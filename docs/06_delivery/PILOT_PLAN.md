@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft / Approved Baseline |
-| Version | `0.2` |
+| Version | `0.3` |
 | Date | `2026-09-06` |
 | Owner | Open — named product/requirement approver required before real-classroom Stage B |
 
@@ -112,7 +112,7 @@ Stage B begins only after Stage A satisfies every hard safety/trust gate and all
 - Target at least `6` evaluated classroom sessions.
 - Maintain at least `12` evaluated teacher sessions across Stage A and Stage B combined.
 
-If real students are involved, Stage B must not begin until applicable retention/deletion expectations are resolved, a named product/requirement approver exists, privacy and consent requirements are reviewed, deployment/support readiness is accepted, target environment evidence is reviewed, and high-impact risks have explicit disposition.
+If real students are involved, Stage B must not begin until the approved [DATA_RETENTION_POLICY.md](./DATA_RETENTION_POLICY.md) is implemented, tested, reflected in participant/privacy notices where applicable, and supported operationally; a named product/requirement approver exists; privacy and consent requirements are reviewed; deployment/support readiness is accepted; target environment evidence is reviewed; and high-impact risks have explicit disposition.
 
 ## 8. Required Session Workflow
 
@@ -276,7 +276,9 @@ Do not log or retain for ordinary pilot instrumentation:
 
 Instrumentation must distinguish hard-gate evidence, primary product metrics, and diagnostic metrics. It must preserve sufficient correlation to reconstruct session workflow, proposal decisions, degradation/recovery, and save outcomes without requiring student profiling.
 
-Applicable retention/deletion rules remain unresolved and must be approved before collecting real-student data.
+Event-level operational/security logs default to `30 days`. Privacy-minimized event-level pilot telemetry and identifiable or pseudonymous research evidence may be retained through pilot analysis and up to `90 days` after final pilot-report acceptance, then must be deleted or appropriately de-identified when no longer required. Participant/contact mapping should be separated from product telemetry where practical.
+
+The approved [DATA_RETENTION_POLICY.md](./DATA_RETENTION_POLICY.md) must be implemented and evidenced before collecting real-student data in Stage B. Retention does not authorize broader collection.
 
 ## 14. Stage Entry Gates
 
@@ -296,7 +298,8 @@ Stage B with a real classroom must not begin until:
 
 - Stage A hard safety/trust gates pass;
 - applicable privacy review is complete;
-- retention/deletion rules required for collected data are resolved;
+- the approved `DATA_RETENTION_POLICY` is implemented, tested, reflected in participant/privacy notices where applicable, and supported operationally;
+- retention expiry, teacher deletion, account deletion, authorized export, and backup-expiry procedures have evidence appropriate to the pilot;
 - a named product/requirement approver exists;
 - the deployment and support plan is accepted;
 - the target device/browser/network baseline is reviewed;
@@ -351,12 +354,12 @@ Relevant active risks include:
 - `R-008` multi-device divergence;
 - `R-012` missing product owner;
 - `R-014` device/browser/stylus variation;
-- `R-017` undefined retention/deletion;
+- `R-017` retention/deletion implementation or operational failure;
 - `R-018` pilot evidence overgeneralization.
 
 See [RISKS.md](./RISKS.md) for ownership and current responses.
 
-Real-classroom Stage B remains dependent on privacy, consent, retention/deletion, product ownership, deployment/support, target-environment, and risk-readiness decisions. Q-04 does not resolve those dependencies.
+Real-classroom Stage B remains dependent on privacy and consent review, implementation and operational evidence for [DATA_RETENTION_POLICY.md](./DATA_RETENTION_POLICY.md), product ownership, deployment/support, target-environment, and risk-readiness decisions. Q-04 does not resolve those dependencies.
 
 ## 18. Pilot Report Template / Required Evidence
 
@@ -376,6 +379,13 @@ Each pilot report must record at minimum:
 - teacher ratings and qualitative feedback;
 - facilitator intervention and whether it constituted rescue for a core action;
 - save status and durable acknowledgement evidence;
+- evidence that raw audio is not retained in ordinary persistence, logs, analytics, or session history;
+- saved-session expiry and early teacher-deletion evidence;
+- teacher lesson/session/account deletion path and primary-purge state evidence;
+- authorized export procedure evidence, including rejection of unauthorized export;
+- event-level pilot telemetry expiry or de-identification evidence;
+- participant/contact mapping separation evidence where applicable;
+- backup-expiry procedure evidence without exposing deleted sensitive content;
 - known limitations;
 - deviations from the pilot protocol.
 
@@ -385,7 +395,7 @@ The aggregate pilot report must also include participant/session counts, topic r
 
 - `Q-06` / `OPD-007`: business model and commercial path.
 - `Q-07` / `OPD-006`: named product owner and requirement approval authority.
-- `OPD-005`: lesson/session retention, history, export, and deletion expectations.
+- Implementation, testing, operational procedures, and Stage B evidence for the approved `DATA_RETENTION_POLICY`.
 - Applicable privacy and consent requirements for real-classroom use.
 - Deployment and support readiness for Stage B.
 - Target device, browser, display, stylus, and network baseline.
@@ -396,5 +406,6 @@ The aggregate pilot report must also include participant/session counts, topic r
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.3` | `2026-09-06` | Resolve `OPD-005` policy and replace the open decision with implementation, operational, and evidence gates | Codex |
 | `0.2` | `2026-09-06` | Remove resolved Q-05 legacy migration follow-up without changing pilot scope or metrics | Codex |
 | `0.1` | `2026-09-06` | Establish narrow staged MVP pilot scope, gates, metrics, and evidence rules | Codex |

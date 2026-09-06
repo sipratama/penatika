@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.2` |
+| Version | `0.3` |
 | Last Updated | `2026-09-06` |
 
 ## 1. Quality Priorities
@@ -90,9 +90,16 @@ See [THREAT_MODEL.md](../04_engineering/THREAT_MODEL.md).
 ## 7. Privacy
 
 - Student identity and student-device data are not required for core MVP.
-- Raw push-to-talk audio is not stored by default.
-- Logs and analytics must avoid full prompts, raw provider payloads, lesson content, session secrets, and private teacher state unless a specific approved purpose requires otherwise.
-- Retention, deletion, export, and evaluation-data policies must be decided before production use.
+- Retention must be enforced by purpose and data class according to [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md).
+- Raw push-to-talk audio has zero default persistence and must not appear in ordinary persistence, logs, analytics, or session history.
+- Full raw transcription/command content, full prompts, raw provider payloads, and unaccepted proposal bodies are transient; any genuinely required diagnostic persistence must expire within the maximum `24-hour` default window.
+- Saved session history and retained annotations must expire after `90 days` by default unless the teacher deletes them earlier.
+- Accepted deletion requests must remove ordinary access when committed, complete primary purge within `30 days`, and expire backup remnants within `30 additional days` unless a documented narrow preservation requirement applies.
+- Teacher account deletion must revoke normal access immediately and apply the same primary-purge and backup-expiry expectations to teacher-owned personal product data.
+- Deletion state must be auditable without logging deleted sensitive content, and product UI must not claim completed deletion while data is only hidden or pending purge.
+- Export of retained teacher-owned lesson/session data must verify authorization and exclude secrets, internal security data, and raw provider payloads that are not retained product data.
+- Logs and analytics must avoid lesson/classroom content, session secrets, private teacher state, student profiling, and unnecessary personal or high-cardinality identifiers.
+- Event-level pilot telemetry and identifiable research evidence must expire or be appropriately de-identified no later than `90 days` after final pilot-report acceptance.
 - Teacher-private information must never appear in classroom projections.
 
 ## 8. Accessibility and Classroom Usability
@@ -158,6 +165,13 @@ Before a classroom pilot:
 - structured content and command contracts pass compatibility tests;
 - required Mathematics corpus passes selected assurance rules;
 - raw audio retention tests pass;
+- prohibited raw transcription, prompt, raw-provider, and unaccepted-proposal persistence tests pass, including the `24-hour` maximum diagnostic expiry where temporary retention is enabled;
+- saved-session and retained-annotation `90-day` expiry is implemented and evidenced;
+- teacher lesson, saved-session, and account deletion paths remove ordinary access and evidence primary purge within `30 days`;
+- protected backup remnants expire within `30 additional days`, and the backup restoration procedure prevents expired or deleted records from being reactivated;
+- authorized teacher export succeeds for retained teacher-owned data and unauthorized export is rejected;
+- deletion state remains auditable without storing deleted sensitive content or falsely reporting completed deletion;
+- event-level pilot telemetry and identifiable research evidence have an operational expiry or de-identification procedure;
 - reconnect and degraded-state scenarios are exercised;
 - backend-authority loss preserves a safe projection and freezes authoritative mutations;
 - AI outage isolates semantic generation failure from healthy classroom capabilities;
@@ -175,12 +189,13 @@ Before a classroom pilot:
 - Formal accessibility conformance target.
 - Supported device/browser/network matrix.
 - Production availability and recovery objectives.
-- Data retention and deletion targets.
+- Physical retention enforcement, backup-expiry mechanism, and export implementation/format.
 - Capacity and cost budgets.
 
 ## 16. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.3` | `2026-09-06` | Add enforceable privacy and release gates for the approved data-lifecycle policy | Codex |
 | `0.2` | `2026-09-06` | Define resilience-oriented degradation, reconciliation, and truthful save requirements | Codex |
 | `0.1` | `2026-09-06` | Initial quality baseline grounded in MVP constraints | Codex |

@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.2` |
+| Version | `0.3` |
 | Last Updated | `2026-09-06` |
 | PRD Capabilities | `CAP-SESSION-001`, `CAP-SESSION-002` |
 
@@ -123,6 +123,18 @@ If the classroom display disconnects, publication and direct student-facing clas
 
 The product shall not report a successful save until durable authoritative persistence acknowledges the save. A failed or unavailable save path shall remain `SAVE_PENDING`, `SAVE_FAILED`, or `RETRY_REQUIRED` as applicable.
 
+### FR-SESSION-018 — Retain Saved Session History for the Approved Window
+
+A successfully saved session shall become eligible for teacher-visible history for `90 days` after session end/save. The retained history shall include only allowed accepted classroom state, lesson-version or allowed historical snapshot/reference, retained annotations, save outcome, relevant assurance/provenance references, and privacy-minimized action or decision metadata.
+
+### FR-SESSION-019 — Support Early Session Deletion and Authorized Export
+
+An authorized teacher shall be able to delete a retained saved session before its default expiry and obtain an authorized export of retained teacher-owned session data. Deletion shall remove ordinary product access when committed and follow the canonical primary-purge and backup-expiry process.
+
+### FR-SESSION-020 — Bound Session-History Content
+
+Retained annotations shall follow the owning saved-session lifecycle. Session history shall not contain raw audio, full prompts, raw provider payloads, full AI conversation history, permanent rejected-proposal bodies, or persistent student identity/profiling.
+
 ## 5. State Model
 
 ```text
@@ -146,6 +158,19 @@ RECONNECTING
 
 `AUTHORITY_UNAVAILABLE` freezes new authoritative mutations. Returning to `ACTIVE` requires completed reconciliation with backend-authoritative state.
 
+Saved-session history has a separate retention lifecycle from the active session lifecycle:
+
+```text
+SAVED → RETAINED_HISTORY
+          ├→ RETENTION_EXPIRED
+          └→ DELETION_REQUESTED
+                    → INACCESSIBLE
+                    → PRIMARY_PURGED
+                    → BACKUP_EXPIRED
+```
+
+`INACCESSIBLE` or deletion processing must not be presented as completed deletion before the applicable purge stage is complete.
+
 ### State Invariants
 
 - One backend revision is authoritative at a time.
@@ -165,9 +190,11 @@ The identity provider and authentication mechanism remain open, but server-side 
 
 ## 7. Data Requirements
 
-Session data may include session identity, teacher identity reference, lesson version, participant roles, pairing status, authoritative revision, accepted scene state, annotations, dependency status, timestamps, and save outcome.
+Active session data may include session identity, teacher identity reference, lesson version, participant roles, pairing status, authoritative revision, accepted scene state, annotations, dependency status, timestamps, and save outcome.
 
-Pairing secrets, access tokens, raw audio, and private AI payloads must not appear in classroom projections or logs.
+Retained saved-session history is limited to the data classes allowed by [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md) and expires after `90 days` by default. Retained annotations expire or are deleted with the owning session. Save, retention, deletion, primary-purge, backup-expiry, and export states must remain truthful and authorization-controlled.
+
+Pairing secrets, access tokens, raw audio, full prompts, raw provider payloads, and unnecessary private AI or classroom content must not appear in classroom projections, retained history, or logs.
 
 ## 8. Failure and Edge Cases
 
@@ -201,13 +228,18 @@ Safe behavior must favor existing authoritative state, visible teacher status, i
 - Pause student-facing mutation until a reconnected display is synchronized.
 - Isolate AI and speech dependency failures from healthy session capabilities.
 - Report save pending/failure/retry states until durable acknowledgement, then save once.
+- Retain a durably saved session for the `90-day` history window and expire it according to policy.
+- Delete a saved session early, remove ordinary access when deletion commits, and evidence primary-purge and backup-expiry states truthfully.
+- Verify retained annotations follow the saved-session lifecycle.
+- Authorize export for the owning teacher and reject unauthorized session export.
+- Verify raw audio, full prompts, raw provider payloads, and unaccepted proposal bodies are absent from retained session history.
 
 ## 10. Open Questions
 
 - What identity and authentication model is required for MVP?
 - Can more than one teacher controller be active?
 - What is the pairing credential lifetime and replacement flow?
-- Which annotations and transient events are retained in a saved session?
+- What exact teacher-visible history and deletion/export interaction design should represent the policy-compliant saved-session data?
 
 ## 11. Definition of Done
 

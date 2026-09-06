@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.1` |
+| Version | `0.2` |
 | Last Updated | `2026-09-06` |
 | PRD Capability | `CAP-LESSON-001` |
 
@@ -91,6 +91,14 @@ A lesson proposal shall not be considered classroom-ready until it reaches the d
 
 Saving shall create or identify a lesson version that can be selected by a classroom session without silently changing when the draft is edited later.
 
+### FR-LESSON-009 — Support Teacher-Owned Lesson Lifecycle
+
+An authorized teacher shall control lifecycle actions for retained teacher-created lessons. A lesson remains retained until the teacher deletes it. When deletion commits, the lesson shall become inaccessible from ordinary product use and enter the canonical primary-purge and backup-expiry process.
+
+### FR-LESSON-010 — Support Authorized Lesson Export
+
+Retained teacher-owned lesson data and stable lesson-version data shall be eligible for an authorized teacher export process, including meaningful version, assurance, and curriculum-provenance information where technically applicable.
+
 ## 5. Business Rules
 
 - `BR-LESSON-001`: Teacher review is required before a generated draft is marked ready.
@@ -98,6 +106,9 @@ Saving shall create or identify a lesson version that can be selected by a class
 - `BR-LESSON-003`: Missing, ungrounded, stale, or non-normative curriculum context must be represented with its actual authority and provenance state.
 - `BR-LESSON-004`: AI provider text is never the authoritative storage format.
 - `BR-LESSON-005`: Official guidance and local sequencing cannot be promoted to national normative authority.
+- `BR-LESSON-006`: Stable lesson versions and their required provenance remain historically immutable while retained.
+- `BR-LESSON-007`: Accepted AI content saved into a lesson follows the lesson lifecycle; raw prompts, raw provider payloads, and rejected, regenerated, abandoned, failed, or blocked proposal bodies are not lesson history.
+- `BR-LESSON-008`: Lesson deletion follows [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md) and must not be represented as complete while only hidden or pending purge.
 
 ## 6. State Model
 
@@ -119,7 +130,7 @@ EMPTY → DRAFT_INPUT → GENERATING → VALIDATING
 
 Inputs include grade, topic, learning intent, teacher edits, and optional commands. Outputs include structured lesson content, provenance, curriculum references, and validation results.
 
-Teacher identity and lesson content may be sensitive. Raw audio is not stored by default. Retention and deletion policy remain open.
+Teacher identity and lesson content may be sensitive. Teacher-owned lessons remain retained until teacher deletion. Raw audio has no default persistence, and raw/full generation working data is transient rather than lesson history. Accepted structured AI content follows the lesson lifecycle, while required assurance and curriculum provenance remains attached and historically stable for the retained version. Retained lesson data is eligible for authorized teacher export. Deletion, primary purge, and backup expiry follow [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md).
 
 ## 8. Failure and Edge Cases
 
@@ -148,18 +159,22 @@ The system must preserve the last safe teacher-authored state and must not mark 
 - Show failed and unsupported validation distinctly.
 - Prevent an unreviewed draft from starting a session.
 - Verify raw audio is absent from persistent data and logs.
+- Delete a teacher-owned lesson, remove ordinary access when deletion commits, and evidence the defined purge state without falsely reporting completion.
+- Authorize an export for the owning teacher and reject unauthorized lesson export.
+- Verify accepted AI content and required provenance follow the retained lesson version while raw generation working data does not become history.
 
 ## 11. Open Questions
 
 - How should BSKAP 046/H/KR/2025 be ingested, normalized, integrity-checked, and mapped to the supported topic taxonomy?
 - How should official guidance and school/teacher local context be licensed, modeled, versioned, and retrieved?
 - What warning types may a teacher explicitly override?
-- What lesson history, duplication, deletion, or export behavior is required?
+- What lesson duplication behavior and exact deletion/export interaction design are required?
 - What content blocks are included in the first structured lesson model?
 
 ## 12. Related Decisions
 
 - [ADR-0005 — Use Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
+- [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 
 ## 13. Definition of Done
 

@@ -12,7 +12,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.6` |
+| Version | `0.7` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 | Target Phase | MVP baseline dan classroom pilot preparation |
@@ -227,6 +227,15 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | PR-031 | Pendago / AI Teaching Canvas material is legacy input and is not authoritative for Penatika unless explicitly reviewed and mapped into a current canonical Penatika document. |
 | PR-032 | When a legacy Pendago decision conflicts with the current Penatika Product Brief, PRD, feature specification, or Accepted ADR, the current Penatika decision takes precedence. |
 | PR-033 | Legacy field-level contracts, taxonomies, and implementation mechanics must be re-derived and revalidated against current Penatika requirements before they can become active Penatika contracts. |
+| PR-034 | Teacher-owned lessons and versions are retained until teacher deletion, subject to documented deletion processing and backup expiry. |
+| PR-035 | Saved classroom session history has a default `90-day` retention period and may be deleted earlier by the teacher. |
+| PR-036 | Raw push-to-talk audio is not retained by default; full transcription, prompts, raw provider payloads, and unaccepted proposal bodies are transient and must not become long-term history by default. |
+| PR-037 | Teacher-owned retained lesson/session data must support an authorized export process and teacher-requested deletion. |
+| PR-038 | Primary deletion must complete within `30 days` of an accepted deletion request; backup remnants expire no later than `30 additional days` unless an explicit narrow preservation requirement applies. |
+| PR-039 | Accepted AI content follows the retention lifecycle of the lesson/session it becomes part of; rejected or unaccepted AI content does not become durable classroom history by default. |
+| PR-040 | Event-level pilot telemetry and identifiable research evidence must be deleted or appropriately de-identified no later than `90 days` after final pilot-report acceptance unless another explicit approved purpose exists. |
+| PR-041 | Retention policy must not introduce persistent student identity, student profiling, or broader collection than the MVP otherwise requires. |
+| PR-042 | Controlled curriculum source/version metadata may be preserved for provenance and historical reproducibility independently of teacher-account deletion, while teacher-specific local-context data follows teacher-owned data policy. |
 
 ---
 
@@ -314,7 +323,7 @@ Pilot instrumentation shall distinguish:
 - primary product metrics for workflow completion, teacher-control confidence, teaching-flow fit, reuse intent, and live-adaptation usefulness;
 - diagnostic metrics for proposal decisions, latency, reconnect convergence, degradation, disconnects, save retries, facilitator intervention, teaching interruptions, assurance outcomes, and curriculum-provenance failures.
 
-The metric definitions and initial thresholds are defined in [PILOT_PLAN.md](../06_delivery/PILOT_PLAN.md). Exact analytics provider, event schema, retention, and evidence-driven diagnostic latency targets remain open. Telemetry must be privacy-minimized; no student profiling or default raw-audio retention is required for MVP.
+The metric definitions and initial thresholds are defined in [PILOT_PLAN.md](../06_delivery/PILOT_PLAN.md). Exact analytics provider, event schema, and evidence-driven diagnostic latency targets remain open; telemetry retention follows [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md). Telemetry must be privacy-minimized; no student profiling or default raw-audio retention is required for MVP.
 
 ---
 
@@ -322,10 +331,18 @@ The metric definitions and initial thresholds are defined in [PILOT_PLAN.md](../
 
 - Collect only teacher, lesson, session, and operational data needed for product behavior.
 - Do not require student identity or student device data for core MVP.
-- Raw push-to-talk audio must be ephemeral by default and excluded from normal persistence and logs.
-- Text commands, generated proposals, annotations, and session history require explicit retention decisions before implementation.
+- Teacher-owned lessons and stable lesson versions remain retained until the teacher deletes the lesson.
+- Saved classroom session history and retained annotations expire after `90 days` by default and may be deleted earlier by the teacher.
+- Raw push-to-talk audio must be ephemeral by default and excluded from normal persistence, logs, analytics, and session history.
+- Full transcription or command content, prompts, raw provider payloads, and unaccepted proposal bodies are transient by default; diagnostic persistence, where genuinely necessary, has a maximum default window of `24 hours`.
+- Accepted AI content follows the lifecycle of the retained lesson or session artifact into which it is accepted; required assurance and curriculum provenance follows that artifact.
+- Teacher-owned retained lesson/session data requires an authorized export process and teacher-requested deletion path.
+- Accepted deletion requests make data inaccessible from ordinary product use, require primary purge within `30 days`, and require backup expiry within `30 additional days` unless a documented narrow preservation requirement applies.
+- Event-level pilot telemetry and identifiable research evidence expire or are appropriately de-identified no later than `90 days` after final pilot-report acceptance.
 - Private teacher information must not leak to classroom display or analytics.
 - Authorization must be enforced by backend behavior, not client visibility.
+
+The canonical detailed policy is [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md). Retention does not authorize broader data collection or replace applicable legal/privacy review.
 
 ---
 
@@ -371,7 +388,11 @@ Integrations must be isolated behind supported application boundaries and must n
 - Supported mathematical content can bypass required validation without a visible state.
 - Curriculum claims cannot identify authority level, controlled source, source version, and relevant provenance.
 - Session state can diverge across clients without deterministic reconciliation.
-- Raw audio is retained by default or exposed through logs.
+- Raw audio or long-lived raw AI working data is retained contrary to [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md).
+- Saved session history exceeds the approved retention period without an explicit approved purpose.
+- Teacher deletion only hides data without a defined primary-purge and backup-expiry path.
+- User-visible deletion or export behavior cannot be evidenced as truthful and authorized.
+- Real-classroom Stage B begins without tested retention, deletion, export, account-deletion, and backup-expiry handling.
 - Critical failure states have no recoverable teacher experience.
 - AI-generated semantic content can reach classroom display without required post-generation teacher approval.
 - A `BLOCKED` proposal can be forced into authoritative classroom state.
@@ -390,7 +411,7 @@ Integrations must be isolated behind supported application boundaries and must n
 - Curriculum ingestion/provenance implementation and permitted usage model for any copied or redistributed guidance content.
 - A test corpus for fractions, algebra, and linear equations.
 - Pilot environment assumptions and target device/browser evidence.
-- Real-classroom Stage B remains dependent on applicable privacy review, resolved retention/deletion rules for collected data, a named product/requirement approver, accepted deployment/support readiness, reviewed target device/browser/network evidence, and explicit disposition of high-impact pilot risks.
+- Real-classroom Stage B remains dependent on implementation and testing of the approved [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md), applicable privacy/consent review and notices, a tested authorized export process, operational deletion and backup-expiry procedures, a named product/requirement approver, accepted deployment/support readiness, reviewed target device/browser/network evidence, and explicit disposition of high-impact pilot risks.
 
 ---
 
@@ -398,7 +419,6 @@ Integrations must be isolated behind supported application boundaries and must n
 
 | ID | Decision |
 |---|---|
-| OPD-005 | Lesson/session retention, history, export, and deletion expectations. |
 | OPD-006 | Product ownership and requirement approval authority. |
 | OPD-007 | Business model and commercial release path. |
 
@@ -434,6 +454,7 @@ The MVP product baseline is acceptable when:
 - [Product Brief](./PRODUCT_BRIEF.md)
 - [Product Roadmap](./ROADMAP.md)
 - [MVP Pilot Plan](../06_delivery/PILOT_PLAN.md)
+- [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Pendago → Penatika Legacy Decision Migration Review](../06_delivery/PENDAGO_MIGRATION_REVIEW.md)
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
@@ -449,6 +470,7 @@ The MVP product baseline is acceptable when:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.7` | `2026-09-06` | Resolve `OPD-005` with product-wide retention, history, export, and deletion requirements | Codex |
 | `0.6` | `2026-09-06` | Add legacy-authority and contract revalidation rules for resolved Q-05 | Codex |
 | `0.5` | `2026-09-06` | Resolve OPD-004 with staged pilot scope, gates, and metrics | Codex |
 | `0.4` | `2026-09-06` | Resolve OPD-003 with resilience-oriented degradation and truthful recovery/save behavior | Codex |

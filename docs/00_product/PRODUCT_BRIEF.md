@@ -12,7 +12,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.6` |
+| Version | `0.7` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 | Primary Market | Indonesia |
@@ -196,6 +196,16 @@ Gangguan AI atau konektivitas tidak boleh membuat seluruh classroom session tida
 
 Penatika hanya mengumpulkan data yang diperlukan untuk outcome product. Raw push-to-talk audio tidak disimpan secara default.
 
+### Data Lifecycle Decision
+
+- Teacher-owned lessons and stable lesson versions remain retained until the teacher deletes the lesson.
+- Saved classroom session history is retained for `90 days` by default and may be deleted earlier by the teacher.
+- Raw push-to-talk audio is never retained by default, while full AI and speech working data is transient by default.
+- Authorized teacher export and teacher-requested deletion of retained teacher-owned lesson/session data are part of the product baseline.
+- Primary deletion must complete within `30 days`; protected backup remnants expire within `30 additional days` unless a documented narrow preservation requirement applies.
+
+The canonical detailed baseline is [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md). This product decision does not replace applicable legal or privacy review.
+
 ---
 
 ## 9. MVP Boundary
@@ -336,6 +346,7 @@ Diagnostic metrics include proposal decisions, p50/p95 AI and transcription late
 - [Product Requirements Document](./PRD.md)
 - [Product Roadmap](./ROADMAP.md)
 - [MVP Pilot Plan](../06_delivery/PILOT_PLAN.md)
+- [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Pendago → Penatika Legacy Decision Migration Review](../06_delivery/PENDAGO_MIGRATION_REVIEW.md)
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
@@ -349,6 +360,7 @@ Diagnostic metrics include proposal decisions, p50/p95 AI and transcription late
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.7` | `2026-09-06` | Resolve the product data-lifecycle baseline for lesson/session history, export, and deletion | Codex |
 | `0.6` | `2026-09-06` | Resolve Q-05 through an explicit Pendago legacy-decision migration review | Codex |
 | `0.5` | `2026-09-06` | Resolve Q-04 with a narrow staged pilot and evidence thresholds | Codex |
 | `0.4` | `2026-09-06` | Resolve Q-03 with resilience-oriented degradation and no offline authority | Codex |

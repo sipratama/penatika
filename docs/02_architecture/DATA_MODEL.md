@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft conceptual baseline |
-| Version | `0.1` |
+| Version | `0.2` |
 | Last Updated | `2026-09-06` |
 | Database Technology | Open Architecture Decision |
 
@@ -20,13 +20,28 @@
 - Keep teacher-private and classroom-safe projections distinct.
 - Treat AI proposals and validation results as lifecycle records, not truth by implication.
 - Minimize personal data and do not persist raw push-to-talk audio by default.
+- Model retention by purpose and data class rather than applying one indefinite history policy to every entity.
+- Distinguish active data, deletion processing, primary-store purge, and backup expiry without claiming completed deletion prematurely.
 - Add physical schema and migrations only after persistence technology is selected.
+
+### Conceptual Retention State
+
+Relevant entities may conceptually carry lifecycle information such as:
+
+- retention class;
+- expiry timestamp where applicable;
+- deletion-requested timestamp;
+- primary-purge due timestamp;
+- deletion or purge status;
+- legal/security hold reference only when a real documented hold exists.
+
+This is a conceptual baseline. It does not require every entity to carry identical fields physically and does not select a database or storage model.
 
 ## 2. Core Concepts
 
 ### Teacher Identity
 
-Represents the teacher principal used for ownership and authorization. Exact account fields, identity provider linkage, organization membership, and lifecycle are not yet decided.
+Represents the teacher principal used for ownership and authorization. Teacher account/profile data remains active until teacher-requested deletion or legitimate account closure under future policy. Normal access is revoked immediately on account deletion, teacher-owned personal product data is deleted or anonymized from primary active storage within `30 days`, and protected backup copies expire within `30 additional days` unless a documented narrow preservation requirement applies. Exact account fields, identity provider linkage, and organization membership remain open.
 
 **Owner:** Identity and Access module
 **Classification:** Personal data
@@ -42,9 +57,12 @@ Known conceptual attributes:
 - subject and grade scope;
 - topic and learning intent;
 - lifecycle status;
+- retention and deletion-processing state where applicable;
 - created and updated timestamps.
 
 **Owner:** Lesson module
+
+Teacher-owned lessons remain retained until the teacher deletes the lesson. Committed deletion removes ordinary teacher access and enters the canonical primary-purge and backup-expiry process.
 
 ### Lesson Version
 
@@ -62,6 +80,8 @@ Known conceptual attributes:
 
 **Owner:** Lesson module
 
+Stable lesson versions remain historically immutable while retained and follow the parent lesson lifecycle. If a retained saved session needs reproducibility after lesson deletion, that session may retain only the allowed stable snapshot or reference required for its own remaining lifecycle.
+
 ### Classroom Session
 
 Backend-authoritative aggregate for an active or saved teaching session.
@@ -74,9 +94,13 @@ Known conceptual attributes:
 - current authoritative revision;
 - active scene or lesson position;
 - degradation and save status;
+- retention class and expiry for saved history;
+- deletion and purge state where applicable;
 - started, ended, and saved timestamps.
 
 **Owner:** Classroom Session module
+
+A successfully saved session is eligible for retained teacher history for `90 days` after session end/save and may be deleted earlier by the teacher.
 
 ### Session Participant
 
@@ -120,7 +144,7 @@ Known conceptual attributes:
 - order or accepted revision;
 - undo/redo relationship where required.
 
-The physical representation, compaction, and retention strategy remain open.
+The physical representation and compaction strategy remain open. Retained annotations follow the owning saved-session lifecycle, expire after `90 days` by default, and are deleted when the session is deleted earlier. There is no independent indefinite ink history.
 
 ### Adaptation Request
 
@@ -135,7 +159,7 @@ Known conceptual attributes:
 - provider correlation metadata excluding secrets;
 - timestamps and failure category.
 
-Raw audio is ephemeral and excluded from default persistence.
+Raw audio is ephemeral and excluded from ordinary persistence, logs, analytics, and session history. Full raw command or transcription content is transient by default and may use at most a `24-hour` diagnostic window where genuinely required; normalized intent or action metadata is preferred.
 
 **Owner:** AI Orchestration module
 
@@ -154,6 +178,8 @@ Known conceptual attributes:
 
 **Owner:** AI Orchestration until accepted; owning domain module applies accepted commands
 
+Rejected, regenerated, abandoned, failed, and blocked proposal bodies are transient by default and may use at most the `24-hour` diagnostic window where necessary. Privacy-minimized lifecycle and teacher-decision metadata may follow an associated saved session for up to `90 days`. Accepted structured content follows the lifecycle of the lesson/session artifact it becomes part of; a redundant raw-provider copy is not retained.
+
 ### Mathematics Validation Result
 
 Reproducible assurance record for supported content.
@@ -168,6 +194,8 @@ Known conceptual attributes:
 - bounded diagnostic and timestamp.
 
 **Owner:** Mathematics Assurance module
+
+Assurance references required to explain or reproduce retained accepted content follow the owning lesson/session lifecycle. Unaccepted content retains only privacy-minimized result metadata where needed for bounded diagnostics or pilot evidence.
 
 ### Curriculum Source Version
 
@@ -185,6 +213,8 @@ Known conceptual attributes:
 
 **Owner:** Curriculum module
 
+Controlled curriculum source/version metadata may be archived beyond teacher-content retention for provenance, integrity, supersession tracking, and historical reproducibility. Teacher-specific or local-context data follows teacher-owned data policy.
+
 ### Curriculum Reference
 
 Links lesson or content claims to an authority level, controlled curriculum source version, relevant phase/scope, reference identity, retrieval or matching provenance, and optional local-context version.
@@ -201,9 +231,9 @@ Known conceptual attributes:
 - lesson version;
 - accepted structured scene and retained annotations;
 - save state and idempotency identity;
-- retention metadata.
+- retention class, expiry, and deletion-processing metadata where applicable.
 
-Exact history and snapshot strategy remain open.
+Saved history retains only the allowed stable lesson reference/snapshot, accepted structured scene, retained annotations, save outcome, required assurance/provenance references, and privacy-minimized action/decision metadata. The physical history and snapshot strategy remains open.
 
 ## 3. Relationships
 
@@ -233,31 +263,47 @@ Classroom Session 1 ── 0..* Session Snapshot or Save Record
 - A classroom projection excludes teacher-private fields by construction.
 - An expired or consumed pairing credential cannot authorize a new participant.
 - A save operation is idempotent for the same session and intended final revision.
+- A retained lesson exists until teacher deletion; deletion processing does not mutate the historical content of stable versions while they remain retained.
+- A saved session expires after `90 days` by default, and retained annotations cannot outlive that owning session.
+- Raw audio never becomes persistent history by default; full raw AI and speech working data remains transient.
+- Accepted AI content follows the owning lesson/session lifecycle, while rejected or unaccepted proposal bodies do not become durable history.
+- Required assurance and curriculum provenance cannot be independently removed while a retained artifact depends on it.
+- Product state distinguishes ordinary-access removal, primary purge, and backup expiry.
 
 ## 5. Data Classification
 
 | Data | Classification | Notes |
 |---|---|---|
-| Teacher identity and account metadata | Personal | Minimize and protect |
-| Lesson and session content | Potentially sensitive educational/work product | Access-controlled |
-| Raw push-to-talk audio | Sensitive transient input | Do not persist by default |
-| Text command or transcript | Potentially sensitive | Retention decision required |
+| Teacher identity and account metadata | Personal | Retain until account deletion/closure; minimize and protect |
+| Lesson and lesson-version content | Potentially sensitive educational/work product | Retain until teacher deletion; access-controlled |
+| Saved session content and retained annotations | Potentially sensitive educational/work product | `90-day` default; teacher may delete earlier |
+| Raw push-to-talk audio | Sensitive transient input | Zero default persistence |
+| Text command or transcript | Potentially sensitive transient input | Maximum `24-hour` diagnostic window where genuinely required |
 | Pairing credentials and tokens | Secret | Short-lived; never log plaintext |
-| AI prompts and raw provider payloads | Potentially sensitive and untrusted | Minimize retention and logging |
+| AI prompts and raw provider payloads | Potentially sensitive and untrusted | Transient; maximum `24-hour` diagnostic window where genuinely required |
+| Unaccepted AI proposal bodies | Potentially sensitive and untrusted | Transient; maximum `24-hour` diagnostic window where genuinely required |
+| Privacy-minimized AI lifecycle/decision metadata | Internal and potentially personal | May follow the associated saved session for up to `90 days` |
+| Assurance and curriculum provenance | Internal integrity record | Follow retained accepted content; controlled source versions may be archived independently |
 | Student identity | Not required for core MVP | Do not introduce without product decision |
-| Operational metrics | Internal | Avoid content and high-cardinality personal labels |
+| Event-level operational/security logs | Internal | Privacy-minimized; `30-day` default |
+| Event-level pilot telemetry and identifiable research evidence | Internal and potentially personal | Through analysis and up to `90 days` after final pilot-report acceptance, then delete or appropriately de-identify |
 
-## 6. Retention and Deletion Open Decisions
+## 6. Conceptual Retention and Deletion Baseline
 
-- Lesson and lesson-version retention.
-- Session history and annotation retention.
-- Text-command and AI-proposal retention for evaluation.
-- Teacher account deletion and data export.
-- Curriculum version archival.
-- Curriculum source supersession and re-evaluation behavior without historical provenance mutation.
-- Audit requirements for teacher overrides and assurance warnings.
+The canonical policy is [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md). The conceptual baseline is:
 
-No production retention period is established by this document.
+- teacher-owned lessons and stable versions remain until teacher deletion;
+- saved session history and retained annotations expire after `90 days` by default;
+- raw audio has zero default persistence;
+- full transcription/command content, full prompts, raw provider payloads, and unaccepted proposal bodies are transient, with a maximum `24-hour` diagnostic window where genuinely necessary;
+- accepted AI content and required assurance/provenance follow the owning retained lesson/session artifact;
+- controlled curriculum source/version metadata may be archived beyond teacher-account or teacher-content deletion, while teacher-specific local context follows teacher-owned data policy;
+- accepted deletion requests make data inaccessible from ordinary use, require primary purge within `30 days`, and require backup expiry within `30 additional days` unless a real documented narrow hold applies;
+- teacher account deletion applies the same primary-purge and backup-expiry expectations to teacher-owned personal product data;
+- event-level operational/security logs default to `30 days`;
+- event-level pilot telemetry and identifiable research evidence expire or are appropriately de-identified no later than `90 days` after final pilot-report acceptance.
+
+Physical enforcement, transaction boundaries, field placement, indexes, storage tiers, backup mechanics, and export format remain open implementation decisions.
 
 ## 7. Physical Model and Migrations
 
@@ -274,6 +320,7 @@ No physical tables, collections, indexes, or migrations are created during initi
 - [System Architecture](./SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority](./adr/ADR-0005-layered-curriculum-authority.md)
 - [PRD](../00_product/PRD.md)
+- [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
 - [Data Persistence Standard](../standards/07_DATA_PERSISTENCE_STANDARD.md)
 
@@ -281,4 +328,5 @@ No physical tables, collections, indexes, or migrations are created during initi
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Resolve the conceptual retention, history, export, deletion, and backup-expiry lifecycle baseline | Codex |
 | `0.1` | `2026-09-06` | Initial conceptual domain model | Codex |

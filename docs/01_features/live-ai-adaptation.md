@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.3` |
+| Version | `0.4` |
 | Last Updated | `2026-09-06` |
 | PRD Capability | `CAP-ADAPT-001` |
 
@@ -76,7 +76,7 @@ The system shall initiate adaptation only from an authorized teacher action. Alw
 
 ### FR-ADAPT-002 — Minimize Audio Retention
 
-Push-to-talk audio shall be processed ephemerally and shall not be persisted or logged by default.
+Push-to-talk audio shall be processed ephemerally and shall not be persisted in ordinary product storage, logs, analytics, or session history by default.
 
 ### FR-ADAPT-003 — Bind Request Context
 
@@ -153,6 +153,14 @@ When backend-authoritative session state cannot be reached, no AI proposal, appr
 ### FR-ADAPT-021 — Preserve Assurance Policy during Degradation
 
 Unavailable assurance shall remain an explicit non-success state and shall continue through the existing Q-02 execution-class policy. Degraded mode shall not convert unavailable assurance into automatic success or bypass schema, policy, curriculum provenance, Mathematics assurance, authorization, privacy, or revision requirements.
+
+### FR-ADAPT-022 — Keep Raw AI Working Data Transient
+
+Full raw transcription or command content, full prompts, raw provider outputs, and rejected, regenerated, abandoned, failed, or `BLOCKED` proposal bodies shall be transient by default. Where diagnostic persistence is genuinely required, the maximum default retention window is `24 hours`.
+
+### FR-ADAPT-023 — Retain Only Accepted Results and Minimized Metadata
+
+Accepted proposal content shall follow the retention lifecycle of the lesson or session artifact into which it is published, without retaining a redundant raw-provider copy. Privacy-minimized lifecycle and teacher-decision metadata may follow the associated saved session for its `90-day` retention window when required for history, assurance, diagnostics, or pilot evidence.
 
 ### Execution Classes
 
@@ -232,12 +240,15 @@ Failure must leave the current classroom projection unchanged unless the teacher
 
 ## 8. Observability
 
-Record correlation-safe operational events for request lifecycle, execution-class decision, latency, cancellation, provider failure category, schema failure, assurance outcome, proposal/revision binding result, and teacher approval, rejection, or warned override. Do not log raw audio, secrets, full prompts, unnecessary proposal payloads, or unnecessary classroom content.
+Record correlation-safe operational events for request lifecycle, execution-class decision, latency, cancellation, provider failure category, schema failure, assurance outcome, proposal/revision binding result, and teacher approval, rejection, or warned override. Do not log raw audio, secrets, full prompts, raw provider payloads, unnecessary proposal bodies, or unnecessary classroom content. Event-level operational logs default to `30 days`; a longer period is allowed only for a specific active security incident through an explicit process.
 
 ## 9. Minimum Test and Evaluation Scenarios
 
 - Valid direct and push-to-talk adaptation requests.
 - No raw audio persistence or logging.
+- Full transcription, prompts, raw provider outputs, and unaccepted proposal bodies expire within the `24-hour` maximum diagnostic window where temporary persistence is enabled.
+- Accepted structured proposal content follows the resulting lesson/session lifecycle without a redundant raw-provider copy.
+- Privacy-minimized proposal lifecycle and teacher-decision metadata follows only the associated saved-session retention where required.
 - Malformed and adversarial provider output.
 - Prompt injection embedded in lesson content.
 - Stale proposal after scene change.
@@ -266,7 +277,7 @@ Record correlation-safe operational events for request lifecycle, execution-clas
 
 - Which speech and AI providers or models are acceptable?
 - What latency budget maintains teaching flow?
-- What sanitized request/proposal data may be retained for evaluation?
+- What de-identified evaluation fixtures, if any, require a separate approved purpose and retention decision?
 
 ## 11. Related Decisions
 
