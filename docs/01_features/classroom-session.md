@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.1` |
+| Version | `0.2` |
 | Last Updated | `2026-09-06` |
 | PRD Capabilities | `CAP-SESSION-001`, `CAP-SESSION-002` |
 
@@ -49,8 +49,9 @@ An authorized teacher starts a lesson session, pairs supported devices, teaches 
 4. Teacher pairs the smartphone controller using an expiring, single-purpose pairing mechanism.
 5. Backend assigns participant roles and returns only permitted state.
 6. Teacher actions produce ordered session commands and authoritative revisions.
-7. Clients reconnect or resynchronize when necessary.
-8. Teacher ends and saves the session.
+7. Dependency failures degrade only affected capabilities while clients preserve backend authority and a safe current projection.
+8. Clients reconnect and reconcile against the authoritative revision before mutations resume.
+9. Teacher ends the session and receives a successful save state only after durable authoritative persistence acknowledges it.
 
 ## 4. Functional Requirements
 
@@ -94,21 +95,65 @@ Only an authorized teacher may end a session. Saving shall preserve the selected
 
 Invalid, expired, replayed, or role-incompatible join attempts shall fail safely and shall not reveal sensitive session state.
 
+### FR-SESSION-011 — Preserve Last-Known Safe Projection
+
+During temporary backend/session connectivity loss, clients may preserve the last-known safe classroom projection but shall not treat cached state as authoritative.
+
+### FR-SESSION-012 — Freeze Mutations without Backend Authority
+
+New authoritative state-changing commands shall not be accepted locally when backend authority cannot be reached.
+
+### FR-SESSION-013 — Reconcile before Resuming
+
+After reconnect, clients shall retrieve and reconcile against backend-authoritative state before classroom mutations resume. Stale or conflicting local assumptions shall be rejected.
+
+### FR-SESSION-014 — Do Not Replay New Offline Mutations
+
+The MVP shall not queue newly created offline state-changing commands for automatic replay. A command sent before connection loss whose acknowledgement is uncertain may be reconciled using command identity, idempotency, and revision checks.
+
+### FR-SESSION-015 — Degrade Controller Loss Safely
+
+If the teacher controller disconnects, the classroom display shall preserve the current authoritative projection and no automatic mutation shall occur. Another teacher control surface may act only when separately authorized by the backend.
+
+### FR-SESSION-016 — Pause Student-Facing Mutation on Display Loss
+
+If the classroom display disconnects, publication and direct student-facing classroom mutation shall pause until the display has reconnected and synchronized against the authoritative revision. Safe teacher-private work may continue.
+
+### FR-SESSION-017 — Report Save Truthfully
+
+The product shall not report a successful save until durable authoritative persistence acknowledges the save. A failed or unavailable save path shall remain `SAVE_PENDING`, `SAVE_FAILED`, or `RETRY_REQUIRED` as applicable.
+
 ## 5. State Model
 
 ```text
-CREATED → READY → ACTIVE → ENDING → SAVED
-             │       ├→ DEGRADED → ACTIVE
+CREATED → READY → ACTIVE → ENDING → SAVE_PENDING → SAVED
+             │       │                  └→ SAVE_FAILED → RETRY_REQUIRED
+             │       ├→ RECONNECTING → ACTIVE
              │       └→ FAILED
              └→ EXPIRED
 ```
+
+The active lifecycle may carry concise degradation overlays rather than separate competing session authorities:
+
+```text
+DEGRADED_AI
+DEGRADED_SPEECH
+DISPLAY_DISCONNECTED
+CONTROLLER_DISCONNECTED
+AUTHORITY_UNAVAILABLE
+RECONNECTING
+```
+
+`AUTHORITY_UNAVAILABLE` freezes new authoritative mutations. Returning to `ACTIVE` requires completed reconciliation with backend-authoritative state.
 
 ### State Invariants
 
 - One backend revision is authoritative at a time.
 - A classroom display cannot issue teacher commands.
 - An expired pairing credential cannot be reused.
-- A saved session references a stable lesson version.
+- A saved session references a stable lesson version and durable authoritative save acknowledgement.
+- Cached client state is never promoted to temporary authority.
+- Newly created offline mutations are never queued for automatic replay.
 
 ## 6. Permissions and Authorization
 
@@ -131,10 +176,14 @@ Pairing secrets, access tokens, raw audio, and private AI payloads must not appe
 - Multiple controllers attempt to become active.
 - Client sends stale or duplicated commands.
 - Teacher connection drops while display remains connected.
-- Backend or persistence is unavailable.
-- Save partially fails after session end.
+- Classroom display disconnects while the teacher remains connected.
+- AI or speech dependency becomes unavailable while backend authority remains healthy.
+- Backend authority becomes unavailable while clients retain cached state.
+- A command was sent before disconnect but its acknowledgement is uncertain.
+- Save persistence is unavailable while authoritative runtime state remains healthy.
+- Save partially fails after session end or remains pending.
 
-Safe behavior must favor existing authoritative state, visible teacher status, idempotent recovery, and no privilege expansion.
+Safe behavior must favor existing authoritative state, visible teacher status, idempotent reconciliation, no new offline mutation replay, truthful save status, and no privilege expansion.
 
 ## 9. Minimum Test Scenarios
 
@@ -145,7 +194,13 @@ Safe behavior must favor existing authoritative state, visible teacher status, i
 - Prove private teacher state is absent from classroom projection.
 - Reconcile a stale client without overwriting authoritative state.
 - Handle duplicate state-changing commands idempotently.
-- Recover from a temporary disconnect and save once.
+- Preserve the last-known safe projection and freeze mutations while backend authority is unavailable.
+- Reconcile before accepting mutations after reconnect.
+- Reconcile uncertain acknowledgement for a pre-disconnect command without replaying newly created offline commands.
+- Keep the display stable and prevent automatic mutation after controller disconnect.
+- Pause student-facing mutation until a reconnected display is synchronized.
+- Isolate AI and speech dependency failures from healthy session capabilities.
+- Report save pending/failure/retry states until durable acknowledgement, then save once.
 
 ## 10. Open Questions
 
@@ -153,7 +208,6 @@ Safe behavior must favor existing authoritative state, visible teacher status, i
 - Can more than one teacher controller be active?
 - What is the pairing credential lifetime and replacement flow?
 - Which annotations and transient events are retained in a saved session?
-- What exact functionality remains available when the backend cannot be reached?
 
 ## 11. Definition of Done
 
@@ -161,4 +215,3 @@ Safe behavior must favor existing authoritative state, visible teacher status, i
 - Pairing threat scenarios are covered.
 - Session contracts and revision rules are versioned.
 - Degraded states satisfy the selected product policy.
-

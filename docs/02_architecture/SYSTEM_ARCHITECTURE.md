@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.3` |
+| Version | `0.4` |
 | Last Updated | `2026-09-06` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
@@ -29,6 +29,8 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - AI providers are proposal generators, not authorities for session state, mathematical correctness, curriculum truth, authorization, or policy.
 - AI semantic generation and classroom publication are separate authorization steps: teacher request authorizes generation, while teacher approval authorizes publication.
 - Deterministic non-generative direct actions use explicitly supported command classes rather than the AI proposal path.
+- Penatika is resilience-oriented, not offline-first; dependency failures degrade affected capabilities without creating competing state authority.
+- Loss of backend authority freezes new authoritative mutations instead of promoting a client to temporary authority.
 - Persistence, realtime transport, identity provider, client frameworks, programming languages, cloud, and external providers remain open decisions.
 
 ### Why This Shape
@@ -88,7 +90,9 @@ Responsibilities:
 - submit approval or explicit warned override for the current proposal;
 - show blocked-state feedback without offering a publication override;
 - submit navigation, annotation, and adaptation commands;
-- show connection and synchronization state.
+- show degraded and reconnecting state;
+- support non-voice fallback when speech recognition is unavailable;
+- avoid local-authority behavior or creation of offline mutation queues.
 
 It must be treated as an untrusted client for authorization.
 
@@ -99,6 +103,7 @@ Responsibilities:
 - render classroom-safe structured scene projections;
 - show current lesson content and accepted annotations;
 - preserve a safe last-known projection during recoverable disruption;
+- resynchronize against the backend-authoritative revision before accepting new student-facing mutations after reconnect;
 - exclude teacher-private and internal AI state.
 
 It has no authority to issue teacher commands.
@@ -125,6 +130,10 @@ Identity technology and account lifecycle remain open.
 
 - owns session lifecycle, participants, roles, current lesson position, authoritative revision, accepted classroom state, degradation status, and save outcome;
 - orders and reconciles state-changing commands;
+- freezes or rejects new authoritative mutations when backend authority is unavailable;
+- reconciles against backend-authoritative state before mutation resumes;
+- distinguishes uncertain acknowledgement for a pre-disconnect command from a newly created offline command;
+- reports save success only after durable authoritative persistence acknowledgement;
 - requires valid proposal, approval or warned-override, session, assurance, and revision binding before accepting AI publication commands;
 - produces role-specific projections.
 
@@ -248,10 +257,15 @@ Transcription, generation progress, proposal preview, assurance results, warning
 
 ### 6.4 Reconnect and Save
 
-1. Client presents its last observed revision.
-2. Session module returns current authoritative state or supported delta.
-3. Stale local changes are rejected or reconciled through explicit commands.
-4. Teacher ends and saves once using an idempotent application operation.
+1. The application identifies which dependency or participant is degraded and exposes an appropriate teacher-private status.
+2. AI or speech failure disables only the affected capability while backend-authoritative classroom behavior continues where healthy.
+3. Display disconnect pauses student-facing publication and direct projection mutations; safe teacher-private work may continue.
+4. Controller disconnect leaves the current authoritative display projection unchanged; another teacher surface may act only when separately authorized.
+5. Loss of backend authority preserves the last-known safe classroom projection and freezes new authoritative commands, AI publication, lifecycle changes, and successful save completion. Clients do not create new offline mutation queues.
+6. On reconnect, the client presents its last observed revision and the Session module returns current authoritative state or a supported delta.
+7. The Session module reconciles uncertain acknowledgement for commands sent before disconnect through command identity, idempotency, and revision semantics, while rejecting stale, conflicting, or newly created offline commands.
+8. Authoritative mutation resumes only after synchronization completes.
+9. Session save remains pending, failed, or retryable until durable authoritative persistence acknowledges success.
 
 ## 7. Trust Boundaries
 
@@ -277,12 +291,22 @@ Transcription, generation progress, proposal preview, assurance results, warning
 
 ## 9. Reliability and Degradation Baseline
 
-- The classroom display should retain a safe last-known projection during recoverable update failures.
-- Failed AI or validation operations must not mutate authoritative classroom state.
+Penatika is resilience-oriented, not offline-first. The degradation policy preserves one backend-authoritative session state and limits failure to the affected capability where possible.
+
+| Failure | `AVAILABLE` | `LIMITED` | `UNAVAILABLE` / Paused |
+|---|---|---|---|
+| AI provider unavailable | Reviewed lesson presentation, accepted content display, navigation, supported `DIRECT_ACTION`, digital ink, synchronization, session lifecycle, and save when backend/persistence are healthy | None required | New semantic AI generation, AI explanations, exercises, visuals, and rewrites |
+| Speech recognition unavailable | Tap/button, keyboard/text, mouse, touch, stylus, digital ink, `DIRECT_ACTION`, and supported non-voice semantic AI requests | None required | Push-to-talk transcription |
+| Teacher controller disconnected | Classroom display retains current authoritative projection; backend session remains authoritative | Another teacher surface may act only when separately backend-authorized | Commands, AI requests, publication approvals, end, or save initiated from the disconnected controller |
+| Classroom display disconnected | Backend session state and safe teacher-private proposal work | Teacher-private work only when it does not mutate student-facing state | Student-facing publication, projection-changing `DIRECT_ACTION`, and AI proposal publication until display resynchronizes |
+| Backend authority unavailable | Last-known safe classroom projection may remain visible | Read-only cached projection | New authoritative navigation, `DIRECT_ACTION`, digital ink commit, AI publication, pairing/session lifecycle mutation, successful save, and automatic replay of new offline commands |
+| Durable save dependency unavailable | Teaching, navigation, permitted mutations, and Q-02-compliant AI adaptation while runtime authority is healthy | Save remains pending, failed, or retryable | Successful durable save acknowledgement |
+
+- Failed AI, speech, assurance, display, controller, backend, or persistence operations must not bypass existing authorization, approval, validation, provenance, privacy, or revision policy.
 - Commands that may be retried require idempotency and revision checks.
-- Reconnection resolves against backend authority.
+- An uncertain acknowledgement for a command sent before disconnect may be reconciled; newly created offline state-changing commands are never automatically replayed in the MVP.
+- Reconnection resolves against backend authority and mutation resumes only after synchronization completes.
 - Dependency timeouts, retry ownership, and circuit-breaking policy must be explicit after providers are selected.
-- The minimum degraded-mode capability remains an Open Product Decision.
 - Latency objectives require prototype measurement before numerical targets are set.
 
 ## 10. AI and Assurance Boundaries
@@ -320,7 +344,7 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 
 - Use correlation identifiers across session, command, AI request, validation, and save operations.
 - Record structured lifecycle and failure-category events without sensitive payloads.
-- Measure synchronization failures, stale commands, pairing failures, provider latency/failures, validation outcomes, degraded-mode entry, and recovery.
+- Measure synchronization failures, stale commands, pairing failures, provider latency/failures, validation outcomes, degradation entry/exit, mutation freezes, display/controller disconnects, uncertain acknowledgements, reconciliation results, rejected offline replay attempts, save retries, and recovery.
 - Avoid high-cardinality labels containing teacher content, prompts, or session secrets.
 - Production SLOs and alert thresholds remain open until workload and deployment evidence exist.
 
@@ -342,6 +366,12 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 - `INV-014`: AI-generated student-facing semantic content requires post-generation approval bound to the actual proposal and current revision, unless a later accepted ADR explicitly narrows this rule for a proven safe content class.
 - `INV-015`: `BLOCKED` results cannot produce authoritative classroom commands through teacher override.
 - `INV-016`: Deterministic non-generative presentation actions may execute without AI publication approval only through explicitly supported command classes.
+- `INV-017`: Loss of backend authority must freeze new authoritative classroom mutations; no client becomes temporary session authority.
+- `INV-018`: Clients may preserve the last-known safe classroom projection during recoverable connectivity loss, but cached state is not authoritative.
+- `INV-019`: MVP must not automatically replay newly created offline state-changing commands after reconnect.
+- `INV-020`: Mutation may resume only after reconciliation with backend-authoritative state.
+- `INV-021`: A durable save is successful only after authoritative persistence acknowledgement.
+- `INV-022`: Degraded mode cannot bypass approval, assurance, authorization, privacy, structured-content, curriculum provenance, or revision policy.
 
 ## 15. Selected Architecture Decisions
 
@@ -351,6 +381,7 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 - [ADR-0004 — Separate AI Generation from Mathematical and Curriculum Authority](./adr/ADR-0004-ai-assurance-boundary.md)
 - [ADR-0005 — Use Layered Curriculum Authority and Versioned Provenance](./adr/ADR-0005-layered-curriculum-authority.md)
 - [ADR-0006 — Teacher Approval and AI Publication Policy](./adr/ADR-0006-teacher-approval-ai-publication-policy.md)
+- [ADR-0007 — Graceful Degradation Without Offline Authority](./adr/ADR-0007-graceful-degradation-without-offline-authority.md)
 
 ## 16. Open Architecture Decisions
 
@@ -389,6 +420,7 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.4` | `2026-09-06` | Apply resilience-oriented degradation and recovery architecture from ADR-0007 | Codex |
 | `0.3` | `2026-09-06` | Apply separate AI generation and teacher-authorized publication architecture from ADR-0006 | Codex |
 | `0.2` | `2026-09-06` | Apply layered curriculum authority and provenance architecture from ADR-0005 | Codex |
 | `0.1` | `2026-09-06` | Initial technology-neutral architecture baseline | Codex |

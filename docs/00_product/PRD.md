@@ -12,7 +12,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.3` |
+| Version | `0.4` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 | Target Phase | MVP baseline dan classroom pilot preparation |
@@ -178,11 +178,15 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 
 ### J-04 — Recover and Save
 
-1. Jika koneksi atau AI dependency bermasalah, Penatika mempertahankan safe last-known classroom state dan menunjukkan degraded status pada teacher surface.
-2. Setelah reconnect, client melakukan synchronization terhadap authoritative backend state.
-3. Guru mengakhiri dan menyimpan sesi.
+1. Jika AI provider gagal, Penatika menghentikan capability AI generation tetapi mempertahankan reviewed lesson presentation dan supported deterministic teaching controls selama backend authority tetap sehat.
+2. Jika speech recognition gagal, Penatika menonaktifkan push-to-talk dan menyediakan supported non-voice teacher interaction.
+3. Jika classroom display terputus, student-facing mutation berhenti sampai display tersinkronisasi kembali; teacher-private work boleh berlanjut hanya bila tidak mengubah classroom projection.
+4. Jika teacher controller terputus, classroom display mempertahankan current authoritative projection tanpa automatic mutation; teacher surface lain hanya boleh bertindak bila diotorisasi secara terpisah oleh backend.
+5. Jika backend-authoritative session state tidak dapat dijangkau, client mempertahankan last-known safe classroom projection, membekukan mutation baru, dan tidak membuat offline command baru untuk automatic replay.
+6. Setelah reconnect, client mengambil authoritative revision, merekonsiliasi state, menolak stale/conflicting assumptions, lalu melanjutkan mutation hanya setelah synchronization selesai. Command yang sudah dikirim sebelum disconnect tetapi acknowledgement-nya tidak pasti boleh direkonsiliasi melalui command identity, idempotency, dan revision semantics.
+7. Jika durable save dependency gagal tetapi runtime authority tetap sehat, pengajaran boleh berlanjut dan save tetap `PENDING`, `FAILED`, atau `RETRY_REQUIRED` sampai durable authoritative acknowledgement diterima.
 
-**Outcome:** Session tidak menghasilkan conflicting authoritative state dan dapat disimpan sesuai policy.
+**Outcome:** Session mempertahankan satu backend-authoritative state, mengalami degradation yang terbatas pada capability terdampak, dan melaporkan recovery serta save outcome secara benar.
 
 ---
 
@@ -208,6 +212,13 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | PR-016 | AI-generated student-facing semantic content requires post-generation teacher approval after private preview and applicable checks. |
 | PR-017 | Authorized deterministic non-generative presentation/annotation commands may execute directly only when they belong to an explicitly supported direct-action class and do not introduce new semantic teaching content. |
 | PR-018 | Unsupported/inconclusive assurance may use explicit warned override when allowed; known-invalid, stale, unauthorized, policy/security/privacy-violating, or structurally unsafe proposals are blocked and cannot be overridden. |
+| PR-019 | AI provider failure must degrade AI-generation capabilities without removing the current reviewed classroom lesson or supported deterministic teaching controls while backend authority remains healthy. |
+| PR-020 | Speech failure must not disable non-voice teacher controls or supported non-voice AI requests. |
+| PR-021 | When the classroom display is disconnected, student-facing mutations must pause until display synchronization is restored; teacher-private work may continue only when it does not mutate classroom projection. |
+| PR-022 | When backend-authoritative session state cannot be reached, clients must preserve the last-known safe projection and must not create new authoritative mutations. |
+| PR-023 | MVP must not queue new offline state-changing commands for automatic replay. Recovery must reconcile against backend authority before new mutations resume. |
+| PR-024 | A session save may be reported successful only after the authoritative durable save path acknowledges success. |
+| PR-025 | Degraded mode must never bypass approval, assurance, authorization, privacy, structured-content validation, curriculum provenance, or stale/revision controls. |
 
 ---
 
@@ -246,7 +257,13 @@ Exact identity, authentication, and session authorization mechanisms remain an O
 - Blocked proposal or action with no publication override.
 - Approved/accepted proposal.
 - Displayed content.
-- Session ready, paired, active, reconnecting, degraded, ending, saved, and failed.
+- Session ready, paired, active, reconnecting, ending, saved, and failed.
+- Degraded AI.
+- Degraded speech with non-voice fallback.
+- Classroom display disconnected.
+- Teacher controller disconnected.
+- Backend authority unavailable with authoritative mutation freeze.
+- Save pending, save failed, and retry required.
 - Unsaved changes.
 - Permission denied or invalid pairing.
 - Unsupported input or content operation.
@@ -354,12 +371,17 @@ Integrations must be isolated behind supported application boundaries and must n
 - AI-generated semantic content can reach classroom display without required post-generation teacher approval.
 - A `BLOCKED` proposal can be forced into authoritative classroom state.
 - Approval can be replayed onto another, replaced, or stale proposal.
+- A client mutates authoritative classroom state while backend authority is unavailable.
+- Newly created offline state-changing commands are replayed automatically after reconnect.
+- Classroom display accepts student-facing mutations before safe resynchronization completes.
+- Product reports save success without durable authoritative acknowledgement.
+- Degraded mode bypasses Q-02 publication approval or applicable assurance policy.
 
 ---
 
 ## 15. Delivery Dependencies
 
-- Open product decisions `Q-03` and `Q-04` from the Product Brief.
+- Open product decision `Q-04` from the Product Brief.
 - Architecture decisions for identity, realtime synchronization, persistence, AI, speech, mathematics validation, and deployment.
 - Curriculum ingestion/provenance implementation and permitted usage model for any copied or redistributed guidance content.
 - A test corpus for fractions, algebra, and linear equations.
@@ -371,7 +393,6 @@ Integrations must be isolated behind supported application boundaries and must n
 
 | ID | Decision |
 |---|---|
-| OPD-003 | Minimum degraded-mode capability during internet or AI outage. |
 | OPD-004 | Pilot scope, success metrics, and quantitative targets. |
 | OPD-005 | Lesson/session retention, history, export, and deletion expectations. |
 | OPD-006 | Product ownership and requirement approval authority. |
@@ -411,6 +432,7 @@ The MVP product baseline is acceptable when:
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
 - [ADR-0006 — Teacher Approval and AI Publication Policy](../02_architecture/adr/ADR-0006-teacher-approval-ai-publication-policy.md)
+- [ADR-0007 — Graceful Degradation Without Offline Authority](../02_architecture/adr/ADR-0007-graceful-degradation-without-offline-authority.md)
 - [UX Flows](../03_design/UX_FLOWS.md)
 - [Test Strategy](../04_engineering/TEST_STRATEGY.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
@@ -421,6 +443,7 @@ The MVP product baseline is acceptable when:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.4` | `2026-09-06` | Resolve OPD-003 with resilience-oriented degradation and truthful recovery/save behavior | Codex |
 | `0.3` | `2026-09-06` | Resolve OPD-001 with post-generation teacher approval and execution classes | Codex |
 | `0.2` | `2026-09-06` | Resolve curriculum authority hierarchy and strengthen provenance requirements | Codex |
 | `0.1` | `2026-09-06` | Initial capability baseline from confirmed Product Brief | Codex |

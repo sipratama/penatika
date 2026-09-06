@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.2` |
+| Version | `0.3` |
 | Last Updated | `2026-09-06` |
 | PRD Capability | `CAP-ADAPT-001` |
 
@@ -134,6 +134,26 @@ Hard structural, policy, security, authorization, or privacy failures; known det
 
 Publication approval shall bind to the proposal identity/version, authorized teacher/session authority, session identity, relevant scene/current revision, and applicable assurance result/version. Approval for one proposal shall not be replayed against another, replaced, or stale proposal.
 
+### FR-ADAPT-017 — Isolate AI Provider Failure
+
+When the AI provider is unavailable, new semantic AI generation shall be unavailable, but the current reviewed lesson and supported deterministic teaching controls may continue while backend authority remains healthy.
+
+### FR-ADAPT-018 — Provide Non-Voice Fallback
+
+When speech recognition is unavailable, push-to-talk transcription shall be unavailable while supported tap, button, keyboard/text, mouse, touch, stylus, digital ink, `DIRECT_ACTION`, and non-voice semantic AI request paths may remain available.
+
+### FR-ADAPT-019 — Pause Publication while Display Is Unavailable
+
+When the classroom display is disconnected, safe private generation, proposal preview, warnings, and other teacher-private work may continue, but AI publication shall pause until the display has reconnected and synchronized.
+
+### FR-ADAPT-020 — Freeze Publication without Backend Authority
+
+When backend-authoritative session state cannot be reached, no AI proposal, approval, warned override, or publication command shall mutate classroom state. The MVP shall not queue new publication commands for automatic replay.
+
+### FR-ADAPT-021 — Preserve Assurance Policy during Degradation
+
+Unavailable assurance shall remain an explicit non-success state and shall continue through the existing Q-02 execution-class policy. Degraded mode shall not convert unavailable assurance into automatic success or bypass schema, policy, curriculum provenance, Mathematics assurance, authorization, privacy, or revision requirements.
+
 ### Execution Classes
 
 | Class | Required Behavior |
@@ -167,6 +187,15 @@ AUTHORIZED_ACTION → INTENT_CLASSIFIED
 
 Semantic AI processing remains `PRIVATE_ONLY` until publication authorization succeeds. Rejected, cancelled, and failed requests terminate without changing the classroom projection. Only an accepted proposal with valid publication authorization, or a validated `DIRECT_ACTION`, may produce a classroom state command. `DIRECT_ACTION` is a separate deterministic command path and is not represented as an AI proposal.
 
+Degradation overlays may apply without changing the Q-02 proposal states:
+
+```text
+DEGRADED_AI       → new semantic generation unavailable
+DEGRADED_SPEECH   → push-to-talk unavailable; supported non-voice paths remain
+DISPLAY_UNAVAILABLE → private proposal work may continue; publication paused
+AUTHORITY_UNAVAILABLE → publication mutation frozen; no new offline replay queue
+```
+
 ## 6. Trust and Safety Rules
 
 - Provider output is untrusted input.
@@ -193,6 +222,11 @@ Semantic AI processing remains `PRIVATE_ONLY` until publication authorization su
 - Voice approval does not unambiguously identify the current proposal.
 - Teacher attempts to override a `BLOCKED` result.
 - A command is ambiguous between deterministic direct action and semantic generation.
+- AI provider becomes unavailable while the backend session remains healthy.
+- Speech recognition becomes unavailable while non-voice input remains usable.
+- Classroom display disconnects after private proposal generation but before publication.
+- Backend authority becomes unavailable after teacher approval but before authoritative mutation.
+- Assurance dependency is unavailable or errors during proposal evaluation.
 
 Failure must leave the current classroom projection unchanged unless the teacher independently performs another safe action.
 
@@ -218,6 +252,11 @@ Record correlation-safe operational events for request lifecycle, execution-clas
 - Stale, duplicate, and replayed approvals are rejected.
 - Voice approval succeeds only when unambiguous and fails safely when ambiguous.
 - Classroom display does not change before publication authorization.
+- AI outage disables new semantic generation without disabling healthy reviewed lesson presentation or deterministic controls.
+- Speech outage disables push-to-talk while supported non-voice request paths continue.
+- Display disconnect permits only safe private proposal work and pauses publication until resynchronization.
+- Backend authority loss prevents proposal publication and does not queue a new publication command for automatic replay.
+- Assurance outage remains non-success and cannot bypass the existing execution-class policy.
 - Provider timeout, cancellation, retry, and rate-limit handling.
 - Private state absent from classroom projection.
 - Deterministic replay tests using recorded sanitized fixtures.
@@ -228,7 +267,6 @@ Record correlation-safe operational events for request lifecycle, execution-clas
 - Which speech and AI providers or models are acceptable?
 - What latency budget maintains teaching flow?
 - What sanitized request/proposal data may be retained for evaluation?
-- What capability remains when AI or speech dependencies are unavailable?
 
 ## 11. Related Decisions
 

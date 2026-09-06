@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.1` |
+| Version | `0.2` |
 | Last Updated | `2026-09-06` |
 | PRD Capabilities | `CAP-CANVAS-001`, `CAP-INK-001` |
 
@@ -78,13 +78,32 @@ Equivalent mouse, touch, and stylus actions shall produce consistent supported c
 
 Accepted annotation changes shall synchronize through the authoritative session state. Clients shall not permanently diverge through local-only edits.
 
+### FR-CANVAS-005 — Preserve Last-Known Safe Projection
+
+During recoverable connectivity loss, the display shall retain the last-known safe classroom projection or a classroom-appropriate safe fallback without treating cached state as authoritative.
+
+### FR-CANVAS-006 — Synchronize before Resuming Mutations
+
+After display reconnect, the display shall synchronize against the backend-authoritative revision before accepting or rendering new student-facing mutations.
+
+### FR-INK-006 — Pause Ink without Backend Authority
+
+Digital ink operations that require authoritative state mutation shall pause while backend authority is unavailable.
+
+### FR-INK-007 — Do Not Queue Offline Ink Mutations
+
+The MVP shall not create a local offline ink mutation queue for automatic replay after reconnect.
+
 ## 4. Business Rules
 
 - `BR-CANVAS-001`: Only supported structured elements may become classroom content.
 - `BR-CANVAS-002`: Private teacher state is never part of the classroom projection.
 - `BR-CANVAS-003`: Scene and annotation updates are revision-aware.
 - `BR-CANVAS-004`: Unsupported content fails closed to a safe visual state.
+- `BR-CANVAS-005`: Cached or local-only classroom state never becomes authoritative.
+- `BR-CANVAS-006`: Connection fallback and reconnect states shown on the display remain classroom-appropriate and exclude internal or private diagnostics.
 - `BR-INK-001`: Destructive clear behavior must be recoverable through undo when feasible or require confirmation.
+- `BR-INK-002`: Offline ink changes are not queued for automatic replay.
 
 ## 5. State Model
 
@@ -93,10 +112,11 @@ Each classroom scene has an authoritative revision and a projection status:
 ```text
 LOADING → READY → UPDATING → READY
    └→ SAFE_FALLBACK
-READY ↔ DEGRADED
+READY → DISPLAY_DISCONNECTED → RECONNECTING → SYNCHRONIZING → READY
+READY → AUTHORITY_UNAVAILABLE → RECONNECTING → SYNCHRONIZING → READY
 ```
 
-Annotation commands are accepted, rejected as stale/unauthorized, or reconciled against the current revision.
+Annotation commands are accepted, rejected as stale/unauthorized, or reconciled against the current revision. `DISPLAY_DISCONNECTED` and `AUTHORITY_UNAVAILABLE` preserve a safe projection; authoritative scene and ink mutations remain paused until synchronization completes.
 
 ## 6. UX and Accessibility
 
@@ -114,6 +134,9 @@ Annotation commands are accepted, rejected as stale/unauthorized, or reconciled 
 - Lost connection during an ink stroke.
 - Duplicate, stale, or out-of-order annotation command.
 - Viewport resize, orientation change, or display reconnect.
+- Display reconnects with a stale cached projection.
+- Backend authority becomes unavailable during navigation or digital ink.
+- Local ink input occurs while authoritative mutation is frozen.
 - Stylus and touch input arrive simultaneously.
 - Clear action is triggered accidentally.
 
@@ -135,6 +158,11 @@ The last safe classroom projection should remain visible when a recoverable upda
 - Exercise write, highlight, erase, undo, redo, and clear with mouse, touch, and stylus simulations.
 - Reconcile stale and duplicated annotation commands.
 - Preserve a safe projection during an update failure.
+- Preserve a classroom-appropriate last-known projection without exposing internal diagnostics during backend or display connectivity loss.
+- Reject local-only scene or ink state as authoritative.
+- Synchronize the display before accepting new student-facing mutations after reconnect.
+- Pause authoritative digital ink mutation while backend authority is unavailable.
+- Prove newly created offline ink mutations are not automatically replayed.
 - Run accessibility checks for keyboard, focus, contrast, labels, and reduced motion.
 
 ## 10. Open Questions
@@ -149,4 +177,3 @@ The last safe classroom projection should remain visible when a recoverable upda
 - Scene and ink behavior satisfy functional, authorization, accessibility, and failure requirements.
 - The structured model is versioned and contract-tested.
 - Target classroom devices have evidence for input and rendering compatibility.
-

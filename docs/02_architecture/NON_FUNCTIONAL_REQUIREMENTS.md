@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.1` |
+| Version | `0.2` |
 | Last Updated | `2026-09-06` |
 
 ## 1. Quality Priorities
@@ -58,11 +58,21 @@ Before pilot, define and measure:
 
 ## 5. Availability and Graceful Degradation
 
-- A recoverable AI failure must not remove current classroom content.
-- The display should retain a safe last-known projection during temporary update failure.
-- Teacher surfaces must identify offline, reconnecting, degraded dependency, and failed states.
-- Retry ownership, timeout, fallback, and circuit-break behavior must be explicit per dependency.
-- Minimum degraded-mode capability is an Open Product Decision and must be resolved before pilot.
+Penatika MVP is resilience-oriented, not offline-first. Dependency failure degrades the affected capability while preserving one backend-authoritative session state.
+
+- A recoverable AI failure must disable new semantic AI generation without removing current reviewed classroom content or healthy deterministic teaching controls.
+- Speech recognition failure must disable push-to-talk while supported non-voice teacher interaction remains available.
+- A disconnected teacher controller must not mutate state; the display retains the current authoritative projection, and another teacher surface may act only when separately authorized.
+- A disconnected classroom display pauses student-facing mutation until it reconnects and synchronizes; safe teacher-private work may continue.
+- Clients may retain a last-known safe classroom projection during backend connectivity loss, but cached state is not authoritative.
+- Loss of backend authority must freeze new authoritative mutations, including `DIRECT_ACTION`, digital ink commits, AI publication, session lifecycle changes, and successful save completion.
+- Newly created offline state-changing commands must not be queued for automatic replay in the MVP.
+- A command sent before connection loss with uncertain acknowledgement may be reconciled using existing command identity, idempotency, and revision semantics.
+- Recovery must retrieve and reconcile backend-authoritative state before mutation resumes.
+- Save status must remain pending, failed, or retryable until durable authoritative persistence acknowledges success.
+- Degraded mode must not bypass Q-02 approval, Mathematics assurance, curriculum provenance, authorization, privacy boundaries, structured-content validation, or stale/revision checks.
+- Teacher surfaces must identify offline, reconnecting, degraded dependency, and failed states without exposing private diagnostics on the classroom display.
+- Retry ownership, timeout, fallback, and circuit-break behavior must be explicit per dependency after implementation technologies are selected.
 
 No production availability percentage or SLO is set before deployment and support maturity are known.
 
@@ -118,7 +128,7 @@ Before production capacity planning, define:
 ## 11. Observability
 
 - Correlate session, command, proposal, validation, and save operations without exposing secrets.
-- Measure state divergence attempts, stale commands, pairing failures, reconnects, dependency latency/failure, assurance outcomes, and degraded-mode recovery.
+- Measure state divergence attempts, stale commands, pairing failures, reconnects, dependency latency/failure, assurance outcomes, degradation entry/exit, mutation freezes, reconciliation outcomes, uncertain acknowledgements, rejected offline replay attempts, and save retry/recovery.
 - Use bounded metric cardinality.
 - Provide health checks and dependency status appropriate to selected runtime.
 - Define alerting and runbooks before production deployment.
@@ -149,6 +159,13 @@ Before a classroom pilot:
 - required Mathematics corpus passes selected assurance rules;
 - raw audio retention tests pass;
 - reconnect and degraded-state scenarios are exercised;
+- backend-authority loss preserves a safe projection and freezes authoritative mutations;
+- AI outage isolates semantic generation failure from healthy classroom capabilities;
+- speech outage preserves supported non-voice interaction;
+- display disconnect pauses mutation and reconnect requires synchronization;
+- controller disconnect preserves the current projection without automatic mutation or authority promotion;
+- save dependency failure never produces false success and supports pending/failed/retry evidence;
+- uncertain acknowledgement of a pre-disconnect command is reconciled without accepting new offline commands;
 - target-device accessibility and input evidence exists;
 - unresolved high risks have an owner and explicit disposition.
 
@@ -165,4 +182,5 @@ Before a classroom pilot:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Define resilience-oriented degradation, reconciliation, and truthful save requirements | Codex |
 | `0.1` | `2026-09-06` | Initial quality baseline grounded in MVP constraints | Codex |

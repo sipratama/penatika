@@ -12,7 +12,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.3` |
+| Version | `0.4` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 | Primary Market | Indonesia |
@@ -319,12 +319,12 @@ Metric final dan target tetap menjadi Open Product Decision.
 |---|---|---|
 | Q-01 | Curriculum source dan versi apa yang menjadi authoritative untuk MVP? | Mathematics normative authority: Keputusan Kepala BSKAP No. 046/H/KR/2025. Official guidance is secondary interpretive guidance; school/teacher context is a local overlay. See ADR-0005. |
 | Q-02 | AI action mana yang memerlukan explicit approval sebelum tampil di classroom display? | AI request authorizes generation, not publication. AI-generated student-facing semantic content requires post-generation teacher approval after private preview and applicable validation. Deterministic non-generative presentation actions may execute directly. Unsupported/inconclusive assurance may require explicit warned override; known-invalid, stale, unauthorized, policy-violating, privacy-violating, or structurally unsafe proposals are blocked and cannot be overridden. See ADR-0006. |
+| Q-03 | Fungsi minimum apa yang harus tetap tersedia saat konektivitas atau AI provider terganggu? | Penatika MVP is resilience-oriented rather than offline-first. AI and speech dependency failures degrade only affected capabilities while reviewed lesson presentation and supported classroom controls continue when backend authority remains available. Speech failure falls back to non-voice interaction. If the classroom display disconnects, student-facing mutations pause while safe teacher-private work may continue. If backend authority cannot be reached, clients preserve the last-known safe classroom projection but do not create new authoritative mutations, publish proposals, complete saves, or queue new offline commands for automatic replay. Recovery must reconcile against backend-authoritative state before mutation resumes. Degraded mode never bypasses approval, assurance, authorization, privacy, structured-content, curriculum provenance, or revision rules. See ADR-0007. |
 
 ### Open
 
 | ID | Question | Decision Needed By |
 |---|---|---|
-| Q-03 | Fungsi minimum apa yang harus tetap tersedia saat konektivitas atau AI provider terganggu? | Sebelum end-to-end classroom pilot |
 | Q-04 | Seberapa luas pilot pertama di luar dua topik Matematika prioritas? | Sebelum pilot planning |
 | Q-05 | Bagian mana dari materi Pendago / AI Teaching Canvas yang masih valid untuk dimigrasikan? | Sebelum requirements baseline dikunci |
 | Q-06 | Business model, payer, dan commercial path apa yang dituju? | Sebelum commercial release planning |
@@ -339,6 +339,7 @@ Metric final dan target tetap menjadi Open Product Decision.
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
 - [ADR-0006 — Teacher Approval and AI Publication Policy](../02_architecture/adr/ADR-0006-teacher-approval-ai-publication-policy.md)
+- [ADR-0007 — Graceful Degradation Without Offline Authority](../02_architecture/adr/ADR-0007-graceful-degradation-without-offline-authority.md)
 - [Risks](../06_delivery/RISKS.md)
 
 ---
@@ -347,6 +348,7 @@ Metric final dan target tetap menjadi Open Product Decision.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.4` | `2026-09-06` | Resolve Q-03 with resilience-oriented degradation and no offline authority | Codex |
 | `0.3` | `2026-09-06` | Resolve Q-02 with separate AI generation and publication authorization | Codex |
 | `0.2` | `2026-09-06` | Resolve Mathematics curriculum authority and provenance model | Codex |
 | `0.1` | `2026-09-06` | Initial Penatika product baseline from confirmed discovery context | Codex |
