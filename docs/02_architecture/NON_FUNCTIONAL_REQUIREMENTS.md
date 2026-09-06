@@ -26,7 +26,8 @@
 - Supported structured content must pass schema validation before persistence or display.
 - Supported Mathematics claims must use deterministic validation where available.
 - Validation status must distinguish valid, invalid, unsupported, inconclusive, and error.
-- Curriculum claims must identify controlled source and version.
+- Curriculum claims must identify authority level, controlled source, source version, relevant phase/scope, and provenance.
+- Saved lesson provenance must remain historically stable when a newer curriculum source version is activated.
 - Content edits must invalidate affected stale assurance results.
 - AI self-reported confidence is not correctness evidence.
 

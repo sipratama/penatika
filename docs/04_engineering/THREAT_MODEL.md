@@ -73,7 +73,7 @@ Out of scope for this baseline: payment, student accounts, school administration
 | T-005 | Arbitrary AI-generated HTML/script | XSS, content manipulation, credential theft | Versioned structured model, allow-listed elements, safe encoding, CSP where applicable |
 | T-006 | Prompt injection through lesson/curriculum content | Policy bypass, data disclosure, unsafe tools | Treat content as untrusted data, isolate instructions, tool allow-lists, scoped credentials, adversarial tests |
 | T-007 | Mathematically incorrect AI content accepted | Student misinformation | Deterministic validation for supported scope, explicit unsupported state, teacher warning/control |
-| T-008 | False or stale curriculum grounding | Misaligned instruction | Controlled source/version, provenance, integrity checks, stale-result invalidation |
+| T-008 | False, stale, or authority-confused curriculum grounding | Misaligned instruction | Layered authority, controlled source/version, provenance, integrity checks, stale-result invalidation, historical provenance preservation |
 | T-009 | Raw audio retained or logged | Sensitive-data exposure | Ephemeral processing by default, log filters, retention tests, provider data-use review |
 | T-010 | Session command replay, duplication, or reordering | Divergent or destructive classroom state | Authorized revision-aware commands, idempotency, ordering and stale detection |
 | T-011 | Stale client overwrites current session | Loss of authoritative teaching state | Backend authority and explicit reconciliation |
@@ -95,6 +95,7 @@ Out of scope for this baseline: payment, student accounts, school administration
 - Secrets and tokens never enter classroom projections or ordinary logs.
 - Client visibility is not authorization.
 - Curriculum provenance cannot be supplied solely by the AI provider.
+- Official guidance or local context cannot be promoted to national normative authority by AI, retrieval ranking, or implementation convenience.
 
 ## 7. Privacy Baseline
 

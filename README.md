@@ -58,7 +58,7 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | Classroom content | Versioned structured model; bukan arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; bukan authority |
 | Mathematics trust | Deterministic validation untuk supported scope |
-| Curriculum trust | Controlled and versioned source |
+| Curriculum trust | BSKAP 046/H/KR/2025 as Mathematics normative authority; official guidance is interpretive and local context is an overlay |
 | Implementation stack | Belum diputuskan |
 | Deployment target | Belum diputuskan |
 
@@ -128,7 +128,7 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 
 ## Open Decisions Before Implementation
 
-- Curriculum source, version, dan usage rights.
+- Curriculum ingestion, provenance contracts, local-context modeling, serta usage/licensing untuk official guidance.
 - Approval policy untuk live AI adaptation.
 - Minimum degraded-mode capability.
 - Client dan backend technology.

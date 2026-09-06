@@ -65,7 +65,7 @@ The system shall capture the minimum supported lesson context: grade, Mathematic
 
 ### FR-LESSON-002 — Use Controlled Curriculum Context
 
-The system shall identify the curriculum source and version used when curriculum grounding is available. It shall not represent ungrounded provider output as an authoritative curriculum claim.
+The system shall identify the curriculum authority level, controlled source, source version, relevant phase/scope, and provenance used for grounded claims. For MVP Mathematics, normative claims resolve to BSKAP 046/H/KR/2025; official guidance and local school/teacher context retain distinct authority levels. It shall not represent ungrounded provider output as authoritative.
 
 ### FR-LESSON-003 — Generate Structured Proposal
 
@@ -81,7 +81,7 @@ The teacher shall be able to edit supported content directly and accept, reject,
 
 ### FR-LESSON-006 — Preserve Provenance
 
-Saved lesson versions shall retain enough provenance to identify teacher edits, relevant generation output, curriculum version, and validation status without retaining raw audio.
+Saved lesson versions shall retain enough provenance to identify teacher edits, relevant generation output, curriculum authority level, controlled source, source version, phase/scope, matching provenance, local-context version when applicable, and validation status without retaining raw audio. Activating a newer curriculum source version shall not silently rewrite a saved lesson version's historical provenance.
 
 ### FR-LESSON-007 — Prevent Unreviewed Classroom Use
 
@@ -95,8 +95,9 @@ Saving shall create or identify a lesson version that can be selected by a class
 
 - `BR-LESSON-001`: Teacher review is required before a generated draft is marked ready.
 - `BR-LESSON-002`: Validation warning and unsupported validation are different from successful validation.
-- `BR-LESSON-003`: Curriculum source absence must be visible when a request implies curriculum alignment.
+- `BR-LESSON-003`: Missing, ungrounded, stale, or non-normative curriculum context must be represented with its actual authority and provenance state.
 - `BR-LESSON-004`: AI provider text is never the authoritative storage format.
+- `BR-LESSON-005`: Official guidance and local sequencing cannot be promoted to national normative authority.
 
 ## 6. State Model
 
@@ -150,16 +151,20 @@ The system must preserve the last safe teacher-authored state and must not mark 
 
 ## 11. Open Questions
 
-- Which curriculum source and supported topic taxonomy are authoritative?
+- How should BSKAP 046/H/KR/2025 be ingested, normalized, integrity-checked, and mapped to the supported topic taxonomy?
+- How should official guidance and school/teacher local context be licensed, modeled, versioned, and retrieved?
 - What warning types may a teacher explicitly override?
 - What lesson history, duplication, deletion, or export behavior is required?
 - What content blocks are included in the first structured lesson model?
 
-## 12. Definition of Done
+## 12. Related Decisions
+
+- [ADR-0005 — Use Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
+
+## 13. Definition of Done
 
 - Requirements and state transitions are implemented and tested.
 - Structured content and provenance contracts are versioned.
 - Required warning and failure states are usable.
 - Curriculum and Mathematics assurance dependencies are resolved for MVP topics.
 - Relevant PRD acceptance and privacy rules are satisfied.
-

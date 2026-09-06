@@ -97,7 +97,11 @@ Use real or representative smartphones, laptops/PCs, classroom displays, mouse, 
 - equivalent forms;
 - ambiguous, malformed, unsupported, and inconclusive cases;
 - stale validation invalidation after content edits;
-- curriculum source/version provenance.
+- normative Mathematics grounding resolves to BSKAP 046/H/KR/2025;
+- official guidance cannot be surfaced as a national normative requirement;
+- local sequencing remains `LOCAL_CONTEXT`;
+- authority level, source version, phase/scope, and matching provenance are retained;
+- saved lesson provenance remains stable after a newer source version is introduced.
 
 ## 5. AI Evaluation Strategy
 

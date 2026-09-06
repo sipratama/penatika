@@ -12,7 +12,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.1` |
+| Version | `0.2` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 | Target Phase | MVP baseline dan classroom pilot preparation |
@@ -37,7 +37,7 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | Classroom Viewer | View appropriate teaching content on the classroom display | Display participant; tidak mendapat private controls atau AI working state |
 | Student | Receive the classroom experience | Beneficiary; tidak menggunakan student device pada MVP |
 | External AI Capability | Produce lesson or adaptation proposals | Untrusted integration, bukan decision-maker |
-| Curriculum Source | Supply controlled curriculum reference data | Authoritative source belum dipilih |
+| Curriculum Source | Supply controlled curriculum reference data | Normative Mathematics authority selected: BSKAP 046/H/KR/2025; guidance/local overlays retain distinct authority levels |
 
 ---
 
@@ -122,7 +122,7 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 
 ### CAP-MATH-001 — Validate Mathematics and Ground Curriculum Claims
 
-**Description:** Penatika memvalidasi hasil matematika secara deterministik bila rule/engine tersedia dan menautkan curriculum claims ke controlled, versioned curriculum data.
+**Description:** Penatika memvalidasi hasil matematika secara deterministik bila rule/engine tersedia dan menautkan curriculum claims ke layered, controlled, versioned curriculum provenance. National normative claims, official guidance, dan local school/teacher context tetap dibedakan.
 
 **User Outcome:** Guru menerima confidence dan warning yang lebih tepat sebelum content digunakan di kelas.
 
@@ -147,7 +147,7 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 ### J-01 — Prepare a Lesson
 
 1. Guru memilih grade, topic, dan learning intent.
-2. Penatika menggunakan curriculum context yang tersedia dan meminta AI menghasilkan structured lesson proposal.
+2. Penatika menyelesaikan curriculum context dari normative source yang berlaku serta optional guidance/local context yang provenance-nya eksplisit, lalu meminta AI menghasilkan structured lesson proposal.
 3. Penatika menunjukkan generation dan validation state pada teacher surface.
 4. Guru meninjau, mengubah, menerima, atau menghasilkan ulang bagian lesson.
 5. Guru menyimpan lesson version yang siap digunakan.
@@ -194,12 +194,14 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | PR-004 | Classroom content harus menggunakan supported structured content model; arbitrary AI-generated HTML atau executable content dilarang. |
 | PR-005 | AI output diperlakukan sebagai untrusted proposal dan harus melewati schema validation serta policy checks sebelum dapat memengaruhi authoritative state. |
 | PR-006 | Scoped mathematical claims harus melewati deterministic validation bila validator tersedia; failure atau unsupported validation harus terlihat bagi guru. |
-| PR-007 | Curriculum claims harus mereferensikan controlled curriculum source dan version. |
+| PR-007 | Setiap grounded curriculum claim harus mereferensikan authority level, controlled source, source version, relevant scope/phase, dan provenance. |
 | PR-008 | Raw push-to-talk audio tidak disimpan secara default. |
 | PR-009 | Student devices tidak boleh menjadi prerequisite untuk core classroom workflow. |
 | PR-010 | Pairing tidak boleh bergantung pada screen mirroring atau keberadaan perangkat pada shared Wi-Fi. |
 | PR-011 | Client tidak boleh menjadi authorization authority hanya karena mempunyai pairing code, cached state, atau hidden UI control. |
 | PR-012 | Degraded mode tidak boleh mengubah stale atau unvalidated proposal menjadi authoritative classroom content. |
+| PR-013 | Untuk Mathematics MVP, national normative curriculum authority adalah Keputusan Kepala BSKAP No. 046/H/KR/2025 sampai Penatika secara eksplisit mengaktifkan official superseding source. |
+| PR-014 | Official guidance dan school/teacher context boleh memperkaya interpretasi atau sequencing, tetapi tidak boleh dipresentasikan sebagai national normative requirement. AI tidak pernah menjadi curriculum authority. |
 
 ---
 
@@ -303,7 +305,7 @@ Exact analytics provider, event schema, retention, and pilot metrics are not dec
 |---|---|---|
 | AI model/provider | Lesson and live adaptation proposals | Open Architecture Decision |
 | Speech recognition | Push-to-talk command transcription | Open Architecture Decision |
-| Curriculum source | Controlled and versioned curriculum grounding | Open Product and Architecture Decision |
+| Curriculum source | Controlled and versioned curriculum grounding | Normative authority selected; ingestion, retrieval, integrity, local-context modeling, and guidance usage/licensing remain architecture follow-up |
 | Mathematics validation engine | Deterministic validation for scoped content | Open Architecture Decision |
 
 Integrations must be isolated behind supported application boundaries and must not become authoritative owners of classroom state.
@@ -337,7 +339,7 @@ Integrations must be isolated behind supported application boundaries and must n
 - Unauthorized participant can control or join a session.
 - Unstructured or executable AI output can reach classroom rendering.
 - Supported mathematical content can bypass required validation without a visible state.
-- Curriculum claims cannot identify the source version used.
+- Curriculum claims cannot identify authority level, controlled source, source version, and relevant provenance.
 - Session state can diverge across clients without deterministic reconciliation.
 - Raw audio is retained by default or exposed through logs.
 - Critical failure states have no recoverable teacher experience.
@@ -346,9 +348,9 @@ Integrations must be isolated behind supported application boundaries and must n
 
 ## 15. Delivery Dependencies
 
-- Product decisions `Q-01` through `Q-04` from the Product Brief.
+- Open product decisions `Q-02` through `Q-04` from the Product Brief.
 - Architecture decisions for identity, realtime synchronization, persistence, AI, speech, mathematics validation, and deployment.
-- A curriculum source and permitted usage model.
+- Curriculum ingestion/provenance implementation and permitted usage model for any copied or redistributed guidance content.
 - A test corpus for fractions, algebra, and linear equations.
 - Pilot environment assumptions and target device/browser evidence.
 
@@ -359,7 +361,6 @@ Integrations must be isolated behind supported application boundaries and must n
 | ID | Decision |
 |---|---|
 | OPD-001 | Exact approval policy for each live AI adaptation type. |
-| OPD-002 | Authoritative curriculum source, version, and content licensing. |
 | OPD-003 | Minimum degraded-mode capability during internet or AI outage. |
 | OPD-004 | Pilot scope, success metrics, and quantitative targets. |
 | OPD-005 | Lesson/session retention, history, export, and deletion expectations. |
@@ -398,6 +399,7 @@ The MVP product baseline is acceptable when:
 - [Product Brief](./PRODUCT_BRIEF.md)
 - [Product Roadmap](./ROADMAP.md)
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
+- [ADR-0005 — Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
 - [UX Flows](../03_design/UX_FLOWS.md)
 - [Test Strategy](../04_engineering/TEST_STRATEGY.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
@@ -408,4 +410,5 @@ The MVP product baseline is acceptable when:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Resolve curriculum authority hierarchy and strengthen provenance requirements | Codex |
 | `0.1` | `2026-09-06` | Initial capability baseline from confirmed Product Brief | Codex |

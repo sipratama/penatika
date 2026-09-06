@@ -37,7 +37,7 @@ Turn the initialized product and architecture baseline into one safe end-to-end 
 
 ### Required Decisions
 
-- Curriculum source and usage rights.
+- Curriculum ingestion and provenance contract for BSKAP 046/H/KR/2025, local-context modeling, and official-guidance usage/licensing.
 - Approval policy for live adaptation.
 - Minimum degraded-mode behavior.
 - Client, backend, persistence, identity, realtime, AI, speech, validation, and deployment technology baseline.

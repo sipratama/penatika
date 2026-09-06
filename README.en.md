@@ -58,7 +58,7 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 | Classroom content | Versioned structured model; no arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; not an authority |
 | Mathematics trust | Deterministic validation for supported scope |
-| Curriculum trust | Controlled and versioned source |
+| Curriculum trust | BSKAP 046/H/KR/2025 as the Mathematics normative authority; official guidance is interpretive and local context is an overlay |
 | Implementation stack | Not decided |
 | Deployment target | Not decided |
 
@@ -128,7 +128,7 @@ This validator checks local Markdown links and unresolved core metadata placehol
 
 ## Open Decisions Before Implementation
 
-- Curriculum source, version, and usage rights.
+- Curriculum ingestion, provenance contracts, local-context modeling, and official-guidance usage/licensing.
 - Approval policy for live AI adaptation.
 - Minimum degraded-mode capability.
 - Client and backend technologies.

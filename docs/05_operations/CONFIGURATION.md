@@ -63,7 +63,11 @@
 
 ### Curriculum
 
-- controlled source identifier and version;
+- authority level and controlled source identifier;
+- normative Mathematics source BSKAP 046/H/KR/2025 and explicit supersession state;
+- source version, phase/scope, and provenance settings;
+- official-guidance activation and usage/licensing controls;
+- local-context source and version controls;
 - ingestion or retrieval endpoint;
 - integrity and licensing metadata;
 - active supported scope.

@@ -31,7 +31,7 @@ Activate before distributing an MVP build to users or deploying a classroom pilo
 ## Quality and Classroom Readiness
 
 - Mathematics validation corpus passes for supported scope.
-- Curriculum source/version and provenance are verified.
+- Curriculum authority level, source/version, phase/scope, provenance, and saved-lesson historical stability are verified.
 - Multi-device reconnect and degraded-mode scenarios pass.
 - Target device, browser, display, input, and accessibility evidence exists.
 - AI evaluation results meet the release threshold selected before testing.

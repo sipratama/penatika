@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.1` |
+| Version | `0.2` |
 | Last Updated | `2026-09-06` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
@@ -144,8 +144,9 @@ Identity technology and account lifecycle remain open.
 
 #### Curriculum Module
 
-- owns controlled curriculum source metadata, versions, supported scope, and provenance;
+- owns curriculum authority levels, controlled source metadata, versions, supported scope, and provenance;
 - provides grounded reference context through supported interfaces;
+- distinguishes national normative authority, official interpretive guidance, and local school/teacher context;
 - does not permit provider output to redefine curriculum truth.
 
 ### 3.5 Infrastructure Adapters
@@ -186,7 +187,7 @@ Rules:
 | Accepted scene state and annotations | Classroom Session through Scene commands | Client cache is not authoritative |
 | AI request/proposal lifecycle | AI Orchestration | Proposal is untrusted until checks complete |
 | Mathematics validation semantics/results | Mathematics Assurance | Independent of AI provider |
-| Curriculum source/version/provenance | Curriculum | Controlled reference data |
+| Curriculum authority/source/version/provenance | Curriculum | Layered controlled reference data; saved lesson provenance remains historically stable |
 | Operational telemetry | Observability infrastructure | Must exclude unnecessary sensitive payloads |
 
 ## 6. Primary Runtime Flows
@@ -233,7 +234,7 @@ Rules:
 | Teacher and display clients → backend | Untrusted input; authenticate, authorize, validate, and bound |
 | Pairing credential → session access | Limited proof for a single purpose; not broad account authority |
 | AI/speech provider → application | Untrusted external dependency and output |
-| Curriculum source → curriculum module | Controlled only after source, version, integrity, and usage policy are established |
+| Curriculum source → curriculum module | Normative source is selected for MVP Mathematics; each ingested source still requires version, integrity, authority-level, provenance, and applicable usage policy |
 | Backend → persistence | Privileged boundary using least-privilege credentials |
 | Teacher-private projection → classroom display | Explicit confidentiality boundary |
 
@@ -265,7 +266,7 @@ Rules:
 - AI evaluation is required for scoped lesson and adaptation tasks before pilot.
 - Deterministic validation is preferred for supported Mathematics claims.
 - Unsupported/inconclusive validation is an explicit state, not success.
-- Curriculum claims identify controlled source and version.
+- Curriculum claims identify authority level, controlled source, version, scope, and provenance.
 - AI must not receive unnecessary teacher or student data.
 
 ## 11. Persistence Baseline
@@ -302,10 +303,12 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 - `INV-004`: AI provider output never directly mutates authoritative state.
 - `INV-005`: Only supported structured content may be rendered; arbitrary executable output is rejected.
 - `INV-006`: Mathematics validation status cannot be derived solely from AI provider claims.
-- `INV-007`: Curriculum claims identify a controlled source and version.
+- `INV-007`: Every grounded curriculum claim identifies its authority level, controlled source, and source version.
 - `INV-008`: Raw push-to-talk audio is not stored by default.
 - `INV-009`: Every accepted state-changing command is bound to an authorized actor, session, and revision context.
 - `INV-010`: Infrastructure and vendor adapters do not own product policy.
+- `INV-011`: Official guidance and local context cannot be promoted to national normative authority by AI, retrieval ranking, or implementation convenience.
+- `INV-012`: New curriculum source versions do not silently rewrite provenance of previously saved lesson versions.
 
 ## 15. Selected Architecture Decisions
 
@@ -313,6 +316,7 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 - [ADR-0002 — Keep Classroom Session State Backend-Authoritative](./adr/ADR-0002-backend-authoritative-session-state.md)
 - [ADR-0003 — Use Versioned Structured Classroom Content](./adr/ADR-0003-structured-classroom-content.md)
 - [ADR-0004 — Separate AI Generation from Mathematical and Curriculum Authority](./adr/ADR-0004-ai-assurance-boundary.md)
+- [ADR-0005 — Use Layered Curriculum Authority and Versioned Provenance](./adr/ADR-0005-layered-curriculum-authority.md)
 
 ## 16. Open Architecture Decisions
 
@@ -326,7 +330,7 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 | OAD-006 | AI provider/model strategy and fallback | AI integration implementation |
 | OAD-007 | Speech recognition strategy | Push-to-talk implementation |
 | OAD-008 | Mathematics validator approach per content type | Assurance implementation |
-| OAD-009 | Curriculum source ingestion and retrieval approach | Curriculum implementation |
+| OAD-009 | Curriculum ingestion, normalization, integrity/versioning, local-context modeling, and retrieval approach | Curriculum implementation |
 | OAD-010 | Deployment platform, environments, secret management, and regional requirements | Deployment planning |
 | OAD-011 | Background execution and queue needs | When measured request duration or reliability requires it |
 | OAD-012 | Contract protocols and schema tooling | Before application source implementation |
@@ -351,4 +355,5 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Apply layered curriculum authority and provenance architecture from ADR-0005 | Codex |
 | `0.1` | `2026-09-06` | Initial technology-neutral architecture baseline | Codex |

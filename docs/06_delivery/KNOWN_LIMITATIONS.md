@@ -22,7 +22,7 @@
 
 ## Unresolved Behavior
 
-- Exact curriculum source and version.
+- Curriculum ingestion, normalization, integrity/versioning, local-context modeling, retrieval, and official-guidance usage/licensing.
 - Approval policy for live AI changes.
 - Minimum degraded/offline functionality.
 - Lesson and session retention, deletion, history, and export.

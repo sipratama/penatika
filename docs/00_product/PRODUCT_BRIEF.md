@@ -12,7 +12,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.1` |
+| Version | `0.2` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 | Primary Market | Indonesia |
@@ -108,7 +108,7 @@ Guru dapat menyiapkan, menyajikan, dan mengadaptasi pelajaran Matematika dari sa
 2. Dual-surface: proses dan saran privat berada di teacher controller, sedangkan siswa hanya melihat konten yang sesuai.
 3. Structured content: AI memperbarui model konten kelas, bukan menghasilkan arbitrary HTML.
 4. Mathematics assurance: hasil matematika divalidasi secara deterministik bila memungkinkan.
-5. Curriculum grounding: klaim kurikulum menggunakan data yang dikontrol dan diberi versi.
+5. Curriculum grounding: klaim kurikulum menggunakan authority level, controlled source, version, scope, dan provenance yang eksplisit.
 
 ### Product Promise
 
@@ -153,7 +153,7 @@ Guru dapat menyiapkan, menyajikan, dan mengadaptasi pelajaran Matematika dari sa
 
 **Goal:** Konten Matematika dan klaim kurikulum diperlakukan sesuai tingkat kepercayaannya.
 
-**Evidence of Success:** Scoped mathematics content melewati deterministic validation bila tersedia dan curriculum reference dapat ditelusuri ke versi sumber yang digunakan.
+**Evidence of Success:** Scoped mathematics content melewati deterministic validation bila tersedia dan setiap grounded curriculum claim dapat ditelusuri ke authority level, controlled source, version, scope, dan provenance yang digunakan.
 
 ---
 
@@ -211,7 +211,7 @@ Penatika hanya mengumpulkan data yang diperlukan untuk outcome product. Raw push
 - Digital ink: write, highlight, erase, undo, redo, dan clear.
 - Private teacher suggestions dan public classroom presentation.
 - Deterministic mathematics validation bila memungkinkan.
-- Controlled, versioned curriculum grounding.
+- Layered curriculum grounding yang membedakan normative national authority, official interpretive guidance, dan local school/teacher context.
 - Save classroom session.
 - Prioritas validation awal: pecahan kelas 5 dan aljabar dasar atau persamaan linear kelas 7.
 
@@ -271,7 +271,9 @@ Metric final dan target tetap menjadi Open Product Decision.
 
 - AI output adalah untrusted proposal sampai melewati policy dan validation yang berlaku.
 - Mathematics harus divalidasi secara deterministik bila memungkinkan.
-- Curriculum claims harus menggunakan controlled and versioned data.
+- Untuk Mathematics MVP, normative curriculum authority adalah Keputusan Kepala BSKAP Nomor 046/H/KR/2025; official guidance dan local school/teacher context memiliki authority level terpisah.
+- Curriculum claims harus mempertahankan controlled source, source version, scope/phase, authority level, dan provenance.
+- AI-generated content tidak pernah menjadi curriculum authority.
 - Student data collection dan privacy exposure harus diminimalkan.
 - Raw push-to-talk audio tidak disimpan secara default.
 - Product harus mempunyai graceful degradation ketika AI atau internet tidak andal.
@@ -287,7 +289,9 @@ Metric final dan target tetap menjadi Open Product Decision.
 
 | Dependency | Purpose | Status |
 |---|---|---|
-| Controlled curriculum source | Grounding klaim kurikulum | Source, licensing, dan version belum dipilih |
+| National Mathematics curriculum authority | Grounding normative curriculum claims | Selected: Keputusan Kepala BSKAP No. 046/H/KR/2025 |
+| Official Mathematics guidance | Secondary pedagogical interpretation | Panduan Mata Pelajaran Matematika 2025; usage/licensing review required before copying or redistribution |
+| School / teacher curriculum context | Local sequencing and classroom context | Optional contextual overlay; ingestion/model remains open |
 | AI generation capability | Draft dan adaptation proposal | Provider/model belum dipilih |
 | Speech recognition capability | Push-to-talk teacher commands | Provider/approach belum dipilih |
 | Deterministic mathematics validation | Memeriksa hasil scoped mathematics | Engine/implementation belum dipilih |
@@ -303,15 +307,22 @@ Metric final dan target tetap menjadi Open Product Decision.
 | A-02 | Structured teaching canvas lebih sedikit mengganggu alur daripada generic AI chat | Comparative prototype/pilot observation | Open |
 | A-03 | Konektivitas kelas cukup untuk cloud-mediated session dengan degradation support | Environment testing pada target sekolah | Open |
 | A-04 | Deterministic validation dapat mencakup risiko utama pada topik MVP | Define validation corpus dan evaluate coverage | Open |
-| A-05 | Curriculum source yang dapat dikontrol dan diberi versi tersedia untuk scope awal | Source and licensing review | Open |
+| A-05 | Curriculum source yang dapat dikontrol dan diberi versi tersedia untuk scope awal | Official-source review | Confirmed for normative Mathematics CP; guidance usage/licensing remains implementation follow-up |
 
 ---
 
-## 15. Open Product Questions
+## 15. Product Decisions and Open Questions
+
+### Resolved
+
+| ID | Decision | Resolution |
+|---|---|---|
+| Q-01 | Curriculum source dan versi apa yang menjadi authoritative untuk MVP? | Mathematics normative authority: Keputusan Kepala BSKAP No. 046/H/KR/2025. Official guidance is secondary interpretive guidance; school/teacher context is a local overlay. See ADR-0005. |
+
+### Open
 
 | ID | Question | Decision Needed By |
 |---|---|---|
-| Q-01 | Curriculum source dan versi apa yang menjadi authoritative untuk MVP? | Sebelum curriculum-backed content implementation |
 | Q-02 | AI action mana yang memerlukan explicit approval sebelum tampil di classroom display? | Sebelum live adaptation implementation |
 | Q-03 | Fungsi minimum apa yang harus tetap tersedia saat konektivitas atau AI provider terganggu? | Sebelum end-to-end classroom pilot |
 | Q-04 | Seberapa luas pilot pertama di luar dua topik Matematika prioritas? | Sebelum pilot planning |
@@ -326,6 +337,7 @@ Metric final dan target tetap menjadi Open Product Decision.
 - [Product Requirements Document](./PRD.md)
 - [Product Roadmap](./ROADMAP.md)
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
+- [ADR-0005 — Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
 - [Risks](../06_delivery/RISKS.md)
 
 ---
@@ -334,4 +346,5 @@ Metric final dan target tetap menjadi Open Product Decision.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Resolve Mathematics curriculum authority and provenance model | Codex |
 | `0.1` | `2026-09-06` | Initial Penatika product baseline from confirmed discovery context | Codex |

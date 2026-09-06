@@ -55,7 +55,7 @@ Known conceptual attributes:
 - lesson version identity and parent lesson;
 - structured content schema version;
 - teacher-review state;
-- curriculum provenance references;
+- curriculum authority level and provenance references;
 - assurance summary;
 - generation and teacher-edit provenance needed by policy;
 - creation timestamp.
@@ -171,12 +171,15 @@ Known conceptual attributes:
 
 ### Curriculum Source Version
 
-Controlled reference describing curriculum origin and version.
+Controlled reference describing curriculum authority level, origin, and version.
 
 Known conceptual attributes:
 
-- source and version identities;
-- jurisdiction, subject, grade, effective scope, and provenance;
+- authority level: `NORMATIVE`, `OFFICIAL_GUIDANCE`, or `LOCAL_CONTEXT`;
+- stable source identity, title, and source version or decision number;
+- jurisdiction, subject, phase or effective scope, and relevant reference identity;
+- retrieval or matching provenance;
+- local-context identity/version when applicable;
 - integrity and licensing metadata;
 - activation status.
 
@@ -184,7 +187,7 @@ Known conceptual attributes:
 
 ### Curriculum Reference
 
-Links lesson or content claims to a controlled curriculum source version and relevant scope.
+Links lesson or content claims to an authority level, controlled curriculum source version, relevant phase/scope, reference identity, retrieval or matching provenance, and optional local-context version.
 
 **Owner:** Curriculum module
 
@@ -225,7 +228,8 @@ Classroom Session 1 ── 0..* Session Snapshot or Save Record
 - A proposal never becomes authoritative solely by being generated.
 - Accepted session mutations advance an authoritative revision.
 - A stale validation result cannot prove changed content valid.
-- Curriculum provenance references an explicit source version.
+- Every grounded curriculum claim references an explicit authority level, controlled source, source version, relevant phase/scope, and provenance.
+- A newer curriculum source version does not silently rewrite provenance stored by an existing lesson version.
 - A classroom projection excludes teacher-private fields by construction.
 - An expired or consumed pairing credential cannot authorize a new participant.
 - A save operation is idempotent for the same session and intended final revision.
@@ -250,6 +254,7 @@ Classroom Session 1 ── 0..* Session Snapshot or Save Record
 - Text-command and AI-proposal retention for evaluation.
 - Teacher account deletion and data export.
 - Curriculum version archival.
+- Curriculum source supersession and re-evaluation behavior without historical provenance mutation.
 - Audit requirements for teacher overrides and assurance warnings.
 
 No production retention period is established by this document.
@@ -267,6 +272,7 @@ No physical tables, collections, indexes, or migrations are created during initi
 ## 8. Related Documents
 
 - [System Architecture](./SYSTEM_ARCHITECTURE.md)
+- [ADR-0005 — Layered Curriculum Authority](./adr/ADR-0005-layered-curriculum-authority.md)
 - [PRD](../00_product/PRD.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
 - [Data Persistence Standard](../standards/07_DATA_PERSISTENCE_STANDARD.md)
