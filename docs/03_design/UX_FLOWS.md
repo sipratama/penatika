@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.1` |
+| Version | `0.2` |
 | Last Updated | `2026-09-06` |
 
 ## 1. Experience Model
@@ -122,8 +122,13 @@ Teacher understands which devices are connected and students never see private c
 2. Controller shows listening/transcribing state only while explicitly active.
 3. Controller shows generating and validating progress.
 4. Teacher receives structured proposal, validation status, or failure.
-5. Until approval policy is resolved, teacher explicitly accepts, modifies, rejects, retries, or cancels.
-6. Accepted content updates the classroom display through authoritative session state.
+5. The teacher handles the result according to its execution classification.
+6. For semantic AI content:
+   - `APPROVAL_REQUIRED`: explicit post-generation teacher approval;
+   - `APPROVAL_WITH_WARNING`: explicit warned override where allowed;
+   - `BLOCKED`: cannot publish.
+7. `DIRECT_ACTION` is a separate deterministic non-generative path and does not enter AI proposal generation.
+8. Accepted semantic content updates the classroom display through authoritative session state.
 
 ### Privacy Rule
 
@@ -137,11 +142,12 @@ Timeout, cancellation, provider failure, invalid output, or stale result leaves 
 
 1. Teacher surface shows whether the issue affects client connection, synchronization, AI, speech, validation, or another dependency.
 2. Classroom display retains the last safe projection where possible.
-3. Actions that cannot be committed are disabled, queued only if explicitly safe, or rejected with a clear state.
-4. On reconnect, clients reconcile against backend authority.
-5. Teacher receives recovery outcome without exposing private diagnostics to students.
+3. When backend authority is unavailable, the client preserves the last-known safe projection and freezes new authoritative mutation; newly-created offline state-changing commands are not queued.
+4. Commands sent before disconnect with uncertain acknowledgement may be reconciled using command identity and revision policy.
+5. On reconnect, clients reconcile against backend authority and resume mutation only after synchronization.
+6. Teacher receives recovery outcome without exposing private diagnostics to students.
 
-Exact offline/degraded capability remains an Open Product Decision.
+Degraded connectivity behavior is defined by Q-03 / ADR-0007.
 
 ## 8. Flow UX-06 — End and Save
 
@@ -177,7 +183,7 @@ Exact offline/degraded capability remains an Open Product Decision.
 
 - Exact navigation model for lesson scenes and progressive reveal.
 - Controller layout and one-handed interaction priorities.
-- Approval interaction per live adaptation type.
+- Approval affordance, proposal preview ergonomics, and voice-approval disambiguation within ADR-0006.
 - Formal accessibility conformance target.
 - Supported viewport, browser, input-device, and display matrix.
 - Indonesian terminology for assurance states and AI actions.
@@ -189,9 +195,12 @@ Exact offline/degraded capability remains an Open Product Decision.
 - [Classroom Session](../01_features/classroom-session.md)
 - [Classroom Canvas](../01_features/classroom-canvas.md)
 - [Live AI Adaptation](../01_features/live-ai-adaptation.md)
+- [ADR-0006 — Teacher Approval and AI Publication Policy](../02_architecture/adr/ADR-0006-teacher-approval-ai-publication-policy.md)
+- [ADR-0007 — Graceful Degradation Without Offline Authority](../02_architecture/adr/ADR-0007-graceful-degradation-without-offline-authority.md)
 
 ## 13. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Align live-adaptation and degraded-connectivity UX with resolved Q-02 / Q-03 | Codex |
 | `0.1` | `2026-09-06` | Initial multi-surface UX baseline | Codex |

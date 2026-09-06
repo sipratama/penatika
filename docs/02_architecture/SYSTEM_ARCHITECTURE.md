@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.4` |
+| Version | `0.5` |
 | Last Updated | `2026-09-06` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
@@ -287,7 +287,7 @@ Transcription, generation progress, proposal preview, assurance results, warning
 - AI output, user input, lesson content, and curriculum content are untrusted for rendering and prompt control.
 - Structured rendering must use allow-listed element types and safe encoding.
 - Resource limits apply to uploads if introduced, AI requests, context, sessions, commands, and payloads.
-- Retention, deletion, export, and audit policies require product decisions before production use.
+- The product data-lifecycle policy is defined in [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md); implementation, physical enforcement, export mechanics, backup expiry, security audit evidence, and applicable legal/privacy review remain architecture/implementation/operational follow-ups.
 
 ## 9. Reliability and Degradation Baseline
 
@@ -326,7 +326,7 @@ Penatika is resilience-oriented, not offline-first. The degradation policy prese
 
 Persistent domain data is required for lesson versions, curriculum provenance, session saves, assurance results, and authorization-related records. The database technology and physical schema are not selected.
 
-The conceptual model is defined in [DATA_MODEL.md](./DATA_MODEL.md). Migrations will become mandatory when a physical persistence technology is selected.
+The conceptual model is defined in [DATA_MODEL.md](./DATA_MODEL.md). Migrations will become mandatory when a physical persistence technology is selected. Persistent data follows the approved retention classes in [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md); persistence does not imply indefinite retention for AI or assurance records.
 
 ## 12. Contracts
 
@@ -412,6 +412,7 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 - [Product Brief](../00_product/PRODUCT_BRIEF.md)
 - [PRD](../00_product/PRD.md)
 - [Data Model](./DATA_MODEL.md)
+- [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Non-Functional Requirements](./NON_FUNCTIONAL_REQUIREMENTS.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
 - [Test Strategy](../04_engineering/TEST_STRATEGY.md)
@@ -420,6 +421,7 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.5` | `2026-09-06` | Align security and persistence wording with the approved product data-lifecycle baseline | Codex |
 | `0.4` | `2026-09-06` | Apply resilience-oriented degradation and recovery architecture from ADR-0007 | Codex |
 | `0.3` | `2026-09-06` | Apply separate AI generation and teacher-authorized publication architecture from ADR-0006 | Codex |
 | `0.2` | `2026-09-06` | Apply layered curriculum authority and provenance architecture from ADR-0005 | Codex |

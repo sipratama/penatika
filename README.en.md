@@ -59,6 +59,8 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 | AI trust | Untrusted proposal generator; not an authority |
 | Mathematics trust | Deterministic validation for supported scope |
 | Curriculum trust | BSKAP 046/H/KR/2025 as the Mathematics normative authority; official guidance is interpretive and local context is an overlay |
+| Product Owner | `sipratama` |
+| Business Model | Teacher-first freemium SaaS; Teacher Pro as the first paid offer; institutional path later |
 | Implementation stack | Not decided |
 | Deployment target | Not decided |
 
@@ -66,9 +68,9 @@ Material decisions are recorded in [`docs/02_architecture/adr/`](./docs/02_archi
 
 ## Current Status
 
-Project Discovery and documentation initialization are complete. The repository does not yet contain application source code, package manifests, database migrations, contract schemas, or deployment configuration.
+Product Discovery is complete. The initialized Q-01–Q-07 / OPD-001–OPD-007 product baseline is resolved; no unresolved product decisions remain from that set.
 
-The next step is to resolve blocking product and architecture decisions and define field-level contracts before source scaffolding.
+The repository does not yet contain application source code, package manifests, database migrations, contract schemas, or deployment configuration. The next major phase is architecture/technology decision-making and contract definition before source scaffolding.
 
 ## Documentation Map
 
@@ -77,6 +79,8 @@ The next step is to resolve blocking product and architecture decisions and defi
 - [Product Brief](./docs/00_product/PRODUCT_BRIEF.md)
 - [PRD](./docs/00_product/PRD.md)
 - [Roadmap](./docs/00_product/ROADMAP.md)
+- [Product Governance](./docs/00_product/PRODUCT_GOVERNANCE.md) — product ownership and requirement approval authority.
+- [Business Model](./docs/00_product/BUSINESS_MODEL.md) — freemium SaaS and commercial path.
 
 ### Features
 
@@ -100,6 +104,9 @@ The next step is to resolve blocking product and architecture decisions and defi
 - [Threat Model](./docs/04_engineering/THREAT_MODEL.md)
 - [Developer Setup](./docs/05_operations/DEVELOPER_SETUP.md)
 - [Configuration](./docs/05_operations/CONFIGURATION.md)
+- [MVP Pilot Plan](./docs/06_delivery/PILOT_PLAN.md) — pilot design, metrics, and Stage B gates.
+- [Data Retention Policy](./docs/06_delivery/DATA_RETENTION_POLICY.md) — retention, history, export, deletion.
+- [Pendago Migration Review](./docs/06_delivery/PENDAGO_MIGRATION_REVIEW.md) — legacy reuse and classification.
 - [Risks](./docs/06_delivery/RISKS.md)
 - [Known Limitations](./docs/06_delivery/KNOWN_LIMITATIONS.md)
 
@@ -126,19 +133,19 @@ python3 scripts/validate_template.py --project-mode
 
 This validator checks local Markdown links and unresolved core metadata placeholders. It does not prove product, architecture, security, or application correctness.
 
-## Open Decisions Before Implementation
+## Open Architecture and Implementation Decisions
 
 - Curriculum ingestion, provenance contracts, local-context modeling, and official-guidance usage/licensing.
-- Approval policy for live AI adaptation.
-- Minimum degraded-mode capability.
-- Client and backend technologies.
-- Database and migration tooling.
-- Identity and authentication model.
+- Client/frontend strategy.
+- Backend language/framework.
+- Persistence and migration technology.
+- Identity/authentication.
 - Realtime transport and reconnect protocol.
-- AI and speech provider strategy.
+- AI provider/model strategy.
+- Speech recognition strategy.
 - Mathematics validator approach.
-- Field-level structured contracts.
+- Contract protocols/schema tooling and field-level contracts.
 - Deployment environment and secret management.
-- Product owner and requirements approver.
+- Evidence-driven device/accessibility/performance targets where relevant.
 
 See the Product Brief, PRD, System Architecture, Risks, and Known Limitations for the complete decision record and timing.

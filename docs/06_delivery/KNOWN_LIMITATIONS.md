@@ -23,26 +23,25 @@
 ## Unresolved Behavior
 
 - Curriculum ingestion, normalization, integrity/versioning, local-context modeling, retrieval, and official-guidance usage/licensing.
-- Approval policy for live AI changes.
-- Minimum degraded/offline functionality.
-- Lesson and session retention, deletion, history, and export.
 - Supported structured content blocks.
-- Supported device/browser/display matrix.
+- Target device/browser/display matrix.
 - Formal accessibility target.
-- Pilot metrics and quantitative success thresholds.
-- Business model and payer.
+- Exact identity/pairing implementation where relevant.
+- Field-level contracts.
+- Technology, provider, and deployment decisions.
+- Numerical latency/reliability targets where evidence is required.
 
 ## Trust and Quality Limitations
 
 - Deterministic validation cannot be assumed to cover all Mathematics content.
 - Unsupported or inconclusive content must remain explicitly labeled.
 - AI quality, latency, privacy, and cost have not been evaluated against candidate providers.
-- Curriculum alignment cannot be claimed until controlled source/version decisions are implemented.
+- Normative curriculum authority is selected, but operational curriculum grounding cannot be claimed until ingestion, integrity/versioning, provenance, retrieval, and applicable guidance-usage implementation are complete and tested.
 - Market and classroom efficacy are product hypotheses, not validated outcomes.
 
 ## Prior Product Context
 
-Penatika succeeds the Pendago / AI Teaching Canvas concept, but previous materials have not been inspected in this repository. They are not canonical unless reviewed and incorporated into Penatika documentation.
+Penatika succeeds the Pendago / AI Teaching Canvas concept. Pendago material has been reviewed and classified in [PENDAGO_MIGRATION_REVIEW.md](./PENDAGO_MIGRATION_REVIEW.md). Only explicitly mapped material may influence Penatika.
 
 ## Last Updated
 

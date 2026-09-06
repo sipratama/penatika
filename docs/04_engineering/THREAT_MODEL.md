@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.1` |
+| Version | `0.2` |
 | Last Updated | `2026-09-06` |
 | Review Trigger | Identity, provider, contract, deployment, retention, or student-data decisions |
 
@@ -101,7 +101,7 @@ Out of scope for this baseline: payment, student accounts, school administration
 
 - No student identity is required for core MVP.
 - Minimize teacher personal data and lesson/session content sent to providers.
-- Define purpose, retention, deletion, export, and access before production collection.
+- Implement, test, and operationally evidence [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md) before real-world collection where required; legal/privacy review still applies.
 - Do not use raw classroom audio for model training or analytics without a new explicit product, legal, and consent decision.
 - Evaluation fixtures should be synthetic or sanitized.
 - Analytics must avoid content and high-cardinality personal identifiers where possible.
@@ -148,8 +148,12 @@ Before selecting AI or speech providers, evaluate:
 
 - Identity/account model and authentication mechanisms.
 - Pairing lifetime and participant revocation behavior.
-- Data retention, deletion, export, and audit requirements.
-- Whether any text transcript or provider payload may be retained for evaluation.
+- Technical retention enforcement and physical purge evidence.
+- Backup expiry evidence.
+- Export authorization mechanism.
+- Audit/event evidence requirements without storing deleted sensitive content.
+- Applicable legal obligations.
+- Provider-side processing/retention configuration and technical enforcement for transient transcription, prompt, and provider payload data within the approved policy.
 - AI/speech provider data-processing terms.
 - Curriculum data integrity and publishing process.
 - Applicable Indonesian legal or institutional obligations; no compliance claim is made yet.
@@ -170,6 +174,8 @@ Review this threat model before:
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
 - [Non-Functional Requirements](../02_architecture/NON_FUNCTIONAL_REQUIREMENTS.md)
 - [PRD](../00_product/PRD.md)
+- [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
+- [Product Governance and Decision Authority](../00_product/PRODUCT_GOVERNANCE.md)
 - [Test Strategy](./TEST_STRATEGY.md)
 - [Security Standard](../standards/08_SECURITY_STANDARD.md)
 
@@ -177,4 +183,5 @@ Review this threat model before:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Align privacy and open-decision wording with the approved data-lifecycle baseline | Codex |
 | `0.1` | `2026-09-06` | Initial multi-surface and AI threat model | Codex |

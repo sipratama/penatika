@@ -43,7 +43,7 @@
 - reconnect and stale-state policy;
 - session duration bounds;
 - save and retention settings;
-- degraded-mode capability after product decision.
+- degraded-mode capability settings follow Q-03 / ADR-0007.
 
 ### AI and Speech
 
@@ -129,4 +129,5 @@ After implementation:
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-06` | Align degraded-mode configuration wording with Q-03 / ADR-0007 | Codex |
 | `2026-09-06` | Initial conceptual configuration baseline | Codex |

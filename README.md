@@ -59,6 +59,8 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | AI trust | Untrusted proposal generator; bukan authority |
 | Mathematics trust | Deterministic validation untuk supported scope |
 | Curriculum trust | BSKAP 046/H/KR/2025 as Mathematics normative authority; official guidance is interpretive and local context is an overlay |
+| Product Owner | `sipratama` |
+| Business Model | Teacher-first freemium SaaS; Teacher Pro sebagai paid offer pertama; institutional path kemudian |
 | Implementation stack | Belum diputuskan |
 | Deployment target | Belum diputuskan |
 
@@ -66,9 +68,9 @@ Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architect
 
 ## Current Status
 
-Project Discovery dan documentation initialization sudah selesai. Repository belum memiliki application source code, package manifest, database migration, contract schema, atau deployment configuration.
+Project Discovery sudah selesai. Inisialisasi product baseline Q-01–Q-07 / OPD-001–OPD-007 sudah selesai; tidak ada unresolved product decision dari set awal.
 
-Langkah berikutnya adalah menyelesaikan blocking product/architecture decisions dan membuat field-level contracts sebelum source scaffolding.
+Repository belum memiliki application source code, package manifest, database migration, contract schema, atau deployment configuration. Fase utama berikutnya adalah architecture/technology decision-making dan contract definition sebelum source scaffolding.
 
 ## Documentation Map
 
@@ -77,6 +79,8 @@ Langkah berikutnya adalah menyelesaikan blocking product/architecture decisions 
 - [Product Brief](./docs/00_product/PRODUCT_BRIEF.md) — why, who, value, principles, constraints, assumptions.
 - [PRD](./docs/00_product/PRD.md) — capabilities, journeys, product-wide rules, release scope.
 - [Roadmap](./docs/00_product/ROADMAP.md) — outcome-oriented sequencing.
+- [Product Governance](./docs/00_product/PRODUCT_GOVERNANCE.md) — product ownership dan requirement approval authority.
+- [Business Model](./docs/00_product/BUSINESS_MODEL.md) — freemium SaaS dan commercial path.
 
 ### Features
 
@@ -100,6 +104,9 @@ Langkah berikutnya adalah menyelesaikan blocking product/architecture decisions 
 - [Threat Model](./docs/04_engineering/THREAT_MODEL.md)
 - [Developer Setup](./docs/05_operations/DEVELOPER_SETUP.md)
 - [Configuration](./docs/05_operations/CONFIGURATION.md)
+- [MVP Pilot Plan](./docs/06_delivery/PILOT_PLAN.md) — pilot design, metrics, dan Stage B gates.
+- [Data Retention Policy](./docs/06_delivery/DATA_RETENTION_POLICY.md) — retention, history, export, deletion.
+- [Pendago Migration Review](./docs/06_delivery/PENDAGO_MIGRATION_REVIEW.md) — legacy reuse dan classification.
 - [Risks](./docs/06_delivery/RISKS.md)
 - [Known Limitations](./docs/06_delivery/KNOWN_LIMITATIONS.md)
 
@@ -126,19 +133,19 @@ python3 scripts/validate_template.py --project-mode
 
 Validator ini memeriksa local Markdown links dan unresolved core metadata placeholders. Validator tidak membuktikan bahwa product, architecture, security, atau application behavior sudah benar.
 
-## Open Decisions Before Implementation
+## Open Architecture and Implementation Decisions
 
 - Curriculum ingestion, provenance contracts, local-context modeling, serta usage/licensing untuk official guidance.
-- Approval policy untuk live AI adaptation.
-- Minimum degraded-mode capability.
-- Client dan backend technology.
-- Database dan migration tooling.
-- Identity dan authentication model.
-- Realtime transport dan reconnect protocol.
-- AI dan speech provider strategy.
+- Client/frontend strategy.
+- Backend language/framework.
+- Persistence dan migration technology.
+- Identity/authentication.
+- Realtime transport/reconnect protocol.
+- AI provider/model strategy.
+- Speech recognition strategy.
 - Mathematics validator approach.
-- Field-level structured contracts.
-- Deployment environment dan secret management.
-- Product owner dan requirement approver.
+- Contract protocols/schema tooling dan field-level contracts.
+- Deployment/environment/secret management.
+- Evidence-driven device/accessibility/performance targets bila relevan.
 
 Lihat Product Brief, PRD, System Architecture, Risks, dan Known Limitations untuk daftar lengkap beserta decision timing.

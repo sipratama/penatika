@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Approved MVP / Pilot Baseline |
-| Version | `0.1` |
+| Version | `0.2` |
 | Date | `2026-09-06` |
 | Scope | MVP and first pilot |
 | Legal Status | Product baseline; applicable legal/privacy review still required where relevant |
@@ -209,7 +209,9 @@ Stage B still requires:
 - implementation and testing of this policy;
 - applicable privacy and consent review;
 - participant/privacy notices reflecting the implemented policy where applicable;
-- a named product/requirement approver under `OPD-006` / `Q-07`;
+- product ownership is resolved in [PRODUCT_GOVERNANCE.md](../00_product/PRODUCT_GOVERNANCE.md);
+- `sipratama` is the Product Owner / Requirement Approver;
+- Stage B still requires the Product Owner go/no-go only after all other applicable entry evidence passes;
 - deployment and support readiness;
 - target environment review;
 - explicit disposition of high-impact risks;
@@ -242,10 +244,11 @@ These follow-ups do not select a database, storage provider, identity provider, 
 - Whether self-service export becomes mandatory before commercial production.
 - Which de-identified evaluation or research datasets, if any, require a separate approved purpose and retention decision?
 
-Product ownership and requirement approval authority remain open under `OPD-006` / `Q-07`. Business model and commercial path remain open under `OPD-007` / `Q-06`.
+Initialized product ownership and business-model decisions are resolved in [PRODUCT_GOVERNANCE.md](../00_product/PRODUCT_GOVERNANCE.md) and [BUSINESS_MODEL.md](../00_product/BUSINESS_MODEL.md). Remaining questions in this section are legal, architecture, implementation, operational, or future separately-approved product matters.
 
 ## 20. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Align Stage B and open-question wording with resolved ownership and business-model decisions | Codex |
 | `0.1` | `2026-09-06` | Resolve `OPD-005` with the approved MVP and first-pilot data-lifecycle baseline | Codex |

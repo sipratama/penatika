@@ -51,6 +51,8 @@ Once the gate passes, follow the initialization sequence defined in `docs/PROJEC
 | Project initialization / discovery workflow | `docs/PROJECT_INITIALIZATION.md` |
 | Product purpose, users, outcomes, constraints | `docs/00_product/PRODUCT_BRIEF.md` |
 | Product capabilities and scope | `docs/00_product/PRD.md` |
+| Product ownership / requirement approval | `docs/00_product/PRODUCT_GOVERNANCE.md` |
+| Business model / payer / commercial path | `docs/00_product/BUSINESS_MODEL.md` |
 | Detailed feature behavior | `docs/01_features/<feature>.md` |
 | System structure and boundaries | `docs/02_architecture/SYSTEM_ARCHITECTURE.md` |
 | Architecture rationale | `docs/02_architecture/adr/` |
@@ -60,6 +62,9 @@ Once the gate passes, follow the initialization sequence defined in `docs/PROJEC
 | UI system | `docs/03_design/DESIGN_SYSTEM.md` + relevant feature spec |
 | Engineering rules | `docs/standards/` |
 | Test approach | `docs/04_engineering/TEST_STRATEGY.md` + relevant feature spec |
+| Pilot design / success metrics / Stage B gates | `docs/06_delivery/PILOT_PLAN.md` |
+| Retention / history / export / deletion | `docs/06_delivery/DATA_RETENTION_POLICY.md` |
+| Pendago legacy reuse / classification | `docs/06_delivery/PENDAGO_MIGRATION_REVIEW.md` |
 | Runtime and deployment | `docs/05_operations/` |
 
 When sources conflict, do not choose whichever is easiest to implement. Follow the source that owns the concern, or update that source when the requested change intentionally changes the decision.
@@ -91,6 +96,13 @@ Default context order:
 8. related source code and tests
 
 Read `PRODUCT_BRIEF.md` when product intent, users, goals, scope, non-goals, or product-level assumptions matter.
+
+Read the relevant specialized canonical policy only when the task touches that concern:
+- commercial change → `BUSINESS_MODEL.md`;
+- data lifecycle → `DATA_RETENTION_POLICY.md`;
+- pilot → `PILOT_PLAN.md`;
+- ownership/approval → `PRODUCT_GOVERNANCE.md`;
+- Pendago reuse → `PENDAGO_MIGRATION_REVIEW.md`.
 
 Read operations docs only when configuration, deployment, runtime, release, or incident behavior is affected.
 

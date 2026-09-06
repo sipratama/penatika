@@ -138,7 +138,7 @@ The following material may inform later design or contract work but is not activ
 - detailed representation-engine taxonomy;
 - generic curriculum-alignment override or “turn curriculum off” behavior.
 
-`REFERENCE_ONLY` does not mean rejected. Any future adoption must be re-derived against Penatika Q-01 through Q-04, current feature requirements, current architecture, and Accepted ADRs. Future out-of-scope curriculum behavior must preserve authority level, warning, provenance, approval, assurance, and blocking rules.
+`REFERENCE_ONLY` does not mean rejected. Any future adoption must be re-derived against the current canonical Penatika product baseline, feature specifications, System Architecture, and Accepted ADRs. Future out-of-scope curriculum behavior must preserve authority level, warning, provenance, approval, assurance, and blocking rules.
 
 ## 9. Deferred Capabilities
 
@@ -150,7 +150,7 @@ The following capabilities remain outside the current MVP or first-pilot scope:
 - optional student-device interaction;
 - attendance;
 - school administration;
-- teacher or class history beyond the separately unresolved retention/history policy;
+- teacher/class history beyond the approved Penatika lesson and saved-session history baseline remains deferred;
 - SMA expansion;
 - advanced graphing;
 - 3D visualization;
@@ -214,17 +214,13 @@ No future legacy reuse may bypass current teacher-control, publication approval,
 
 ## 13. Remaining Open Decisions
 
-This review does not resolve:
+The initialized Penatika product-decision set has no remaining unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
-- `Q-06` / `OPD-007` — business model and commercial release path;
-- `Q-07` / `OPD-006` — product ownership and requirement approval authority;
-- `OPD-005` — lesson/session retention, history, export, and deletion expectations;
-- identity, authentication, realtime, persistence, AI, speech, validation, deployment, or provider choices;
-- future field-level lesson, action, scene, question, session, event, or persistence contracts;
-- whether any deferred Pendago capability should enter a later Penatika scope.
+This migration review still does not resolve architecture, implementation, provider, legal/privacy, compatibility, deployment, or future product decisions. Future field-level contracts and deferred Pendago capabilities remain future work.
 
 ## 14. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Align open-decision and deferred-history wording with the fully resolved product baseline | Codex |
 | `0.1` | `2026-09-06` | Resolve Q-05 by classifying and mapping the approved Pendago legacy decision set | Codex |
