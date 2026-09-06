@@ -12,7 +12,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.4` |
+| Version | `0.5` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 | Primary Market | Indonesia |
@@ -223,7 +223,7 @@ Semua item pada bagian Non-Goals serta capability yang belum diperlukan untuk me
 
 MVP siap dievaluasi untuk investment berikutnya ketika core workflow dapat digunakan end-to-end dalam prototype atau pilot, teacher control dapat dibuktikan, failure/degraded states telah diuji, dan evidence penggunaan cukup untuk menilai apakah Penatika memperbaiki alur mengajar.
 
-Target kuantitatif dan desain pilot belum diputuskan.
+Desain first pilot dan initial evidence thresholds ditetapkan dalam [PILOT_PLAN.md](../06_delivery/PILOT_PLAN.md); pencapaiannya masih harus divalidasi melalui pelaksanaan pilot.
 
 ---
 
@@ -235,18 +235,17 @@ Monetization, payer, pricing, dan business model belum diputuskan. Keputusan ini
 
 ## 11. Success Metrics
 
-Primary metric dan target kuantitatif belum dipilih karena belum ada baseline atau desain pilot.
+First-pilot success requires every hard safety/trust gate to pass, including zero private projection leakage, zero unauthorized control/join success, compliant AI publication, no publication of known-invalid Mathematics or structurally blocked content, no client authority divergence or automatic replay of new offline mutations, safe recovery, truthful save acknowledgement, and zero default raw-audio retention.
 
-Candidate evidence yang perlu didefinisikan sebelum pilot:
+Primary product thresholds are:
 
-- keberhasilan penyelesaian core teaching workflow;
-- waktu atau jumlah interruption saat melakukan live adaptation;
-- tingkat acceptance atau rejection terhadap AI proposals;
-- jumlah validation failure yang tertangkap sebelum display;
-- keberhasilan recovery dari gangguan konektivitas atau AI provider;
-- qualitative teacher confidence dan perceived control.
+- core teaching workflow completion rate `>= 80%` for normal-path evaluated sessions;
+- teacher-control confidence median `>= 4/5`;
+- teaching-flow fit median `>= 4/5`;
+- reuse intent `>= 70%` answering definitely/probably yes;
+- at least `70%` of participating teachers report at least one useful live adaptation.
 
-Metric final dan target tetap menjadi Open Product Decision.
+Diagnostic metrics include proposal decisions, p50/p95 AI and transcription latency, projection latency, reconnect convergence, degradation and disconnect events, save retries, facilitator interventions, teaching-flow interruptions, assurance outcomes, and curriculum-provenance failures. Diagnostic latency thresholds remain open until measured evidence exists. Detailed definitions and interpretation rules are authoritative in [PILOT_PLAN.md](../06_delivery/PILOT_PLAN.md).
 
 ---
 
@@ -320,12 +319,12 @@ Metric final dan target tetap menjadi Open Product Decision.
 | Q-01 | Curriculum source dan versi apa yang menjadi authoritative untuk MVP? | Mathematics normative authority: Keputusan Kepala BSKAP No. 046/H/KR/2025. Official guidance is secondary interpretive guidance; school/teacher context is a local overlay. See ADR-0005. |
 | Q-02 | AI action mana yang memerlukan explicit approval sebelum tampil di classroom display? | AI request authorizes generation, not publication. AI-generated student-facing semantic content requires post-generation teacher approval after private preview and applicable validation. Deterministic non-generative presentation actions may execute directly. Unsupported/inconclusive assurance may require explicit warned override; known-invalid, stale, unauthorized, policy-violating, privacy-violating, or structurally unsafe proposals are blocked and cannot be overridden. See ADR-0006. |
 | Q-03 | Fungsi minimum apa yang harus tetap tersedia saat konektivitas atau AI provider terganggu? | Penatika MVP is resilience-oriented rather than offline-first. AI and speech dependency failures degrade only affected capabilities while reviewed lesson presentation and supported classroom controls continue when backend authority remains available. Speech failure falls back to non-voice interaction. If the classroom display disconnects, student-facing mutations pause while safe teacher-private work may continue. If backend authority cannot be reached, clients preserve the last-known safe classroom projection but do not create new authoritative mutations, publish proposals, complete saves, or queue new offline commands for automatic replay. Recovery must reconcile against backend-authoritative state before mutation resumes. Degraded mode never bypasses approval, assurance, authorization, privacy, structured-content, curriculum provenance, or revision rules. See ADR-0007. |
+| Q-04 | Seberapa luas pilot pertama di luar dua topik Matematika prioritas? | The first Penatika pilot remains limited to Grade 5 Fractions and Grade 7 Basic Algebra / Linear Equations; no additional Mathematics topic or grade is added merely for breadth. The pilot uses a staged teacher rehearsal followed by a limited classroom pilot, targeting 6–8 Mathematics teachers and at least 12 evaluated teacher sessions across both stages. Success is determined by hard safety/trust gates plus core workflow completion, teacher-control confidence, teaching-flow fit, reuse intent, and live-adaptation usefulness. The pilot is directional product evidence and does not claim statistical educational efficacy or market representativeness. See PILOT_PLAN.md. |
 
 ### Open
 
 | ID | Question | Decision Needed By |
 |---|---|---|
-| Q-04 | Seberapa luas pilot pertama di luar dua topik Matematika prioritas? | Sebelum pilot planning |
 | Q-05 | Bagian mana dari materi Pendago / AI Teaching Canvas yang masih valid untuk dimigrasikan? | Sebelum requirements baseline dikunci |
 | Q-06 | Business model, payer, dan commercial path apa yang dituju? | Sebelum commercial release planning |
 | Q-07 | Siapa owner product dan approver requirement Penatika? | Sebelum requirement locking |
@@ -336,6 +335,7 @@ Metric final dan target tetap menjadi Open Product Decision.
 
 - [Product Requirements Document](./PRD.md)
 - [Product Roadmap](./ROADMAP.md)
+- [MVP Pilot Plan](../06_delivery/PILOT_PLAN.md)
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
 - [ADR-0006 — Teacher Approval and AI Publication Policy](../02_architecture/adr/ADR-0006-teacher-approval-ai-publication-policy.md)
@@ -348,6 +348,7 @@ Metric final dan target tetap menjadi Open Product Decision.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.5` | `2026-09-06` | Resolve Q-04 with a narrow staged pilot and evidence thresholds | Codex |
 | `0.4` | `2026-09-06` | Resolve Q-03 with resilience-oriented degradation and no offline authority | Codex |
 | `0.3` | `2026-09-06` | Resolve Q-02 with separate AI generation and publication authorization | Codex |
 | `0.2` | `2026-09-06` | Resolve Mathematics curriculum authority and provenance model | Codex |

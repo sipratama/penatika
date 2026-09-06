@@ -12,7 +12,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.4` |
+| Version | `0.5` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 | Target Phase | MVP baseline dan classroom pilot preparation |
@@ -219,6 +219,11 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | PR-023 | MVP must not queue new offline state-changing commands for automatic replay. Recovery must reconcile against backend authority before new mutations resume. |
 | PR-024 | A session save may be reported successful only after the authoritative durable save path acknowledges success. |
 | PR-025 | Degraded mode must never bypass approval, assurance, authorization, privacy, structured-content validation, curriculum provenance, or stale/revision controls. |
+| PR-026 | The first pilot is limited to Grade 5 Fractions and Grade 7 Basic Algebra / Linear Equations; broader Mathematics coverage is not a pilot requirement. |
+| PR-027 | Pilot success requires all hard safety/trust gates to pass before broader scope expansion may be considered. |
+| PR-028 | Pilot telemetry must be privacy-minimized and must not require student profiling or raw-audio retention. |
+| PR-029 | Pilot results are directional product evidence and must not be represented as statistically valid learning-outcome, nationwide teacher-demand, or educational-efficacy evidence. |
+| PR-030 | Missing product/usability thresholds with all safety gates passing leads to iteration within the current pilot scope rather than automatic feature/topic expansion. |
 
 ---
 
@@ -300,16 +305,13 @@ Search, filtering, and sorting across a lesson library are not yet defined as MV
 
 ## 11. Analytics and Product Instrumentation
 
-Instrumentation should provide privacy-minimized evidence for:
+Pilot instrumentation shall distinguish:
 
-- completion or abandonment of core journeys;
-- AI proposal lifecycle;
-- validation outcomes;
-- pairing and synchronization reliability;
-- degraded-mode activation and recovery;
-- explicit teacher acceptance, rejection, or modification where captured.
+- hard safety/trust evidence, including projection privacy, authorization, AI publication integrity, Mathematics/content blocking, session authority, recovery, save acknowledgement, and raw-audio retention;
+- primary product metrics for workflow completion, teacher-control confidence, teaching-flow fit, reuse intent, and live-adaptation usefulness;
+- diagnostic metrics for proposal decisions, latency, reconnect convergence, degradation, disconnects, save retries, facilitator intervention, teaching interruptions, assurance outcomes, and curriculum-provenance failures.
 
-Exact analytics provider, event schema, retention, and pilot metrics are not decided. No student profiling is required for MVP.
+The metric definitions and initial thresholds are defined in [PILOT_PLAN.md](../06_delivery/PILOT_PLAN.md). Exact analytics provider, event schema, retention, and evidence-driven diagnostic latency targets remain open. Telemetry must be privacy-minimized; no student profiling or default raw-audio retention is required for MVP.
 
 ---
 
@@ -381,11 +383,11 @@ Integrations must be isolated behind supported application boundaries and must n
 
 ## 15. Delivery Dependencies
 
-- Open product decision `Q-04` from the Product Brief.
 - Architecture decisions for identity, realtime synchronization, persistence, AI, speech, mathematics validation, and deployment.
 - Curriculum ingestion/provenance implementation and permitted usage model for any copied or redistributed guidance content.
 - A test corpus for fractions, algebra, and linear equations.
 - Pilot environment assumptions and target device/browser evidence.
+- Real-classroom Stage B remains dependent on applicable privacy review, resolved retention/deletion rules for collected data, a named product/requirement approver, accepted deployment/support readiness, reviewed target device/browser/network evidence, and explicit disposition of high-impact pilot risks.
 
 ---
 
@@ -393,7 +395,6 @@ Integrations must be isolated behind supported application boundaries and must n
 
 | ID | Decision |
 |---|---|
-| OPD-004 | Pilot scope, success metrics, and quantitative targets. |
 | OPD-005 | Lesson/session retention, history, export, and deletion expectations. |
 | OPD-006 | Product ownership and requirement approval authority. |
 | OPD-007 | Business model and commercial release path. |
@@ -429,6 +430,7 @@ The MVP product baseline is acceptable when:
 
 - [Product Brief](./PRODUCT_BRIEF.md)
 - [Product Roadmap](./ROADMAP.md)
+- [MVP Pilot Plan](../06_delivery/PILOT_PLAN.md)
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
 - [ADR-0006 — Teacher Approval and AI Publication Policy](../02_architecture/adr/ADR-0006-teacher-approval-ai-publication-policy.md)
@@ -443,6 +445,7 @@ The MVP product baseline is acceptable when:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.5` | `2026-09-06` | Resolve OPD-004 with staged pilot scope, gates, and metrics | Codex |
 | `0.4` | `2026-09-06` | Resolve OPD-003 with resilience-oriented degradation and truthful recovery/save behavior | Codex |
 | `0.3` | `2026-09-06` | Resolve OPD-001 with post-generation teacher approval and execution classes | Codex |
 | `0.2` | `2026-09-06` | Resolve curriculum authority hierarchy and strengthen provenance requirements | Codex |

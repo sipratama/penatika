@@ -8,13 +8,13 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.1` |
+| Version | `0.2` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 
 ## 1. Current Product Stage
 
-Penatika is in post-discovery, pre-implementation initialization. The Minimum Product Context Gate has passed, but market efficacy, classroom usability, technology choices, and pilot metrics remain unvalidated.
+Penatika is in post-discovery, pre-implementation initialization. The Minimum Product Context Gate has passed and the narrow first-pilot design is defined, but classroom usability, pilot results, market hypotheses, and technology choices remain unvalidated.
 
 ## 2. Roadmap Principle
 
@@ -38,10 +38,9 @@ Turn the initialized product and architecture baseline into one safe end-to-end 
 ### Required Decisions
 
 - Curriculum ingestion and provenance contract for BSKAP 046/H/KR/2025, local-context modeling, and official-guidance usage/licensing.
-- Approval policy for live adaptation.
-- Minimum degraded-mode behavior.
 - Client, backend, persistence, identity, realtime, AI, speech, validation, and deployment technology baseline.
 - Versioned field-level contracts for lesson, scene, session, adaptation, and assurance.
+- Privacy, retention, product ownership, deployment/support, target-device, and risk-readiness gates required before real-classroom Stage B.
 
 ### Exit Evidence
 
@@ -59,6 +58,7 @@ Evaluate whether Penatika improves teacher flow and confidence in realistic clas
 
 ### Candidate Work
 
+- Execute the staged [Penatika MVP Pilot Plan](../06_delivery/PILOT_PLAN.md) within Grade 5 Fractions and Grade 7 Basic Algebra / Linear Equations.
 - Refine interaction speed, controller ergonomics, and classroom readability.
 - Expand validation corpus within agreed MVP topics.
 - Validate supported devices, browsers, display resolutions, and network conditions.
@@ -68,11 +68,15 @@ Evaluate whether Penatika improves teacher flow and confidence in realistic clas
 
 ### Entry Condition
 
-The MVP vertical slice meets release-blocker and threat-model requirements.
+Stage A may begin when the MVP vertical slice supports the required workflow, relevant rehearsal release blockers are absent, pilot instrumentation is available, the initial Mathematics evaluation corpus exists, and safe mock or sanitized data can be used.
+
+Real-classroom Stage B additionally requires Stage A hard safety gates to pass, applicable privacy review, resolved retention/deletion rules for collected data, a named product/requirement approver, accepted deployment/support readiness, reviewed target device/browser/network evidence, and explicit disposition of high-impact pilot risks.
 
 ### Exit Evidence
 
-Pilot design, success metrics, participating context, support plan, and risk acceptance are explicitly approved. Quantitative targets remain open until baseline evidence exists.
+The staged pilot targets 6–8 Mathematics teachers, representation of both supported topic contexts, at least 6 evaluated classroom sessions in Stage B, and at least 12 evaluated teacher sessions across both stages. Evidence is classified as `PROCEED`, `ITERATE`, or `BLOCKED` using the hard gates and primary thresholds in `PILOT_PLAN.md`.
+
+Expansion to additional topics may be considered only when all hard gates pass, primary product thresholds support `PROCEED`, and no unresolved high-impact risk blocks expansion.
 
 ## 5. Later — Candidate Directions
 
@@ -80,7 +84,7 @@ These directions are not commitments:
 
 | Direction | Opportunity | Revisit Trigger |
 |---|---|---|
-| Additional Mathematics topics and grades | Broader teacher usefulness | Initial validation and pilot evidence supports expansion |
+| Additional Mathematics topics and grades | Broader teacher usefulness | Hard gates pass, product thresholds support `PROCEED`, and no unresolved high-impact risk blocks expansion |
 | Additional subjects | Wider market applicability | Subject-specific assurance and curriculum model is understood |
 | Lesson import | Reduce migration effort from existing materials | Core creation/editing workflow is stable |
 | Student participation | Interactive classroom learning | Teacher-first core succeeds and privacy/identity implications are resolved |
@@ -110,4 +114,5 @@ See [RISKS.md](../06_delivery/RISKS.md) for the active risk register.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Lock staged first-pilot scope, evidence targets, and expansion trigger | Codex |
 | `0.1` | `2026-09-06` | Initial outcome-based roadmap after Product Context Gate | Codex |
