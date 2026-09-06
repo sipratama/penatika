@@ -42,14 +42,31 @@ The teacher expresses an adaptation intent through push-to-talk or direct contro
 
 ## 3. Primary Flow
 
-1. Teacher starts an authorized push-to-talk or direct adaptation action.
-2. Penatika captures the minimum request context and, for voice, transcribes ephemeral audio.
-3. Penatika converts the request into a supported adaptation intent and requests a structured proposal with bounded lesson, scene, grade, topic, and curriculum context.
-4. Penatika validates schema, policy, curriculum provenance, and applicable Mathematics claims.
-5. Penatika assigns the applicable execution class.
-6. Teacher receives a private preview, warning, or blocked result.
-7. Teacher approves, explicitly overrides a warning where permitted, rejects, retries, or cancels; blocked results cannot be overridden.
-8. A proposal with valid publication authorization becomes a revision-aware classroom command.
+1. Teacher starts an authorized action bound to the active session and scene revision.
+2. Penatika classifies the supported intent before invoking AI Orchestration. Ambiguous intent uses the safer semantic AI proposal path.
+3. Penatika follows the applicable path below.
+
+### `DIRECT_ACTION` Path
+
+1. Penatika validates teacher/session authorization for the supported direct-action command.
+2. Penatika validates the deterministic, non-generative command and its current revision context.
+3. The valid command becomes an accepted revision-aware classroom command.
+4. The Classroom Session publishes updated role-specific projections.
+
+This path does not invoke AI Orchestration and does not create or imitate an AI proposal.
+
+### Semantic AI Adaptation Path
+
+1. Penatika transcribes ephemeral audio if applicable and captures the minimum bounded request context.
+2. AI Orchestration produces a structured proposal using bounded lesson, scene, grade, topic, and curriculum context.
+3. Penatika validates schema and policy, then performs curriculum and applicable Mathematics assurance.
+4. Publication policy assigns `APPROVAL_REQUIRED`, `APPROVAL_WITH_WARNING`, or `BLOCKED` to the proposal outcome.
+5. Teacher receives the actual proposal, warning, or blocked result through a private surface.
+6. Teacher approves the proposal or explicitly overrides an eligible warning; blocked results cannot be overridden.
+7. A proposal with valid publication authorization and proposal/revision binding becomes an accepted revision-aware classroom command.
+8. The Classroom Session publishes updated role-specific projections.
+
+Transcription, generation progress, proposal preview, assurance results, warnings, alternatives, and other `PRIVATE_ONLY` work remain teacher-private and do not mutate student-facing authoritative state.
 
 ## 4. Functional Requirements
 
@@ -130,16 +147,25 @@ Publication approval shall bind to the proposal identity/version, authorized tea
 ## 5. State Model
 
 ```text
-REQUESTED → TRANSCRIBING → GENERATING → VALIDATING → CLASSIFIED
-                                                        ├→ PRIVATE_RESULT
-                                                        ├→ PROPOSAL_READY → APPROVED → ACCEPTED → DISPLAYED
-                                                        ├→ PROPOSAL_WITH_WARNING → WARNED_OVERRIDE → ACCEPTED → DISPLAYED
-                                                        └→ BLOCKED
-
-DIRECT_ACTION: AUTHORIZED → COMMAND_VALIDATED → ACCEPTED → DISPLAYED
+AUTHORIZED_ACTION → INTENT_CLASSIFIED
+                        ├→ DIRECT_ACTION → AUTHORIZATION_VALIDATED
+                        │                    → COMMAND_VALIDATED
+                        │                    → REVISION_VALIDATED
+                        │                    → ACCEPTED → DISPLAYED
+                        │
+                        ├→ SEMANTIC_AI_ADAPTATION
+                        │      → TRANSCRIBING_IF_APPLICABLE
+                        │      → GENERATING → ASSURING → PUBLICATION_CLASSIFIED
+                        │           ├→ APPROVAL_REQUIRED → PROPOSAL_READY
+                        │           │      → APPROVED → ACCEPTED → DISPLAYED
+                        │           ├→ APPROVAL_WITH_WARNING → PROPOSAL_WITH_WARNING
+                        │           │      → WARNED_OVERRIDE → ACCEPTED → DISPLAYED
+                        │           └→ BLOCKED
+                        │
+                        └→ PRIVATE_ONLY → PRIVATE_RESULT
 ```
 
-Rejected, cancelled, and failed requests terminate without changing the classroom projection. Only an accepted proposal with valid publication authorization, or a validated `DIRECT_ACTION`, may produce a classroom state command. `DIRECT_ACTION` is a separate deterministic command path and is not represented as an AI proposal.
+Semantic AI processing remains `PRIVATE_ONLY` until publication authorization succeeds. Rejected, cancelled, and failed requests terminate without changing the classroom projection. Only an accepted proposal with valid publication authorization, or a validated `DIRECT_ACTION`, may produce a classroom state command. `DIRECT_ACTION` is a separate deterministic command path and is not represented as an AI proposal.
 
 ## 6. Trust and Safety Rules
 

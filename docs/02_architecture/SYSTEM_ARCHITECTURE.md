@@ -220,17 +220,31 @@ Rules:
 
 ### 6.3 Live Adaptation
 
-1. Controller sends an authorized request bound to session and scene revision.
-2. Speech adapter transcribes ephemeral audio if applicable.
-3. AI Orchestration produces a structured proposal.
-4. Scene, Curriculum, and Mathematics modules perform applicable checks.
-5. Application policy assigns `PRIVATE_ONLY`, `DIRECT_ACTION`, `APPROVAL_REQUIRED`, `APPROVAL_WITH_WARNING`, or `BLOCKED`.
-6. Teacher surface receives a private preview, warning, or blocked result.
-7. Teacher approves the actual proposal or explicitly overrides an eligible warning when required; blocked results cannot be overridden.
-8. A proposal with valid proposal/approval/assurance/revision binding becomes an accepted revision-aware classroom command.
-9. Session publishes updated role-specific projections.
+1. Controller sends an authorized teacher action bound to the session and scene revision.
+2. The application classifies the supported intent before invoking AI Orchestration. Ambiguous intent uses the safer semantic AI proposal path.
+3. The action follows one of the paths below.
 
-Deterministic `DIRECT_ACTION` commands follow a separate path: the authorized command is classified against an explicitly supported command class, validated without semantic AI generation, accepted as a revision-aware classroom command, and projected to clients. Ambiguous commands use the safer proposal and approval flow.
+#### Deterministic `DIRECT_ACTION` Path
+
+1. Identity and Access and Classroom Session validate teacher/session authorization.
+2. Classroom Scene validates the explicitly supported deterministic, non-generative command.
+3. Classroom Session validates the current revision and accepts the classroom command.
+4. Classroom Session publishes updated role-specific projections.
+
+This path does not enter AI Orchestration and does not create or imitate an AI proposal.
+
+#### Semantic AI Adaptation Path
+
+1. Speech adapter transcribes ephemeral audio if applicable.
+2. AI Orchestration produces a structured proposal from bounded request context.
+3. Scene, Curriculum, and Mathematics modules perform applicable schema, policy, provenance, and assurance checks.
+4. Publication policy assigns `APPROVAL_REQUIRED`, `APPROVAL_WITH_WARNING`, or `BLOCKED` to the proposal outcome.
+5. Teacher surface receives the actual proposal, warning, or blocked result through a private projection.
+6. Teacher approves the actual proposal or explicitly overrides an eligible warning; blocked results cannot be overridden.
+7. A proposal with valid proposal/approval/assurance/revision binding becomes an accepted revision-aware classroom command.
+8. Classroom Session publishes updated role-specific projections.
+
+Transcription, generation progress, proposal preview, assurance results, warnings, alternatives, and other `PRIVATE_ONLY` work remain teacher-private and do not mutate student-facing authoritative state.
 
 ### 6.4 Reconnect and Save
 
