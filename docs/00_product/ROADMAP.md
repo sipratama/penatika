@@ -8,13 +8,13 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.3` |
-| Owner | Open Question — belum ditetapkan |
+| Version | `0.4` |
+| Owner | `sipratama — Product Owner` |
 | Last Updated | `2026-09-06` |
 
 ## 1. Current Product Stage
 
-Penatika is in post-discovery, pre-implementation initialization. The Minimum Product Context Gate has passed, the narrow first-pilot design is defined, and the Pendago legacy baseline review is complete, but classroom usability, pilot results, market hypotheses, and technology choices remain unvalidated.
+Penatika is in post-discovery, pre-implementation initialization. The Minimum Product Context Gate has passed, the narrow first-pilot design is defined, the Pendago legacy baseline review is complete, and founder-led product authority is established in [PRODUCT_GOVERNANCE.md](./PRODUCT_GOVERNANCE.md), but classroom usability, pilot results, market hypotheses, and technology choices remain unvalidated.
 
 ## 2. Roadmap Principle
 
@@ -40,7 +40,7 @@ Turn the initialized product and architecture baseline into one safe end-to-end 
 - Curriculum ingestion and provenance contract for BSKAP 046/H/KR/2025, local-context modeling, and official-guidance usage/licensing.
 - Client, backend, persistence, identity, realtime, AI, speech, validation, and deployment technology baseline.
 - Versioned field-level contracts for lesson, scene, session, adaptation, and assurance.
-- Privacy, retention, product ownership, deployment/support, target-device, and risk-readiness gates required before real-classroom Stage B.
+- Privacy review, implementation/evidence for the approved retention policy, deployment/support, target-device, and risk-readiness gates required before real-classroom Stage B. Product ownership and requirement approval authority are resolved.
 - Any future Pendago reuse must be explicitly classified and mapped through the approved [legacy decision migration review](../06_delivery/PENDAGO_MIGRATION_REVIEW.md); legacy contracts do not become active Penatika contracts without re-derivation and validation.
 
 ### Exit Evidence
@@ -63,7 +63,7 @@ Evaluate whether Penatika improves teacher flow and confidence in realistic clas
 - Refine interaction speed, controller ergonomics, and classroom readability.
 - Expand validation corpus within agreed MVP topics.
 - Validate supported devices, browsers, display resolutions, and network conditions.
-- Define privacy, retention, support, deployment, and operational procedures for pilot use.
+- Complete applicable privacy review and implement the approved retention, support, deployment, and operational procedures for pilot use.
 - Instrument pilot evidence without student profiling.
 - Use Pendago material only through the approved [legacy decision migration review](../06_delivery/PENDAGO_MIGRATION_REVIEW.md), without promoting deferred capabilities into the first-pilot scope.
 
@@ -71,7 +71,7 @@ Evaluate whether Penatika improves teacher flow and confidence in realistic clas
 
 Stage A may begin when the MVP vertical slice supports the required workflow, relevant rehearsal release blockers are absent, pilot instrumentation is available, the initial Mathematics evaluation corpus exists, and safe mock or sanitized data can be used.
 
-Real-classroom Stage B additionally requires Stage A hard safety gates to pass, applicable privacy review, resolved retention/deletion rules for collected data, a named product/requirement approver, accepted deployment/support readiness, reviewed target device/browser/network evidence, and explicit disposition of high-impact pilot risks.
+Real-classroom Stage B additionally requires Stage A hard safety gates to pass, applicable privacy review, implemented and tested retention/deletion/export/backup-expiry procedures, accepted deployment/support readiness, reviewed target device/browser/network evidence, explicit disposition of high-impact pilot risks, and the named Product Owner (`sipratama`) to perform the product go/no-go decision after all required entry evidence is satisfied. `Q-07` resolves who approves Stage B; it does not remove or weaken any entry gate.
 
 ### Exit Evidence
 
@@ -115,6 +115,7 @@ See [RISKS.md](../06_delivery/RISKS.md) for the active risk register.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.4` | `2026-09-06` | Record resolved founder-led product authority while preserving remaining Stage B evidence gates | Codex |
 | `0.3` | `2026-09-06` | Record completed Pendago baseline review and controlled future legacy reuse | Codex |
 | `0.2` | `2026-09-06` | Lock staged first-pilot scope, evidence targets, and expansion trigger | Codex |
 | `0.1` | `2026-09-06` | Initial outcome-based roadmap after Product Context Gate | Codex |

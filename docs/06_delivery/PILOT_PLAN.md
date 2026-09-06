@@ -8,9 +8,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft / Approved Baseline |
-| Version | `0.3` |
+| Version | `0.4` |
 | Date | `2026-09-06` |
-| Owner | Open — named product/requirement approver required before real-classroom Stage B |
+| Owner | `sipratama — Product Owner / Stage B product go-no-go authority` |
 
 ## 1. Purpose
 
@@ -112,7 +112,7 @@ Stage B begins only after Stage A satisfies every hard safety/trust gate and all
 - Target at least `6` evaluated classroom sessions.
 - Maintain at least `12` evaluated teacher sessions across Stage A and Stage B combined.
 
-If real students are involved, Stage B must not begin until the approved [DATA_RETENTION_POLICY.md](./DATA_RETENTION_POLICY.md) is implemented, tested, reflected in participant/privacy notices where applicable, and supported operationally; a named product/requirement approver exists; privacy and consent requirements are reviewed; deployment/support readiness is accepted; target environment evidence is reviewed; and high-impact risks have explicit disposition.
+If real students are involved, Stage B must not begin until the approved [DATA_RETENTION_POLICY.md](./DATA_RETENTION_POLICY.md) is implemented, tested, reflected in participant/privacy notices where applicable, and supported operationally; privacy and consent requirements are reviewed; deployment/support readiness is accepted; target environment evidence is reviewed; high-impact risks have explicit disposition; and the named Product Owner (`sipratama`) performs the Stage B product go/no-go decision after all required entry evidence is satisfied.
 
 ## 8. Required Session Workflow
 
@@ -300,12 +300,12 @@ Stage B with a real classroom must not begin until:
 - applicable privacy review is complete;
 - the approved `DATA_RETENTION_POLICY` is implemented, tested, reflected in participant/privacy notices where applicable, and supported operationally;
 - retention expiry, teacher deletion, account deletion, authorized export, and backup-expiry procedures have evidence appropriate to the pilot;
-- a named product/requirement approver exists;
+- the named Product Owner (`sipratama`) performs the Stage B product go/no-go decision after all required entry evidence is satisfied;
 - the deployment and support plan is accepted;
 - the target device/browser/network baseline is reviewed;
 - high-impact pilot risks have explicit disposition.
 
-These dependencies remain open until separately resolved and evidenced.
+`Q-07` resolves who approves Stage B. It does not change what must pass before approval. All other dependencies remain open until separately resolved and evidenced.
 
 ## 15. Pilot Decision Rule
 
@@ -352,14 +352,14 @@ Relevant active risks include:
 - `R-004` incorrect Mathematics;
 - `R-006` private projection leakage;
 - `R-008` multi-device divergence;
-- `R-012` missing product owner;
+- `R-012` governance delegation or team-growth ambiguity;
 - `R-014` device/browser/stylus variation;
 - `R-017` retention/deletion implementation or operational failure;
 - `R-018` pilot evidence overgeneralization.
 
 See [RISKS.md](./RISKS.md) for ownership and current responses.
 
-Real-classroom Stage B remains dependent on privacy and consent review, implementation and operational evidence for [DATA_RETENTION_POLICY.md](./DATA_RETENTION_POLICY.md), product ownership, deployment/support, target-environment, and risk-readiness decisions. Q-04 does not resolve those dependencies.
+Real-classroom Stage B remains dependent on privacy and consent review, implementation and operational evidence for [DATA_RETENTION_POLICY.md](./DATA_RETENTION_POLICY.md), deployment/support, target-environment, risk-readiness decisions, and the Product Owner's evidence-based go/no-go decision. Product ownership is resolved in [PRODUCT_GOVERNANCE.md](../00_product/PRODUCT_GOVERNANCE.md); Q-04 and Q-07 do not remove the remaining dependencies.
 
 ## 18. Pilot Report Template / Required Evidence
 
@@ -394,7 +394,6 @@ The aggregate pilot report must also include participant/session counts, topic r
 ## 19. Open Follow-Ups
 
 - `Q-06` / `OPD-007`: business model and commercial path.
-- `Q-07` / `OPD-006`: named product owner and requirement approval authority.
 - Implementation, testing, operational procedures, and Stage B evidence for the approved `DATA_RETENTION_POLICY`.
 - Applicable privacy and consent requirements for real-classroom use.
 - Deployment and support readiness for Stage B.
@@ -406,6 +405,7 @@ The aggregate pilot report must also include participant/session counts, topic r
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.4` | `2026-09-06` | Resolve `Q-07` Stage B decision authority without changing entry gates, scope, or thresholds | Codex |
 | `0.3` | `2026-09-06` | Resolve `OPD-005` policy and replace the open decision with implementation, operational, and evidence gates | Codex |
 | `0.2` | `2026-09-06` | Remove resolved Q-05 legacy migration follow-up without changing pilot scope or metrics | Codex |
 | `0.1` | `2026-09-06` | Establish narrow staged MVP pilot scope, gates, metrics, and evidence rules | Codex |

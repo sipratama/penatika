@@ -12,8 +12,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.7` |
-| Owner | Open Question — belum ditetapkan |
+| Version | `0.8` |
+| Owner | `sipratama — Product Owner / Requirement Approver` |
 | Last Updated | `2026-09-06` |
 | Target Phase | MVP baseline dan classroom pilot preparation |
 
@@ -236,6 +236,13 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | PR-040 | Event-level pilot telemetry and identifiable research evidence must be deleted or appropriately de-identified no later than `90 days` after final pilot-report acceptance unless another explicit approved purpose exists. |
 | PR-041 | Retention policy must not introduce persistent student identity, student profiling, or broader collection than the MVP otherwise requires. |
 | PR-042 | Controlled curriculum source/version metadata may be preserved for provenance and historical reproducibility independently of teacher-account deletion, while teacher-specific local-context data follows teacher-owned data policy. |
+| PR-043 | `sipratama` is the accountable Product Owner and Requirement Approver for the current founder-led Penatika phase until explicit delegation or supersession. |
+| PR-044 | Material product requirement, scope, user-behavior, pilot, privacy-policy, or business-policy changes require Product Owner / Requirement Approver approval in the applicable canonical source. |
+| PR-045 | Engineering, architecture, AI agents, and implementation choices must not silently redefine or supersede accepted product requirements. |
+| PR-046 | A material technical decision that changes product behavior, scope, teacher control, privacy, assurance, pilot commitments, or business assumptions requires Product Owner review in addition to the applicable technical decision process. |
+| PR-047 | Hard safety/trust gates, Product Release Blockers, and Accepted invariants cannot be waived through ordinary Product Owner approval; a failed hard gate requires remediation and revalidation before blocked progression resumes. |
+| PR-048 | Stage B product go/no-go authority belongs to the Product Owner, but approval is valid only after all required Stage B entry gates and evidence are satisfied. |
+| PR-049 | Delegation of Product Owner or Requirement Approver authority must be explicit, scoped, dated, and recorded in [PRODUCT_GOVERNANCE.md](./PRODUCT_GOVERNANCE.md). |
 
 ---
 
@@ -411,7 +418,7 @@ Integrations must be isolated behind supported application boundaries and must n
 - Curriculum ingestion/provenance implementation and permitted usage model for any copied or redistributed guidance content.
 - A test corpus for fractions, algebra, and linear equations.
 - Pilot environment assumptions and target device/browser evidence.
-- Real-classroom Stage B remains dependent on implementation and testing of the approved [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md), applicable privacy/consent review and notices, a tested authorized export process, operational deletion and backup-expiry procedures, a named product/requirement approver, accepted deployment/support readiness, reviewed target device/browser/network evidence, and explicit disposition of high-impact pilot risks.
+- Product ownership and requirement approval authority are defined in [PRODUCT_GOVERNANCE.md](./PRODUCT_GOVERNANCE.md). Real-classroom Stage B remains dependent on implementation and testing of the approved [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md), applicable privacy/consent review and notices, a tested authorized export process, operational deletion and backup-expiry procedures, accepted deployment/support readiness, reviewed target device/browser/network evidence, explicit disposition of high-impact pilot risks, and the named Product Owner's go/no-go decision after all required entry evidence is satisfied.
 
 ---
 
@@ -419,7 +426,6 @@ Integrations must be isolated behind supported application boundaries and must n
 
 | ID | Decision |
 |---|---|
-| OPD-006 | Product ownership and requirement approval authority. |
 | OPD-007 | Business model and commercial release path. |
 
 ---
@@ -443,6 +449,7 @@ The MVP product baseline is acceptable when:
 - required capabilities satisfy their feature acceptance criteria;
 - product-wide rules are covered by tests or explicit evidence;
 - open decisions that block implementation or pilot are resolved;
+- material product and requirement changes have approval from the named Product Owner / Requirement Approver in the applicable canonical source;
 - contracts and data definitions match implementation;
 - release blockers are absent;
 - relevant security, privacy, accessibility, reliability, and AI evaluation evidence is available.
@@ -453,6 +460,7 @@ The MVP product baseline is acceptable when:
 
 - [Product Brief](./PRODUCT_BRIEF.md)
 - [Product Roadmap](./ROADMAP.md)
+- [Product Governance and Decision Authority](./PRODUCT_GOVERNANCE.md)
 - [MVP Pilot Plan](../06_delivery/PILOT_PLAN.md)
 - [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Pendago → Penatika Legacy Decision Migration Review](../06_delivery/PENDAGO_MIGRATION_REVIEW.md)
@@ -470,6 +478,7 @@ The MVP product baseline is acceptable when:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.8` | `2026-09-06` | Resolve `OPD-006` and add founder-led product and requirement approval rules | Codex |
 | `0.7` | `2026-09-06` | Resolve `OPD-005` with product-wide retention, history, export, and deletion requirements | Codex |
 | `0.6` | `2026-09-06` | Add legacy-authority and contract revalidation rules for resolved Q-05 | Codex |
 | `0.5` | `2026-09-06` | Resolve OPD-004 with staged pilot scope, gates, and metrics | Codex |

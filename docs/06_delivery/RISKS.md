@@ -25,7 +25,7 @@
 | R-009 | Structured content model is too narrow | Adaptation cannot express useful teaching changes | Start with MVP blocks; version schema; expand from validated needs | Owner open; design work required |
 | R-010 | Raw audio or provider payload is retained unexpectedly | Sensitive-data exposure | Zero default raw-audio persistence; maximum `24-hour` diagnostic window for genuinely required raw AI working data; provider review, redaction, expiry, and non-retention tests | Owner open; release blocker |
 | R-011 | Provider cost or rate limits make usage unsustainable | Outage or unplanned spend | Quotas, resource bounds, model comparison, cost telemetry | Owner open; business/provider decisions pending |
-| R-012 | No clear product owner or approver | Requirements and risk decisions stall | Keep open; require a named product/requirement approver before real-classroom Stage B and applicable requirement approval | Open; Stage B gate |
+| R-012 | Product authority becomes ambiguous after delegation or team growth | Requirements and risk decisions could stall or be approved by an unclear authority | `sipratama` is the named Product Owner / Requirement Approver for the current phase; require explicit scoped, dated governance updates when authority is delegated or team structure changes | Resolved for current founder-led phase; monitor delegation/team growth |
 | R-013 | Previous Pendago decisions conflict with new baseline | Scope drift or lost context | Allow only reviewed and mapped Pendago decisions to enter Penatika; Penatika canonical documents and Accepted ADRs win conflicts; legacy contracts remain reference-only until revalidated; update the migration review for any future legacy reuse | Mitigated for current baseline; monitor future legacy reuse |
 | R-014 | Target device/browser/stylus behavior varies | Poor classroom usability | Collect target-device, browser, display, stylus, and network evidence during Stage A and Stage B; define the supported baseline before real-classroom use | Owner open; matrix pending |
 | R-015 | Accessibility is deferred behind prototype speed | Excludes users and creates costly rework | Include accessibility in design, components, tests, and pilot gates | Owner open; conformance target pending |
@@ -44,6 +44,7 @@
 
 - [Product Brief](../00_product/PRODUCT_BRIEF.md)
 - [Roadmap](../00_product/ROADMAP.md)
+- [Product Governance and Decision Authority](../00_product/PRODUCT_GOVERNANCE.md)
 - [MVP Pilot Plan](./PILOT_PLAN.md)
 - [Data Retention, History, Export, and Deletion Policy](./DATA_RETENTION_POLICY.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
@@ -53,6 +54,7 @@
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-06` | Resolve current product-owner ambiguity and retain delegation/team-growth monitoring | Codex |
 | `2026-09-06` | Update retention risks for the approved policy while keeping implementation evidence as a Stage B requirement | Codex |
 | `2026-09-06` | Align pilot risk responses and add evidence-overgeneralization risk | Codex |
 | `2026-09-06` | Initial risk register | Codex |
