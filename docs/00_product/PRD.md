@@ -12,7 +12,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.2` |
+| Version | `0.3` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 | Target Phase | MVP baseline dan classroom pilot preparation |
@@ -112,7 +112,7 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 
 ### CAP-ADAPT-001 — Request Live AI Adaptation
 
-**Description:** Guru dapat meminta perubahan terhadap contoh, pertanyaan, penjelasan, atau visual melalui push-to-talk atau direct command. AI menghasilkan structured proposal dan tidak menjadi authoritative state owner.
+**Description:** Guru dapat meminta perubahan terhadap contoh, pertanyaan, penjelasan, atau visual melalui push-to-talk atau direct command. Teacher request authorizes generation, lalu Penatika menjalankan flow teacher request → structured proposal → policy/assurance → private preview → approval / warned override / block → accepted revision-aware classroom command. AI tidak menjadi authoritative state owner.
 
 **User Outcome:** Guru dapat berimprovisasi tanpa berpindah ke generic chatbot.
 
@@ -169,8 +169,10 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 2. Guru meminta adaptation menggunakan push-to-talk atau direct control.
 3. Penatika mengubah request menjadi structured AI proposal.
 4. Policy, curriculum grounding, dan mathematics validation diterapkan sesuai content type.
-5. Guru menerima status atau suggestion secara privat.
-6. Content hanya menjadi authoritative classroom state sesuai approval policy yang berlaku.
+5. Guru menerima private preview berupa clean proposal, proposal with warning, atau blocked result.
+6. Guru memberikan approval atau explicit warned override bila diizinkan; blocked result tidak dapat dipublikasikan.
+7. Proposal yang memiliki publication authorization valid menjadi accepted revision-aware classroom command.
+8. Classroom display menerima role-specific projection yang sudah diperbarui.
 
 **Outcome:** Classroom content berubah tanpa guru keluar dari teaching flow.
 
@@ -202,6 +204,10 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | PR-012 | Degraded mode tidak boleh mengubah stale atau unvalidated proposal menjadi authoritative classroom content. |
 | PR-013 | Untuk Mathematics MVP, national normative curriculum authority adalah Keputusan Kepala BSKAP No. 046/H/KR/2025 sampai Penatika secara eksplisit mengaktifkan official superseding source. |
 | PR-014 | Official guidance dan school/teacher context boleh memperkaya interpretasi atau sequencing, tetapi tidak boleh dipresentasikan sebagai national normative requirement. AI tidak pernah menjadi curriculum authority. |
+| PR-015 | A teacher request to generate AI content authorizes generation but does not authorize publication of unseen generated semantic content. |
+| PR-016 | AI-generated student-facing semantic content requires post-generation teacher approval after private preview and applicable checks. |
+| PR-017 | Authorized deterministic non-generative presentation/annotation commands may execute directly only when they belong to an explicitly supported direct-action class and do not introduce new semantic teaching content. |
+| PR-018 | Unsupported/inconclusive assurance may use explicit warned override when allowed; known-invalid, stale, unauthorized, policy/security/privacy-violating, or structurally unsafe proposals are blocked and cannot be overridden. |
 
 ---
 
@@ -228,16 +234,18 @@ Exact identity, authentication, and session authorization mechanisms remain an O
 - Classroom display prioritizes readability, focus, and absence of private controls.
 - Teacher controller prioritizes one-handed or quick interaction where practical.
 - AI generation must expose progress without blocking unrelated safe teaching actions.
-- Teacher must be able to distinguish draft, proposed, validated, warning, accepted, and displayed content states.
+- Teacher must be able to distinguish private processing, proposal ready, proposal with warning, blocked, approved/accepted, and displayed states.
 - Mouse, touch, stylus, and keyboard behavior must be consistent for equivalent actions.
 
 ### Required States
 
 - Empty or no lesson selected.
-- Draft generation in progress.
-- Validation in progress.
+- Private processing, including generation and validation in progress.
 - Proposal ready for teacher action.
-- Validation warning or failure.
+- Proposal with warning and explicit warned-override action where allowed.
+- Blocked proposal or action with no publication override.
+- Approved/accepted proposal.
+- Displayed content.
 - Session ready, paired, active, reconnecting, degraded, ending, saved, and failed.
 - Unsaved changes.
 - Permission denied or invalid pairing.
@@ -343,12 +351,15 @@ Integrations must be isolated behind supported application boundaries and must n
 - Session state can diverge across clients without deterministic reconciliation.
 - Raw audio is retained by default or exposed through logs.
 - Critical failure states have no recoverable teacher experience.
+- AI-generated semantic content can reach classroom display without required post-generation teacher approval.
+- A `BLOCKED` proposal can be forced into authoritative classroom state.
+- Approval can be replayed onto another, replaced, or stale proposal.
 
 ---
 
 ## 15. Delivery Dependencies
 
-- Open product decisions `Q-02` through `Q-04` from the Product Brief.
+- Open product decisions `Q-03` and `Q-04` from the Product Brief.
 - Architecture decisions for identity, realtime synchronization, persistence, AI, speech, mathematics validation, and deployment.
 - Curriculum ingestion/provenance implementation and permitted usage model for any copied or redistributed guidance content.
 - A test corpus for fractions, algebra, and linear equations.
@@ -360,7 +371,6 @@ Integrations must be isolated behind supported application boundaries and must n
 
 | ID | Decision |
 |---|---|
-| OPD-001 | Exact approval policy for each live AI adaptation type. |
 | OPD-003 | Minimum degraded-mode capability during internet or AI outage. |
 | OPD-004 | Pilot scope, success metrics, and quantitative targets. |
 | OPD-005 | Lesson/session retention, history, export, and deletion expectations. |
@@ -400,6 +410,7 @@ The MVP product baseline is acceptable when:
 - [Product Roadmap](./ROADMAP.md)
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
+- [ADR-0006 — Teacher Approval and AI Publication Policy](../02_architecture/adr/ADR-0006-teacher-approval-ai-publication-policy.md)
 - [UX Flows](../03_design/UX_FLOWS.md)
 - [Test Strategy](../04_engineering/TEST_STRATEGY.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
@@ -410,5 +421,6 @@ The MVP product baseline is acceptable when:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.3` | `2026-09-06` | Resolve OPD-001 with post-generation teacher approval and execution classes | Codex |
 | `0.2` | `2026-09-06` | Resolve curriculum authority hierarchy and strengthen provenance requirements | Codex |
 | `0.1` | `2026-09-06` | Initial capability baseline from confirmed Product Brief | Codex |
