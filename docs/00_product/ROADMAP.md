@@ -8,13 +8,13 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.4` |
+| Version | `0.5` |
 | Owner | `sipratama — Product Owner` |
 | Last Updated | `2026-09-06` |
 
 ## 1. Current Product Stage
 
-Penatika is in post-discovery, pre-implementation initialization. The Minimum Product Context Gate has passed, the narrow first-pilot design is defined, the Pendago legacy baseline review is complete, and founder-led product authority is established in [PRODUCT_GOVERNANCE.md](./PRODUCT_GOVERNANCE.md), but classroom usability, pilot results, market hypotheses, and technology choices remain unvalidated.
+Penatika is in post-discovery, pre-implementation initialization. The Minimum Product Context Gate has passed, the narrow first-pilot design is defined, the Pendago legacy baseline review is complete, founder-led product authority is established in [PRODUCT_GOVERNANCE.md](./PRODUCT_GOVERNANCE.md), and the teacher-first freemium commercial baseline is resolved in [BUSINESS_MODEL.md](./BUSINESS_MODEL.md), but classroom usability, pilot results, market hypotheses, and technology choices remain unvalidated.
 
 ## 2. Roadmap Principle
 
@@ -40,7 +40,7 @@ Turn the initialized product and architecture baseline into one safe end-to-end 
 - Curriculum ingestion and provenance contract for BSKAP 046/H/KR/2025, local-context modeling, and official-guidance usage/licensing.
 - Client, backend, persistence, identity, realtime, AI, speech, validation, and deployment technology baseline.
 - Versioned field-level contracts for lesson, scene, session, adaptation, and assurance.
-- Privacy review, implementation/evidence for the approved retention policy, deployment/support, target-device, and risk-readiness gates required before real-classroom Stage B. Product ownership and requirement approval authority are resolved.
+- Privacy review, implementation/evidence for the approved retention policy, deployment/support, target-device, and risk-readiness gates required before real-classroom Stage B. Product ownership, requirement approval authority, and business model are resolved.
 - Any future Pendago reuse must be explicitly classified and mapped through the approved [legacy decision migration review](../06_delivery/PENDAGO_MIGRATION_REVIEW.md); legacy contracts do not become active Penatika contracts without re-derivation and validation.
 
 ### Exit Evidence
@@ -79,7 +79,17 @@ The staged pilot targets 6–8 Mathematics teachers, representation of both supp
 
 Expansion to additional topics may be considered only when all hard gates pass, primary product thresholds support `PROCEED`, and no unresolved high-impact risk blocks expansion.
 
-## 5. Later — Candidate Directions
+## 5. Then — Post-Pilot Commercialization and Pricing Validation
+
+After classroom and pilot validation, commercialization proceeds through the evidence-gated phases in [BUSINESS_MODEL.md](./BUSINESS_MODEL.md), without calendar dates:
+
+- post-pilot early access with cost, quota, unit-economics, and willingness-to-pay validation;
+- individual Teacher Pro commercial launch only after the commercial launch gates are satisfied;
+- institutional licensing only after teacher adoption and administrator needs are evidenced and validated.
+
+Commercial launch is not automatic after pilot `PROCEED`. The roadmap remains focused on product evidence before revenue experimentation.
+
+## 6. Later — Candidate Directions
 
 These directions are not commitments:
 
@@ -92,7 +102,7 @@ These directions are not commitments:
 | Advanced graphing or visualization | Richer Mathematics explanation | Structured scene model and assurance support it safely |
 | School workflows | Institutional adoption | Business model and administrator needs are validated |
 
-## 6. Explicitly Parked
+## 7. Explicitly Parked
 
 - Autonomous AI teaching.
 - Attendance management.
@@ -100,7 +110,7 @@ These directions are not commitments:
 - Proprietary smart-board dependence.
 - Feature expansion that bypasses teacher-control or content-assurance evidence.
 
-## 7. Key Product Risks
+## 8. Key Product Risks
 
 - The controller may still distract teachers.
 - Classroom connectivity may be insufficient for the intended flow.
@@ -111,10 +121,11 @@ These directions are not commitments:
 
 See [RISKS.md](../06_delivery/RISKS.md) for the active risk register.
 
-## 8. Roadmap Changes
+## 9. Roadmap Changes
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.5` | `2026-09-06` | Record the resolved business-model baseline and staged commercialization sequence | Codex |
 | `0.4` | `2026-09-06` | Record resolved founder-led product authority while preserving remaining Stage B evidence gates | Codex |
 | `0.3` | `2026-09-06` | Record completed Pendago baseline review and controlled future legacy reuse | Codex |
 | `0.2` | `2026-09-06` | Lock staged first-pilot scope, evidence targets, and expansion trigger | Codex |

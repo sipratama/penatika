@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft / Approved Baseline |
-| Version | `0.4` |
+| Version | `0.5` |
 | Date | `2026-09-06` |
 | Owner | `sipratama — Product Owner / Stage B product go-no-go authority` |
 
@@ -63,6 +63,8 @@ The first pilot does not include:
 - statistically representative nationwide teacher-demand or market-validation claims.
 
 A request for another topic is recorded as expansion evidence rather than silently added to pilot scope.
+
+Commercial policy for the first pilot is fixed by [BUSINESS_MODEL.md](../00_product/BUSINESS_MODEL.md): Stage A and Stage B access are free, and billing, subscriptions, payer workflows, pricing conversion, and payment experiments are outside first-pilot scope. `Q-06` is resolved, but the pilot is not a monetization experiment. Commercial metrics do not alter `Q-04` thresholds.
 
 ## 5. Participants
 
@@ -393,7 +395,6 @@ The aggregate pilot report must also include participant/session counts, topic r
 
 ## 19. Open Follow-Ups
 
-- `Q-06` / `OPD-007`: business model and commercial path.
 - Implementation, testing, operational procedures, and Stage B evidence for the approved `DATA_RETENTION_POLICY`.
 - Applicable privacy and consent requirements for real-classroom use.
 - Deployment and support readiness for Stage B.
@@ -405,6 +406,7 @@ The aggregate pilot report must also include participant/session counts, topic r
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.5` | `2026-09-06` | Record resolved business model and free-pilot commercial policy without changing pilot metrics or gates | Codex |
 | `0.4` | `2026-09-06` | Resolve `Q-07` Stage B decision authority without changing entry gates, scope, or thresholds | Codex |
 | `0.3` | `2026-09-06` | Resolve `OPD-005` policy and replace the open decision with implementation, operational, and evidence gates | Codex |
 | `0.2` | `2026-09-06` | Remove resolved Q-05 legacy migration follow-up without changing pilot scope or metrics | Codex |

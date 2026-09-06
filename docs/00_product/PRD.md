@@ -12,7 +12,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.8` |
+| Version | `0.9` |
 | Owner | `sipratama — Product Owner / Requirement Approver` |
 | Last Updated | `2026-09-06` |
 | Target Phase | MVP baseline dan classroom pilot preparation |
@@ -243,6 +243,15 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | PR-047 | Hard safety/trust gates, Product Release Blockers, and Accepted invariants cannot be waived through ordinary Product Owner approval; a failed hard gate requires remediation and revalidation before blocked progression resumes. |
 | PR-048 | Stage B product go/no-go authority belongs to the Product Owner, but approval is valid only after all required Stage B entry gates and evidence are satisfied. |
 | PR-049 | Delegation of Product Owner or Requirement Approver authority must be explicit, scoped, dated, and recorded in [PRODUCT_GOVERNANCE.md](./PRODUCT_GOVERNANCE.md). |
+| PR-050 | Penatika uses a teacher-first freemium SaaS model; school procurement is not required for initial teacher adoption. |
+| PR-051 | The first pilot is free and does not require billing, subscription, payment, or procurement workflows. |
+| PR-052 | The initial paid commercial offer is an optional per-teacher Teacher Pro subscription; exact numeric pricing is evidence-driven and requires Product Owner approval before charging users. |
+| PR-053 | Free-tier resource controls may limit AI capacity, but quota exhaustion must not weaken safety policy or corrupt an active classroom session. |
+| PR-054 | Mathematics assurance, curriculum provenance, AI publication approval, authorization, privacy, data-lifecycle rights, structured-content safety, and other required safety/trust controls must not be made paid-only features. |
+| PR-055 | Penatika does not use advertising, sale of teacher/student personal data, or student profiling as its teacher-first monetization model. |
+| PR-056 | Institutional licensing is a later commercial path and does not automatically introduce school-administration capabilities into MVP scope. |
+| PR-057 | Commercial launch requires evidence for product value, unit economics, willingness to pay, billing correctness, support readiness, privacy/legal readiness, and Product Owner approval. |
+| PR-058 | Commercial metrics remain separate from the Q-04 first-pilot pass/fail thresholds unless the Product Owner explicitly approves a future pilot-policy change. |
 
 ---
 
@@ -410,6 +419,10 @@ Integrations must be isolated behind supported application boundaries and must n
 - Product reports save success without durable authoritative acknowledgement.
 - Degraded mode bypasses Q-02 publication approval or applicable assurance policy.
 
+### Commercial Release Readiness
+
+Commercial billing remains deferred from MVP and pilot. A paid Teacher Pro launch must satisfy the gates in [BUSINESS_MODEL.md](./BUSINESS_MODEL.md), including product-value evidence, measured unit economics, tested free-tier limits, willingness-to-pay evidence, explicit numeric-price approval, tested truthful billing, defined cancellation/refund behavior, reviewed commercial/privacy notices, compliant data-retention implementation, paying-user support readiness, and resolved commercial release blockers.
+
 ---
 
 ## 15. Delivery Dependencies
@@ -419,14 +432,13 @@ Integrations must be isolated behind supported application boundaries and must n
 - A test corpus for fractions, algebra, and linear equations.
 - Pilot environment assumptions and target device/browser evidence.
 - Product ownership and requirement approval authority are defined in [PRODUCT_GOVERNANCE.md](./PRODUCT_GOVERNANCE.md). Real-classroom Stage B remains dependent on implementation and testing of the approved [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md), applicable privacy/consent review and notices, a tested authorized export process, operational deletion and backup-expiry procedures, accepted deployment/support readiness, reviewed target device/browser/network evidence, explicit disposition of high-impact pilot risks, and the named Product Owner's go/no-go decision after all required entry evidence is satisfied.
+- The business model is defined in [BUSINESS_MODEL.md](./BUSINESS_MODEL.md). Paid commercial launch remains deferred until its launch gates are satisfied and does not proceed automatically from pilot `PROCEED`.
 
 ---
 
 ## 16. Open Product Decisions
 
-| ID | Decision |
-|---|---|
-| OPD-007 | Business model and commercial release path. |
+No remaining unresolved product decisions from the initialized Q-01–Q-07 / OPD-001–OPD-007 baseline.
 
 ---
 
@@ -461,6 +473,7 @@ The MVP product baseline is acceptable when:
 - [Product Brief](./PRODUCT_BRIEF.md)
 - [Product Roadmap](./ROADMAP.md)
 - [Product Governance and Decision Authority](./PRODUCT_GOVERNANCE.md)
+- [Business Model and Commercial Path](./BUSINESS_MODEL.md)
 - [MVP Pilot Plan](../06_delivery/PILOT_PLAN.md)
 - [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Pendago → Penatika Legacy Decision Migration Review](../06_delivery/PENDAGO_MIGRATION_REVIEW.md)
@@ -478,6 +491,7 @@ The MVP product baseline is acceptable when:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.9` | `2026-09-06` | Resolve `OPD-007` and add teacher-first commercial and release-readiness rules | Codex |
 | `0.8` | `2026-09-06` | Resolve `OPD-006` and add founder-led product and requirement approval rules | Codex |
 | `0.7` | `2026-09-06` | Resolve `OPD-005` with product-wide retention, history, export, and deletion requirements | Codex |
 | `0.6` | `2026-09-06` | Add legacy-authority and contract revalidation rules for resolved Q-05 | Codex |

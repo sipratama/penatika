@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Approved Baseline |
-| Version | `0.1` |
+| Version | `0.2` |
 | Date | `2026-09-06` |
 | Product Owner | `sipratama` |
 | Requirement Approver | `sipratama` |
@@ -194,6 +194,7 @@ Primary canonical product sources include:
 - `PRODUCT_BRIEF.md`;
 - `PRD.md`;
 - `ROADMAP.md`;
+- `BUSINESS_MODEL.md`;
 - feature specifications where they own detailed behavior;
 - approved product and delivery policies, including `PILOT_PLAN.md`, `DATA_RETENTION_POLICY.md`, and `PENDAGO_MIGRATION_REVIEW.md`.
 
@@ -227,12 +228,13 @@ Governance changes must not silently reassign technical/domain risks, weaken har
 
 ## 14. Remaining Open Product Decisions
 
-- `Q-06` / `OPD-007` — business model, payer, and commercial release path.
+The initialized `Q-01`–`Q-07` / `OPD-001`–`OPD-007` product decision set has no remaining unresolved product decisions. Future product decisions may still arise through normal product governance.
 
-The identity, architecture, provider, implementation, privacy-review, deployment, and Stage B evidence follow-ups remain unresolved where documented, but they are not unresolved product-ownership authority.
+The identity, architecture, provider, implementation, pricing-evidence, privacy-review, deployment, and Stage B evidence follow-ups remain unresolved where documented, but they are not unresolved product-ownership or business-model authority.
 
 ## 15. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Record the resolved business-model baseline and close the initialized open-product-decision set | Codex |
 | `0.1` | `2026-09-06` | Resolve `Q-07` / `OPD-006` with founder-led product ownership and requirement approval authority | Codex |
