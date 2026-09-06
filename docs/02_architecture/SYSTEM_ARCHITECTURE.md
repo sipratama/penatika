@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.5` |
+| Version | `0.6` |
 | Last Updated | `2026-09-06` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
@@ -23,6 +23,10 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 ### Selected Baseline
 
 - Multiple client surfaces interact with one backend-owned application boundary.
+- Browser-first client strategy uses React, TypeScript, and Vite.
+- Teacher Web contains Preparation and private Controller modes; Classroom Display is a separate browser application entry/build boundary.
+- No native mobile client is used in the MVP.
+- Frontend clients are browser application layers and do not become a BFF or application authority.
 - The initial backend is a modular monolith with explicit domain modules.
 - Classroom session state is authoritative on the backend and projected differently to teacher and display surfaces.
 - Classroom content uses a versioned structured model; arbitrary generated HTML or executable AI output is not supported.
@@ -31,7 +35,7 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - Deterministic non-generative direct actions use explicitly supported command classes rather than the AI proposal path.
 - Penatika is resilience-oriented, not offline-first; dependency failures degrade affected capabilities without creating competing state authority.
 - Loss of backend authority freezes new authoritative mutations instead of promoting a client to temporary authority.
-- Persistence, realtime transport, identity provider, client frameworks, programming languages, cloud, and external providers remain open decisions.
+- Persistence, realtime transport, identity provider, backend language/framework, cloud, and external providers remain open decisions.
 
 ### Why This Shape
 
@@ -41,8 +45,9 @@ The MVP has tightly coupled workflows and shared consistency rules but no confir
 
 ```text
 Teacher
-  ├─ Preparation Client
-  └─ Private Controller Client
+  └─ Teacher Web
+       ├─ Preparation mode
+       └─ Private Controller mode
              │
              │ authorized application + realtime interactions
              ▼
@@ -61,15 +66,19 @@ Teacher
              └─ Controlled Curriculum Source
              │
              ▼
-     Classroom Display Client
+     Classroom Display Web
        classroom-safe projection only
 ```
 
 Students consume the classroom display but do not require a Penatika device identity in the MVP.
 
+Teacher Web is one browser application containing Preparation and private
+Controller modes. Classroom Display Web is a separate browser application
+entry/build boundary.
+
 ## 3. Main Runtime Components
 
-### 3.1 Preparation Client
+### 3.1 Preparation Client (Teacher Web)
 
 Responsibilities:
 
@@ -80,7 +89,7 @@ Responsibilities:
 
 It does not own authoritative lesson or curriculum provenance.
 
-### 3.2 Private Controller Client
+### 3.2 Private Controller Client (Teacher Web)
 
 Responsibilities:
 
@@ -96,7 +105,7 @@ Responsibilities:
 
 It must be treated as an untrusted client for authorization.
 
-### 3.3 Classroom Display Client
+### 3.3 Classroom Display Web
 
 Responsibilities:
 
@@ -382,12 +391,12 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 - [ADR-0005 — Use Layered Curriculum Authority and Versioned Provenance](./adr/ADR-0005-layered-curriculum-authority.md)
 - [ADR-0006 — Teacher Approval and AI Publication Policy](./adr/ADR-0006-teacher-approval-ai-publication-policy.md)
 - [ADR-0007 — Graceful Degradation Without Offline Authority](./adr/ADR-0007-graceful-degradation-without-offline-authority.md)
+- [ADR-0008 — Use Browser-First React Clients with Separate Teacher and Classroom Display Boundaries](./adr/ADR-0008-browser-first-react-client-strategy.md)
 
 ## 16. Open Architecture Decisions
 
 | ID | Decision | Needed Before |
 |---|---|---|
-| OAD-001 | Client application strategy and frontend framework(s) | Source scaffolding |
 | OAD-002 | Backend language and framework | Source scaffolding |
 | OAD-003 | Database and migration technology | Persistent implementation |
 | OAD-004 | Identity, authentication, and account model | Protected workflow implementation |
@@ -421,6 +430,7 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.6` | `2026-09-06` | Resolve OAD-001 with browser-first React client architecture | Codex |
 | `0.5` | `2026-09-06` | Align security and persistence wording with the approved product data-lifecycle baseline | Codex |
 | `0.4` | `2026-09-06` | Apply resilience-oriented degradation and recovery architecture from ADR-0007 | Codex |
 | `0.3` | `2026-09-06` | Apply separate AI generation and teacher-authorized publication architecture from ADR-0006 | Codex |

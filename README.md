@@ -61,7 +61,9 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | Curriculum trust | BSKAP 046/H/KR/2025 as Mathematics normative authority; official guidance is interpretive and local context is an overlay |
 | Product Owner | `sipratama` |
 | Business Model | Teacher-first freemium SaaS; Teacher Pro sebagai paid offer pertama; institutional path kemudian |
-| Implementation stack | Belum diputuskan |
+| Client strategy | Browser-first React + TypeScript + Vite |
+| Client surfaces | Teacher Web (Preparation + Controller) dan Classroom Display Web terpisah |
+| Backend | Belum diputuskan — OAD-002 |
 | Deployment target | Belum diputuskan |
 
 Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architecture/adr/).
@@ -140,7 +142,6 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 ## Open Architecture and Implementation Decisions
 
 - Curriculum ingestion, provenance contracts, local-context modeling, serta usage/licensing untuk official guidance.
-- Client/frontend strategy.
 - Backend language/framework.
 - Persistence dan migration technology.
 - Identity/authentication.

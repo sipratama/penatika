@@ -23,7 +23,7 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.1 |
+| Version | 0.2 |
 | Last Updated | 2026-09-06 |
 | Current Phase | Architecture & Technology Decisioning |
 | Implementation State | Pre-source / Pre-scaffolding |
@@ -57,8 +57,8 @@ created.
 | Data-lifecycle policy | COMPLETE | [DATA_RETENTION_POLICY.md](./06_delivery/DATA_RETENTION_POLICY.md) |
 | First-pilot definition | COMPLETE | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) |
 | Pendago legacy review | COMPLETE | [PENDAGO_MIGRATION_REVIEW.md](./06_delivery/PENDAGO_MIGRATION_REVIEW.md) |
-| Initial architecture principles | ESTABLISHED | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) + ADR-0001–ADR-0007 |
-| Architecture / technology decisions | ACTIVE | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) OAD-001–OAD-012 |
+| Initial architecture principles | ESTABLISHED | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) + ADR-0001–ADR-0008 |
+| Architecture / technology decisions | ACTIVE | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) OAD-002–OAD-012 |
 | Field-level contracts | PENDING | create only after relevant OAD decisions |
 | Source scaffolding | PENDING | after blocking OADs/contracts |
 | Application implementation | PENDING | after source scaffolding |
@@ -97,7 +97,7 @@ tracks status only and does not redefine the OAD descriptions.
 
 | ID | Decision | Status |
 |---|---|---|
-| OAD-001 | Client application strategy and frontend framework(s) | NEXT |
+| OAD-001 | Client application strategy and frontend framework(s) | COMPLETE |
 | OAD-002 | Backend language and framework | NEXT |
 | OAD-003 | Database and migration technology | PENDING |
 | OAD-004 | Identity, authentication, and account model | PENDING |
@@ -122,12 +122,10 @@ Architecture reasoning is not duplicated here.
 
 Immediate next decision work:
 
-1. OAD-001 — Client Application Strategy
-2. OAD-002 — Backend Language and Framework
+1. OAD-002 — Backend Language and Framework
 
-These decisions establish the implementation platform boundaries needed before
-source scaffolding. Later OAD sequencing will follow dependency and evidence
-requirements.
+OAD-001 is complete. Contracts and source scaffolding remain PENDING. Later
+OAD sequencing will follow dependency and evidence requirements.
 
 ## Open Non-Product Follow-Ups
 
@@ -135,7 +133,7 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 ### Architecture / Implementation
 
-- OAD-001 through OAD-012 as applicable;
+- OAD-002 through OAD-012 as applicable;
 - field-level structured contracts;
 - physical persistence model/migrations;
 - identity implementation;

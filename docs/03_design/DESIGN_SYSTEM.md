@@ -1,6 +1,6 @@
 # Design System — Penatika
 
-> Defines initial visual and interaction principles for teacher-private and classroom-facing surfaces. Brand identity and implementation technology are not yet selected.
+> Defines initial visual and interaction principles for teacher-private and classroom-facing surfaces. Brand identity, component library, styling approach, palette, typography, Mathematics renderer, and icon library are not yet selected.
 
 ## Metadata
 
@@ -8,8 +8,15 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft foundation |
-| Version | `0.1` |
+| Version | `0.2` |
 | Last Updated | `2026-09-06` |
+
+## 0. Client Implementation Baseline
+
+- Client implementation framework: React + TypeScript.
+- Delivery strategy: browser-first web clients.
+- Client boundaries: Teacher Web (Preparation + private Controller) and separate Classroom Display Web.
+- Visual implementation choices such as component library, CSS framework, palette, typography, Mathematics renderer, and icon library remain open.
 
 ## 1. Design Principles
 
@@ -147,7 +154,7 @@ Formal conformance target remains open but must be chosen before pilot readiness
 ## 11. Open Design Decisions
 
 - Brand identity, logo, palette, and typography.
-- Component implementation framework.
+- Component library / styling approach, if any.
 - Mathematics notation renderer.
 - Exact target-device breakpoints and touch-target baseline.
 - Scene navigation and content-block visual grammar.
@@ -157,4 +164,5 @@ Formal conformance target remains open but must be chosen before pilot readiness
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Record browser-first React client baseline without selecting visual libraries | Codex |
 | `0.1` | `2026-09-06` | Initial design principles and component scope | Codex |

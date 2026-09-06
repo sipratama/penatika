@@ -61,7 +61,9 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 | Curriculum trust | BSKAP 046/H/KR/2025 as the Mathematics normative authority; official guidance is interpretive and local context is an overlay |
 | Product Owner | `sipratama` |
 | Business Model | Teacher-first freemium SaaS; Teacher Pro as the first paid offer; institutional path later |
-| Implementation stack | Not decided |
+| Client strategy | Browser-first React + TypeScript + Vite |
+| Client surfaces | Teacher Web (Preparation + Controller) and separate Classroom Display Web |
+| Backend | Not decided — OAD-002 |
 | Deployment target | Not decided |
 
 Material decisions are recorded in [`docs/02_architecture/adr/`](./docs/02_architecture/adr/).
@@ -140,7 +142,6 @@ This validator checks local Markdown links and unresolved core metadata placehol
 ## Open Architecture and Implementation Decisions
 
 - Curriculum ingestion, provenance contracts, local-context modeling, and official-guidance usage/licensing.
-- Client/frontend strategy.
 - Backend language/framework.
 - Persistence and migration technology.
 - Identity/authentication.

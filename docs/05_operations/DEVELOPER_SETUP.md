@@ -14,7 +14,9 @@
 
 Penatika currently contains canonical product, feature, architecture, design, engineering, operations, and delivery documentation. Application source code, package manifests, database migrations, and deployment configuration do not yet exist.
 
-Do not invent setup commands before the relevant stack is selected.
+Client architecture is selected: React, TypeScript, Vite, and browser-first Teacher Web + Classroom Display. No frontend source exists and no dependency installation command exists yet. Package manager and exact runtime version are not selected merely by this ADR.
+
+Do not invent setup commands before the remaining stack is selected.
 
 ## 2. Current Prerequisites
 
@@ -52,7 +54,7 @@ Read selectively:
 
 Resolve and record at minimum:
 
-- client strategy and frontend framework;
+- client strategy and frontend framework — resolved by ADR-0008;
 - backend language/framework;
 - database and migration tooling;
 - authentication approach;
@@ -86,10 +88,11 @@ When source exists, this document must add exact, executed instructions for:
 
 ## 8. Open Decisions
 
-All application-specific setup remains open because no implementation stack has been selected.
+Frontend source has not been scaffolded and no frontend dependency commands exist. Backend language/framework, database, identity, realtime transport, providers, and deployment remain open.
 
 ## 9. Change Log
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-06` | Record resolved client architecture without adding application setup commands | Codex |
 | `2026-09-06` | Initial pre-source developer setup baseline | Codex |
