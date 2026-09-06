@@ -1,8 +1,8 @@
-# Product Brief — <PROJECT_NAME>
+# Product Brief — Penatika
 
-> **Peran dokumen:** Authoritative source untuk **kenapa product ini ada, siapa yang dilayani, outcome apa yang dituju, dan constraint product/business apa yang membentuknya**.
+> **Peran dokumen:** Source of truth untuk alasan Penatika dibuat, pengguna yang dilayani, outcome yang dituju, serta constraint product dan business yang membentuknya.
 >
-> Detailed feature behavior berada di PRD dan Feature Specs. Technical design berada di architecture documentation.
+> Capability product berada di [PRD](./PRD.md). Perilaku feature berada di `docs/01_features/`. Technical design berada di dokumentasi architecture.
 
 ---
 
@@ -10,12 +10,12 @@
 
 | Field | Value |
 |---|---|
-| Product | `<PROJECT_NAME>` |
-| Status | Draft / Review / Locked |
+| Product | Penatika |
+| Status | Draft |
 | Version | `0.1` |
-| Owner | `<OWNER>` |
-| Last Updated | `<YYYY-MM-DD>` |
-| Primary Market | `<MARKET>` |
+| Owner | Open Question — belum ditetapkan |
+| Last Updated | `2026-09-06` |
+| Primary Market | Indonesia |
 
 ---
 
@@ -23,11 +23,17 @@
 
 ### Vision
 
-<Jelaskan perubahan jangka panjang yang ingin dihasilkan product dalam satu paragraf singkat.>
+Membantu guru Indonesia mengajar secara lebih alami dan adaptif dengan classroom teaching surface yang mengikuti intent guru tanpa mengambil alih kendali mengajar.
 
 ### Product Statement
 
-Untuk `<TARGET_USERS>` yang mengalami `<CORE_NEED>`, `<PROJECT_NAME>` adalah `<PRODUCT_CATEGORY>` yang memberikan `<PRIMARY_VALUE>`. Berbeda dengan `<ALTERNATIVE_OR_STATUS_QUO>`, product ini `<KEY_DIFFERENTIATOR>`.
+Untuk guru Indonesia yang perlu menyiapkan sekaligus menyesuaikan materi saat kelas berlangsung, Penatika adalah teaching copilot yang mengubah intent guru menjadi konten kelas terstruktur. Berbeda dari materi statis atau generic AI chat, Penatika menjaga guru tetap berada dalam alur mengajar, memisahkan kontrol privat dari tampilan siswa, dan memperlakukan keluaran AI sebagai usulan yang harus dibatasi serta divalidasi.
+
+### Core Principle
+
+> **Bicara. Tulis. Mengajar. AI mengikuti.**
+
+Guru tetap memegang kendali. AI adalah teaching copilot, bukan guru otonom.
 
 ---
 
@@ -35,28 +41,31 @@ Untuk `<TARGET_USERS>` yang mengalami `<CORE_NEED>`, `<PROJECT_NAME>` adalah `<P
 
 ### Core Problem
 
-<Jelaskan masalah utama dari sudut pandang user/business. Jangan membahas solusi terlebih dahulu.>
+Persiapan pelajaran dan delivery di kelas sering terpisah. Guru menyiapkan materi statis sebelum kelas, tetapi kebutuhan tak terduga selama mengajar mengharuskan guru mengubah penjelasan, contoh, latihan, atau visual secara manual.
+
+Generic AI chat dapat membantu menghasilkan konten, tetapi bukan classroom teaching surface. Penggunaannya dapat memutus alur mengajar, memaksa guru mengoperasikan chatbot, mengekspos proses yang seharusnya privat, dan menghasilkan konten matematika atau klaim kurikulum yang tidak boleh dipercaya tanpa validasi.
 
 ### Why It Matters
 
-<Jelaskan friction, cost, missed opportunity, risk, atau user pain yang ditimbulkan masalah tersebut.>
+- Guru kehilangan momentum saat harus berpindah alat atau menyusun ulang materi secara manual.
+- Materi yang tidak dapat diadaptasi membatasi respons terhadap pemahaman aktual siswa.
+- Konten AI yang langsung ditampilkan tanpa kontrol atau validasi dapat menyesatkan kelas.
+- Screen mirroring mencampur kontrol privat guru dengan tampilan yang dilihat siswa.
 
 ### Current Alternatives
 
-Bagaimana user menyelesaikan masalah ini hari ini?
+- Slide, dokumen, atau papan tulis yang disiapkan sebelum kelas.
+- Perubahan manual terhadap contoh, latihan, atau visual selama kelas.
+- Generic AI chat yang digunakan terpisah dari classroom display.
+- Screen mirroring dari perangkat guru.
+- Mengabaikan kebutuhan adaptasi dan melanjutkan materi yang sudah disiapkan.
 
-- `<ALTERNATIVE_1>`
-- `<ALTERNATIVE_2>`
-- `<MANUAL_WORKAROUND>`
-- `<DO_NOTHING / STATUS_QUO>`
-
-### Evidence
+### Evidence Status
 
 | Evidence | Source | Confidence |
 |---|---|---|
-| `<OBSERVATION>` | `<INTERVIEW / DATA / EXPERIENCE / RESEARCH>` | Low / Medium / High |
-
-Jangan menyatakan assumption sebagai fakta tervalidasi.
+| Problem, target user, desired workflow, dan constraints | Confirmed project discovery, `2026-09-06` | High untuk intended product direction; belum menjadi market validation |
+| Efektivitas solusi bagi guru dalam kelas nyata | Belum tersedia | Open assumption |
 
 ---
 
@@ -64,25 +73,26 @@ Jangan menyatakan assumption sebagai fakta tervalidasi.
 
 ### Primary User
 
-**Who:** `<PRIMARY_USER>`
+**Who:** Guru Matematika Indonesia untuk kelas 4 SD sampai kelas 9 SMP.
 
-**Context:**  
-<Kapan dan di mana user mengalami problem?>
+**Context:** Guru menyiapkan pelajaran menggunakan laptop atau PC, menghubungkannya ke classroom display, dan dapat menggunakan smartphone sebagai private teaching controller selama kelas.
 
 **Primary Job-to-be-Done**
 
-> Ketika `<SITUATION>`, saya ingin `<MOTIVATION>`, sehingga saya dapat `<EXPECTED_OUTCOME>`.
+> Ketika saya menyiapkan dan mengajar pelajaran Matematika, saya ingin mengubah materi secara langsung tanpa keluar dari alur mengajar, sehingga saya dapat merespons kebutuhan kelas sambil tetap mengendalikan apa yang dilihat siswa.
 
-### Secondary Users
+### Beneficiaries
 
-| User | Need | Why They Matter |
+| User | Need | MVP Role |
 |---|---|---|
-| `<USER>` | `<NEED>` | `<RATIONALE>` |
+| Siswa kelas 4 SD–9 SMP | Mendapat penjelasan, contoh, latihan, dan visual yang sesuai konteks pembelajaran | Beneficiary dan viewer classroom display; bukan primary product user |
 
 ### Explicitly Not Targeted Yet
 
-- `<USER_SEGMENT>`
-- `<USER_SEGMENT>`
+- Siswa sebagai pengguna perangkat individual.
+- Administrator sekolah dan workflow administrasi sekolah.
+- Mata pelajaran selain Matematika.
+- Guru di luar rentang kelas 4 SD sampai kelas 9 SMP.
 
 ---
 
@@ -90,21 +100,19 @@ Jangan menyatakan assumption sebagai fakta tervalidasi.
 
 ### Primary Value
 
-<Outcome berguna apa yang dibuat product?>
+Guru dapat menyiapkan, menyajikan, dan mengadaptasi pelajaran Matematika dari satu teaching workflow tanpa merasa sedang mengoperasikan AI chatbot.
 
 ### Differentiation
 
-Kenapa target user memilih product ini dibanding current alternative?
-
-1. `<DIFFERENTIATOR>`
-2. `<DIFFERENTIATOR>`
-3. `<DIFFERENTIATOR>`
+1. Teacher-first: guru mengendalikan pacing, approval, dan classroom display.
+2. Dual-surface: proses dan saran privat berada di teacher controller, sedangkan siswa hanya melihat konten yang sesuai.
+3. Structured content: AI memperbarui model konten kelas, bukan menghasilkan arbitrary HTML.
+4. Mathematics assurance: hasil matematika divalidasi secara deterministik bila memungkinkan.
+5. Curriculum grounding: klaim kurikulum menggunakan data yang dikontrol dan diberi versi.
 
 ### Product Promise
 
-> `<ONE-SENTENCE PROMISE>`
-
-Promise harus menggambarkan outcome, bukan daftar feature.
+> Penatika membantu guru berimprovisasi saat mengajar sementara AI menangani generasi dan adaptasi konten terstruktur di belakang layar.
 
 ---
 
@@ -112,74 +120,81 @@ Promise harus menggambarkan outcome, bukan daftar feature.
 
 ### User Outcomes
 
-- `<USER_OUTCOME_1>`
-- `<USER_OUTCOME_2>`
-- `<USER_OUTCOME_3>`
+- Guru dapat menghasilkan, meninjau, dan mengubah draft pelajaran sebelum mengajar.
+- Guru dapat memulai sesi, memasangkan smartphone, dan mengendalikan classroom display tanpa screen mirroring.
+- Guru dapat menggunakan suara, touch, mouse, stylus, dan digital ink sesuai perangkat yang tersedia.
+- Guru dapat meminta variasi penjelasan, contoh, pertanyaan, atau visual selama kelas.
+- Guru dapat menjaga suggestion, validation status, dan progress AI tetap privat saat diperlukan.
+- Guru dapat menyimpan hasil sesi mengajar.
 
-### Business / Product Outcomes
+### Product Outcomes
 
-- `<BUSINESS_OUTCOME_1>`
-- `<BUSINESS_OUTCOME_2>`
+- Membuktikan bahwa teacher-controlled AI classroom surface dapat mempertahankan alur mengajar.
+- Membuktikan bahwa structured content dan validation boundary dapat mengurangi risiko keluaran AI yang tidak tepat.
+- Menghasilkan evidence pilot yang cukup untuk memutuskan scope lanjutan.
 
 ---
 
 ## 6. Goals
 
-Goal harus measurable atau setidaknya observable.
+### G-01 — Complete Teacher-to-Classroom Workflow
 
-### G-01 — `<GOAL_NAME>`
+**Goal:** Guru dapat menyelesaikan alur prepare, review, present, adapt, dan save dalam satu pengalaman yang koheren.
 
-**Goal**  
-<Description>
+**Evidence of Success:** Prototype atau pilot menunjukkan alur end-to-end dapat dilakukan tanpa berpindah ke generic AI chat atau screen mirroring.
 
-**Evidence of Success**  
-<Metric atau observable condition>
+### G-02 — Preserve Teacher Control
 
-### G-02 — `<GOAL_NAME>`
+**Goal:** AI tidak menampilkan atau mengubah konten siswa di luar kebijakan kontrol dan approval guru.
 
-**Goal**  
-<Description>
+**Evidence of Success:** Setiap jalur perubahan classroom content mempunyai state, authorization, dan acceptance behavior yang dapat diuji.
 
-**Evidence of Success**  
-<Metric atau observable condition>
+### G-03 — Establish Mathematics and Curriculum Trust Boundaries
+
+**Goal:** Konten Matematika dan klaim kurikulum diperlakukan sesuai tingkat kepercayaannya.
+
+**Evidence of Success:** Scoped mathematics content melewati deterministic validation bila tersedia dan curriculum reference dapat ditelusuri ke versi sumber yang digunakan.
 
 ---
 
 ## 7. Non-Goals
 
-Hal berikut secara eksplisit berada di luar arah product/fase saat ini:
-
-- `<NON_GOAL_1>`
-- `<NON_GOAL_2>`
-- `<NON_GOAL_3>`
-
-Non-Goals mencegah contributor dan AI memperluas scope secara accidental.
+- AI guru otonom.
+- Student-device participation sebagai kebutuhan core experience.
+- PDF atau PowerPoint lesson import.
+- Advanced graphing atau 3D visualization.
+- Attendance management.
+- School administration features.
+- Ketergantungan pada smart board atau proprietary hardware.
+- Dukungan mata pelajaran di luar Matematika pada MVP.
 
 ---
 
 ## 8. Product Principles
 
-Principles membantu keputusan ketika detailed requirement belum lengkap.
+### P-01 — Teacher Control Before Automation
 
-### P-01 — `<PRINCIPLE_NAME>`
+Guru menentukan pacing dan konten yang ditampilkan. Automation tidak boleh menghilangkan keputusan material dari guru.
 
-<Penjelasan singkat.>
+### P-02 — Teaching Flow Before Chat Interaction
 
-### P-02 — `<PRINCIPLE_NAME>`
+AI harus mengikuti workflow mengajar, bukan mengubah kegiatan mengajar menjadi percakapan chatbot.
 
-<Penjelasan singkat.>
+### P-03 — Private Control, Appropriate Display
 
-### P-03 — `<PRINCIPLE_NAME>`
+Kontrol, suggestion, dan status yang hanya dibutuhkan guru tidak boleh otomatis muncul pada student-facing display.
 
-<Penjelasan singkat.>
+### P-04 — Structured and Verifiable Content
 
-Contoh:
-- outcome before feature count;
-- user control before automation;
-- progressive disclosure before overwhelming configuration;
-- safe defaults before maximum flexibility.
+Classroom content menggunakan struktur yang dapat dirender konsisten, divalidasi, diuji, dan dipulihkan.
 
-Hanya gunakan principle yang benar-benar relevan.
+### P-05 — Graceful Degradation
+
+Gangguan AI atau konektivitas tidak boleh membuat seluruh classroom session tidak dapat digunakan jika fungsi lokal atau state terakhir masih dapat dipertahankan dengan aman.
+
+### P-06 — Data Minimization
+
+Penatika hanya mengumpulkan data yang diperlukan untuk outcome product. Raw push-to-talk audio tidak disimpan secara default.
 
 ---
 
@@ -187,145 +202,131 @@ Hanya gunakan principle yang benar-benar relevan.
 
 ### In Scope
 
-MVP harus membuktikan:
-
-- `<CAPABILITY / HYPOTHESIS>`
-- `<CAPABILITY / HYPOTHESIS>`
-- `<CAPABILITY / HYPOTHESIS>`
+- AI-assisted lesson draft dengan curriculum-aware context.
+- Review dan modification sebelum kelas.
+- Cloud classroom session dengan backend-managed authoritative state.
+- Pairing teacher smartphone dan classroom display tanpa screen mirroring atau shared Wi-Fi dependency.
+- Structured classroom canvas.
+- Voice command dan direct manipulation untuk adaptasi konten.
+- Digital ink: write, highlight, erase, undo, redo, dan clear.
+- Private teacher suggestions dan public classroom presentation.
+- Deterministic mathematics validation bila memungkinkan.
+- Controlled, versioned curriculum grounding.
+- Save classroom session.
+- Prioritas validation awal: pecahan kelas 5 dan aljabar dasar atau persamaan linear kelas 7.
 
 ### Out of Scope
 
-MVP tidak mencakup:
-
-- `<CAPABILITY>`
-- `<CAPABILITY>`
-- `<CAPABILITY>`
+Semua item pada bagian Non-Goals serta capability yang belum diperlukan untuk membuktikan core teacher-to-classroom workflow.
 
 ### MVP Exit Condition
 
-MVP dianggap cukup tervalidasi untuk investment berikutnya ketika:
+MVP siap dievaluasi untuk investment berikutnya ketika core workflow dapat digunakan end-to-end dalam prototype atau pilot, teacher control dapat dibuktikan, failure/degraded states telah diuji, dan evidence penggunaan cukup untuk menilai apakah Penatika memperbaiki alur mengajar.
 
-<Describe required evidence.>
-
-Detailed capability scope tetap berada di PRD.
+Target kuantitatif dan desain pilot belum diputuskan.
 
 ---
 
 ## 10. Business Model
 
-Isi hanya jika relevan.
-
-### Monetization
-
-`<FREE / ONE-TIME / SUBSCRIPTION / TRANSACTION / B2B / OTHER>`
-
-### Payer
-
-`<WHO PAYS>`
-
-### Pricing Assumption
-
-`<CURRENT ASSUMPTION>`
-
-### Cost Drivers
-
-- `<INFRASTRUCTURE>`
-- `<THIRD-PARTY SERVICE>`
-- `<OPERATIONS>`
-- `<SUPPORT>`
-
-Pricing assumption bukan final product requirement.
+Monetization, payer, pricing, dan business model belum diputuskan. Keputusan ini tidak diperlukan untuk baseline MVP, tetapi harus ditetapkan sebelum commercial release planning.
 
 ---
 
 ## 11. Success Metrics
 
-Bagian ini adalah canonical owner untuk **product-level success metrics**.
+Primary metric dan target kuantitatif belum dipilih karena belum ada baseline atau desain pilot.
 
-### Primary Metric
+Candidate evidence yang perlu didefinisikan sebelum pilot:
 
-| Metric | Definition | Target / Direction |
-|---|---|---|
-| `<METRIC>` | `<HOW IT IS CALCULATED>` | `<TARGET>` |
+- keberhasilan penyelesaian core teaching workflow;
+- waktu atau jumlah interruption saat melakukan live adaptation;
+- tingkat acceptance atau rejection terhadap AI proposals;
+- jumlah validation failure yang tertangkap sebelum display;
+- keberhasilan recovery dari gangguan konektivitas atau AI provider;
+- qualitative teacher confidence dan perceived control.
 
-### Supporting Metrics
-
-| Metric | Why It Matters |
-|---|---|
-| `<METRIC>` | `<RATIONALE>` |
-
-### Guardrail Metrics
-
-| Metric | Guardrail |
-|---|---|
-| `<METRIC>` | `<LIMIT OR EXPECTATION>` |
-
-PRD/analytics documentation boleh mereferensikan metric ini tetapi tidak mendefinisikan target berbeda tanpa update Product Brief.
+Metric final dan target tetap menjadi Open Product Decision.
 
 ---
 
 ## 12. Constraints
 
 ### Product Constraints
-- `<CONSTRAINT>`
 
-### Business Constraints
-- `<CONSTRAINT>`
+- Market awal Indonesia.
+- Mata pelajaran awal Matematika untuk kelas 4 SD–9 SMP.
+- Teacher-first, software-first, dan hardware-agnostic.
+- Student devices tidak diperlukan untuk core experience.
+- Guru bertanggung jawab atas classroom content dan pacing.
+- Classroom content harus terstruktur, bukan arbitrary generated HTML.
 
-### Legal / Compliance Constraints
-- `<CONSTRAINT OR N/A>`
+### Environment Constraints
 
-### Technical Constraints
+- Minimum setup: smartphone guru, laptop atau PC, classroom display, dan koneksi internet.
+- Pairing tidak boleh bergantung pada screen mirroring atau shared Wi-Fi.
+- Mouse, touch, stylus, dan digital ink harus diperlakukan sebagai input yang relevan.
 
-Hanya masukkan technical constraint yang benar-benar membentuk product, misalnya:
-- mandatory integration;
-- platform restriction;
-- data residency;
-- offline requirement;
-- compatibility requirement.
+### Trust, Privacy, and Safety Constraints
 
-Detailed architecture choice tidak berada di sini.
+- AI output adalah untrusted proposal sampai melewati policy dan validation yang berlaku.
+- Mathematics harus divalidasi secara deterministik bila memungkinkan.
+- Curriculum claims harus menggunakan controlled and versioned data.
+- Student data collection dan privacy exposure harus diminimalkan.
+- Raw push-to-talk audio tidak disimpan secara default.
+- Product harus mempunyai graceful degradation ketika AI atau internet tidak andal.
+
+### Technology Constraints
+
+- Backend-managed classroom state adalah constraint yang sudah dikonfirmasi.
+- Programming language, framework, database, cloud provider, deployment target, identity solution, realtime transport, AI provider, dan speech provider belum diputuskan.
 
 ---
 
 ## 13. Dependencies
 
-External condition yang dibutuhkan product:
-
-| Dependency | Why Needed | Risk |
+| Dependency | Purpose | Status |
 |---|---|---|
-| `<DEPENDENCY>` | `<RATIONALE>` | Low / Medium / High |
+| Controlled curriculum source | Grounding klaim kurikulum | Source, licensing, dan version belum dipilih |
+| AI generation capability | Draft dan adaptation proposal | Provider/model belum dipilih |
+| Speech recognition capability | Push-to-talk teacher commands | Provider/approach belum dipilih |
+| Deterministic mathematics validation | Memeriksa hasil scoped mathematics | Engine/implementation belum dipilih |
+| Internet connectivity | Cloud session dan remote services | Degradation boundary belum final |
 
 ---
 
 ## 14. Assumptions
 
-Bagian ini adalah canonical owner untuk **product-level assumptions**.
-
-| ID | Assumption | Validation Method | Status |
+| ID | Assumption | Validation Approach | Status |
 |---|---|---|---|
-| A-01 | `<ASSUMPTION>` | `<HOW TO TEST>` | Open |
-| A-02 | `<ASSUMPTION>` | `<HOW TO TEST>` | Open |
+| A-01 | Smartphone dapat menjadi private controller yang dapat diterima guru saat mengajar | Prototype observation dan teacher feedback | Open |
+| A-02 | Structured teaching canvas lebih sedikit mengganggu alur daripada generic AI chat | Comparative prototype/pilot observation | Open |
+| A-03 | Konektivitas kelas cukup untuk cloud-mediated session dengan degradation support | Environment testing pada target sekolah | Open |
+| A-04 | Deterministic validation dapat mencakup risiko utama pada topik MVP | Define validation corpus dan evaluate coverage | Open |
+| A-05 | Curriculum source yang dapat dikontrol dan diberi versi tersedia untuk scope awal | Source and licensing review | Open |
 
 ---
 
 ## 15. Open Product Questions
 
-| ID | Question | Owner | Target Decision |
-|---|---|---|---|
-| Q-01 | `<QUESTION>` | `<OWNER>` | `<DATE / MILESTONE>` |
-
-Saat resolved, pindahkan keputusan ke authoritative document yang sesuai.
+| ID | Question | Decision Needed By |
+|---|---|---|
+| Q-01 | Curriculum source dan versi apa yang menjadi authoritative untuk MVP? | Sebelum curriculum-backed content implementation |
+| Q-02 | AI action mana yang memerlukan explicit approval sebelum tampil di classroom display? | Sebelum live adaptation implementation |
+| Q-03 | Fungsi minimum apa yang harus tetap tersedia saat konektivitas atau AI provider terganggu? | Sebelum end-to-end classroom pilot |
+| Q-04 | Seberapa luas pilot pertama di luar dua topik Matematika prioritas? | Sebelum pilot planning |
+| Q-05 | Bagian mana dari materi Pendago / AI Teaching Canvas yang masih valid untuk dimigrasikan? | Sebelum requirements baseline dikunci |
+| Q-06 | Business model, payer, dan commercial path apa yang dituju? | Sebelum commercial release planning |
+| Q-07 | Siapa owner product dan approver requirement Penatika? | Sebelum requirement locking |
 
 ---
 
 ## 16. Related Documents
 
-- Product Requirements: `./PRD.md`
-- Product Roadmap: `./ROADMAP.md`
-- Feature Specifications: `../01_features/`
-- System Architecture: `../02_architecture/SYSTEM_ARCHITECTURE.md`
-- Risks: `../06_delivery/RISKS.md`
+- [Product Requirements Document](./PRD.md)
+- [Product Roadmap](./ROADMAP.md)
+- [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
+- [Risks](../06_delivery/RISKS.md)
 
 ---
 
@@ -333,4 +334,4 @@ Saat resolved, pindahkan keputusan ke authoritative document yang sesuai.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
-| 0.1 | `<YYYY-MM-DD>` | Initial draft | `<AUTHOR>` |
+| `0.1` | `2026-09-06` | Initial Penatika product baseline from confirmed discovery context | Codex |

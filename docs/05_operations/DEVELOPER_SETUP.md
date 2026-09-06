@@ -1,282 +1,94 @@
-# Developer Setup — <PROJECT_NAME>
+# Developer Setup — Penatika
 
-> **Document role:** Authoritative instructions for getting a development environment from a clean machine to a verified local run.
->
-> Keep this document executable and current. Do not duplicate configuration definitions that belong in `.env.example` or `CONFIGURATION.md`.
+> Active baseline for working with the initialized repository. Application setup commands will be added only after technology decisions and source scaffolding.
 
----
+## Metadata
 
-## 1. Supported Development Environment
-
-| Tool / Platform | Supported Version |
+| Field | Value |
 |---|---|
-| OS | `<macOS / Linux / Windows/WSL>` |
-| Runtime | `<VERSION>` |
-| Package Manager | `<VERSION>` |
-| Container Runtime | `<Docker / Podman / N/A>` |
-| Database Client | `<OPTIONAL>` |
+| Product | Penatika |
+| Status | Active documentation baseline; application setup pending |
+| Last Updated | `2026-09-06` |
 
-Pin versions where incompatibility is material.
+## 1. Current Repository State
 
----
+Penatika currently contains canonical product, feature, architecture, design, engineering, operations, and delivery documentation. Application source code, package manifests, database migrations, and deployment configuration do not yet exist.
 
-## 2. Prerequisites
+Do not invent setup commands before the relevant stack is selected.
 
-Install:
-- `<TOOL>`;
-- `<TOOL>`;
-- `<TOOL>`.
+## 2. Current Prerequisites
 
-Verify:
+- Git.
+- Python 3 for the repository validator.
+- A Markdown-capable editor.
+- Access to the repository.
 
-```bash
-<command> --version
-```
+No Node.js, JVM, .NET, Go, Rust, database, container, or cloud prerequisite is currently authoritative.
 
----
+## 3. Validate the Initialized Repository
 
-## 3. Clone
+Run:
 
 ```bash
-git clone <REPOSITORY_URL>
-cd <PROJECT_DIRECTORY>
+python3 scripts/validate_template.py --project-mode
 ```
 
----
+This validates Markdown links and unresolved core metadata placeholders. It does not validate product quality or application behavior.
 
-## 4. Environment Configuration
+## 4. Required Reading Before Implementation
 
-Copy the example:
+Read selectively:
 
-```bash
-cp .env.example .env
-```
+1. `AGENTS.md`;
+2. relevant section of `docs/00_product/PRD.md`;
+3. relevant feature specification in `docs/01_features/`;
+4. `docs/02_architecture/SYSTEM_ARCHITECTURE.md` and relevant ADRs;
+5. relevant contracts after they are created;
+6. relevant standards in `docs/standards/`;
+7. source and tests after they exist.
 
-Then configure required local values.
+## 5. Before Source Scaffolding
 
-Never copy production secrets into a local `.env`.
+Resolve and record at minimum:
 
-See:
+- client strategy and frontend framework;
+- backend language/framework;
+- database and migration tooling;
+- authentication approach;
+- realtime protocol;
+- contract formats and tooling;
+- initial provider strategy for AI, speech, curriculum, and Mathematics validation;
+- local secret/configuration approach.
 
-`docs/05_operations/CONFIGURATION.md`
+Material decisions require ADRs where defined by `AGENTS.md`.
 
----
+## 6. Future Setup Sections
 
-## 5. Local Dependencies
+When source exists, this document must add exact, executed instructions for:
 
-### Option A — Containers
+- dependency installation;
+- local configuration and secret handling;
+- database setup and migrations;
+- provider fakes or local emulators;
+- running each client and backend;
+- unit, integration, contract, end-to-end, accessibility, and AI-evaluation commands;
+- formatting and linting;
+- supported operating systems or known setup limitations.
 
-```bash
-<docker/podman compose command>
-```
+## 7. Development Safety
 
-### Option B — Native
+- Never commit secrets or raw production/student data.
+- Do not use raw classroom audio as a fixture.
+- Prefer synthetic or sanitized lesson and evaluation data.
+- Do not create application folders until architecture and stack decisions justify their structure.
+- Do not weaken schema, validation, authorization, or tests to make a prototype appear complete.
 
-`<INSTRUCTIONS>`
+## 8. Open Decisions
 
-Choose one canonical path where possible. Too many setup paths increase maintenance cost.
+All application-specific setup remains open because no implementation stack has been selected.
 
----
+## 9. Change Log
 
-## 6. Database Initialization
-
-```bash
-<CREATE/START DB>
-<MIGRATION COMMAND>
-<SEED COMMAND IF NEEDED>
-```
-
-Describe:
-- required database name;
-- migration tool;
-- optional seed/demo data;
-- reset command.
-
----
-
-## 7. Install Dependencies
-
-### Backend
-
-```bash
-<COMMAND>
-```
-
-### Frontend
-
-```bash
-<COMMAND>
-```
-
-Remove sections that do not apply.
-
----
-
-## 8. Run Locally
-
-### Backend
-
-```bash
-<COMMAND>
-```
-
-Expected:
-
-```text
-<PORT / HEALTH URL>
-```
-
-### Frontend
-
-```bash
-<COMMAND>
-```
-
-Expected:
-
-```text
-<LOCAL URL>
-```
-
----
-
-## 9. Verify Setup
-
-A successful setup should prove more than process startup.
-
-### Health
-
-```bash
-<COMMAND>
-```
-
-### Tests
-
-```bash
-<FAST TEST COMMAND>
-```
-
-### Critical Local Flow
-
-`<SHORT MANUAL OR AUTOMATED CHECK>`
-
----
-
-## 10. Common Development Commands
-
-| Task | Command |
-|---|---|
-| Build | `<COMMAND>` |
-| Unit tests | `<COMMAND>` |
-| Integration tests | `<COMMAND>` |
-| Lint | `<COMMAND>` |
-| Format | `<COMMAND>` |
-| Migrations | `<COMMAND>` |
-| Generate contracts/client | `<COMMAND>` |
-| Start local stack | `<COMMAND>` |
-| Stop local stack | `<COMMAND>` |
-
----
-
-## 11. Test Accounts / Local Identity
-
-Do not place real credentials here.
-
-Use documented local-only seeded identities:
-
-| Role | Username | Credential Source |
+| Date | Change | Author |
 |---|---|---|
-| `<ROLE>` | `<USER>` | `<LOCAL SEED / ENV>` |
-
----
-
-## 12. External Service Sandboxes
-
-| Service | Environment | Setup |
-|---|---|---|
-| `<SERVICE>` | Sandbox / Mock | `<LINK/INSTRUCTION>` |
-
-Prefer fake/local adapters for repeatable development where appropriate.
-
----
-
-## 13. IDE / Editor
-
-Optional recommended configuration:
-- formatting;
-- linting;
-- language server;
-- test integration.
-
-Do not require a specific commercial IDE unless project tooling truly depends on it.
-
----
-
-## 14. AI Agent Setup
-
-Agents should start from:
-- `AGENTS.md`;
-- `CLAUDE.md` for Claude Code adapter;
-- relevant project documentation only.
-
-Do not require agents to read all docs.
-
----
-
-## 15. Troubleshooting
-
-### <PROBLEM>
-
-**Symptom**
-`<ERROR>`
-
-**Cause**
-`<CAUSE>`
-
-**Fix**
-```bash
-<COMMAND>
-```
-
-Only include recurring project-specific issues.
-
----
-
-## 16. Clean Reset
-
-```bash
-<COMMANDS>
-```
-
-Clearly warn if the command deletes local data.
-
----
-
-## 17. Setup Acceptance Checklist
-
-- [ ] required runtimes installed;
-- [ ] dependencies installed;
-- [ ] local configuration created;
-- [ ] infrastructure running;
-- [ ] migrations applied;
-- [ ] backend starts;
-- [ ] frontend starts where applicable;
-- [ ] health check passes;
-- [ ] fast test suite passes.
-
----
-
-## 18. Related Documents
-
-- Configuration: `./CONFIGURATION.md`
-- Deployment: `./DEPLOYMENT.md`
-- Runbook: `./RUNBOOK.md`
-- Test Strategy: `../04_engineering/TEST_STRATEGY.md`
-
----
-
-## 19. Change Log
-
-| Version | Date | Change | Author |
-|---|---|---|---|
-| 0.1 | `<YYYY-MM-DD>` | Initial draft | `<AUTHOR>` |
+| `2026-09-06` | Initial pre-source developer setup baseline | Codex |

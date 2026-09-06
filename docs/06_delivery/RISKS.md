@@ -1,128 +1,53 @@
-# Risk Register — <PROJECT_NAME>
+# Risks — Penatika
 
-> **Document role:** Track material product, engineering, security, operational, and delivery risks that require explicit ownership or mitigation.
->
-> Do not use this file as a list of every imaginable bad outcome.
+> Active product, delivery, security, reliability, and architecture risk register.
 
----
+## Metadata
 
-## 1. Risk Scale
+| Field | Value |
+|---|---|
+| Product | Penatika |
+| Status | Active |
+| Last Updated | `2026-09-06` |
 
-### Likelihood
-- Low
-- Medium
-- High
+## Risk Register
 
-### Impact
-- Low
-- Medium
-- High
-- Critical
-
-### Status
-- Open
-- Mitigating
-- Accepted
-- Closed
-- Materialized
-
----
-
-## 2. Active Risks
-
-| ID | Risk | Category | Likelihood | Impact | Mitigation | Owner | Status |
-|---|---|---|---|---|---|---|---|
-| R-001 | `<RISK>` | Product / Tech / Security / Ops / Delivery | `<L>` | `<I>` | `<ACTION>` | `<OWNER>` | Open |
-
----
-
-## 3. Risk Detail
-
-### R-001 — <RISK_NAME>
-
-**Description**  
-<Describe the risk and trigger condition.>
-
-**Potential Impact**
-- `<IMPACT>`
-
-**Likelihood**  
-`Low / Medium / High`
-
-**Impact**  
-`Low / Medium / High / Critical`
-
-**Early Signals**
-- `<SIGNAL>`
-
-**Mitigation**
-1. `<ACTION>`
-2. `<ACTION>`
-
-**Contingency**
-`<WHAT TO DO IF IT MATERIALIZES>`
-
-**Owner**
-`<OWNER>`
-
-**Review**
-`<DATE / MILESTONE>`
-
----
-
-## 4. Accepted Risks
-
-| ID | Risk | Acceptance Rationale | Owner | Review/Expiry |
+| ID | Risk | Impact | Current Response | Owner / Status |
 |---|---|---|---|---|
-| `<ID>` | `<RISK>` | `<RATIONALE>` | `<OWNER>` | `<DATE>` |
+| R-001 | Teacher controller distracts rather than supports teaching | Core product hypothesis fails | Prototype realistic teaching flows; measure interruptions and teacher control | Owner open; validation required |
+| R-002 | Classroom network or internet is too unreliable | Session or live adaptation becomes unusable | Backend authority, safe cached projection, visible degradation; define minimum degraded mode | Owner open; product decision pending |
+| R-003 | AI latency interrupts classroom flow | Teacher abandons live adaptation | Measure separate latency stages; support progress, cancellation, timeout, and safe unchanged content | Owner open; provider decision pending |
+| R-004 | AI produces plausible but incorrect Mathematics | Student misinformation | Deterministic validation, explicit unsupported state, teacher control, versioned corpus | Owner open; validator decision pending |
+| R-005 | Curriculum source is unavailable, ambiguous, outdated, or restricted | False alignment claims or implementation block | Select controlled source/version and verify licensing/integrity | Owner open; product decision pending |
+| R-006 | Private teacher information leaks to classroom display | Privacy and trust failure | Separate projection schemas, allow-lists, threat tests, architecture invariant | Owner open; release blocker |
+| R-007 | Pairing or authorization can be abused | Unauthorized session access or control | Expiring purpose-bound pairing, server authorization, replay/rate controls | Owner open; identity design pending |
+| R-008 | Multi-device state diverges | Wrong or lost classroom content | Backend authority, revision-aware commands, reconciliation, idempotency | Owner open; protocol decision pending |
+| R-009 | Structured content model is too narrow | Adaptation cannot express useful teaching changes | Start with MVP blocks; version schema; expand from validated needs | Owner open; design work required |
+| R-010 | Raw audio or provider payload is retained unexpectedly | Sensitive-data exposure | Ephemeral audio baseline, provider review, redaction and non-retention tests | Owner open; release blocker |
+| R-011 | Provider cost or rate limits make usage unsustainable | Outage or unplanned spend | Quotas, resource bounds, model comparison, cost telemetry | Owner open; business/provider decisions pending |
+| R-012 | No clear product owner or approver | Requirements and risk decisions stall | Assign ownership before locking requirements or pilot scope | Open |
+| R-013 | Previous Pendago decisions conflict with new baseline | Scope drift or lost context | Import only traceable, reviewed decisions into canonical Penatika docs | Open; source material not inspected |
+| R-014 | Target device/browser/stylus behavior varies | Poor classroom usability | Define compatibility matrix and test real devices/displays | Owner open; matrix pending |
+| R-015 | Accessibility is deferred behind prototype speed | Excludes users and creates costly rework | Include accessibility in design, components, tests, and pilot gates | Owner open; conformance target pending |
+| R-016 | Premature distributed architecture slows validation | Delivery and operations complexity | Modular-monolith baseline and ADR review before extraction | Mitigated by ADR-0001 |
+| R-017 | Retention and deletion remain undefined before real use | Privacy and operational risk | Resolve before production/pilot data collection | Owner open; blocking for real data |
 
-Risk acceptance should be deliberate, not merely lack of action.
+## Review Rules
 
----
+- Review before each architecture or release milestone.
+- High-impact unresolved risks require an owner and explicit acceptance, mitigation, avoidance, or transfer decision.
+- New student data, providers, imports, deployments, or classroom pilots trigger risk and threat-model review.
+- Do not close a risk without evidence.
 
-## 5. Materialized Risks / Issues
+## Related Documents
 
-When a risk becomes an active issue, track operational work in the issue/incident system and keep only the relevant risk context here.
+- [Product Brief](../00_product/PRODUCT_BRIEF.md)
+- [Roadmap](../00_product/ROADMAP.md)
+- [Threat Model](../04_engineering/THREAT_MODEL.md)
+- [Known Limitations](./KNOWN_LIMITATIONS.md)
 
-| ID | Materialized On | Tracking Reference | Outcome |
-|---|---|---|---|
-| `<ID>` | `<DATE>` | `<ISSUE>` | `<STATUS>` |
+## Change Log
 
----
-
-## 6. Closed Risks
-
-| ID | Closed | Reason |
+| Date | Change | Author |
 |---|---|---|
-| `<ID>` | `<DATE>` | `<MITIGATED / NO LONGER RELEVANT>` |
-
----
-
-## 7. Review Cadence
-
-Review when:
-- roadmap milestone changes;
-- major architecture decision is made;
-- new critical integration is added;
-- new sensitive data is introduced;
-- security incident or major defect occurs;
-- release risk materially changes.
-
-Avoid arbitrary recurring review if the project does not need it.
-
----
-
-## 8. Related Documents
-
-- Product Roadmap: `../00_product/ROADMAP.md`
-- System Architecture: `../02_architecture/SYSTEM_ARCHITECTURE.md`
-- Threat Model: `../04_engineering/THREAT_MODEL.md`
-- Known Limitations: `./KNOWN_LIMITATIONS.md`
-
----
-
-## 9. Change Log
-
-| Version | Date | Change | Author |
-|---|---|---|---|
-| 0.1 | `<YYYY-MM-DD>` | Initial draft | `<AUTHOR>` |
+| `2026-09-06` | Initial risk register | Codex |

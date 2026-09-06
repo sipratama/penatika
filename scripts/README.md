@@ -212,13 +212,13 @@ docs/PROJECT_INITIALIZATION.md
 Validator memeriksa link repository-local seperti:
 
 ```md
-[PRD](./docs/00_product/PRD.md)
+[PRD](../docs/00_product/PRD.md)
 ```
 
 atau:
 
 ```md
-[System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
+[System Architecture](../docs/02_architecture/SYSTEM_ARCHITECTURE.md)
 ```
 
 Jika file target tidak ditemukan, validation gagal.

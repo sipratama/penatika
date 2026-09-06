@@ -1,173 +1,128 @@
-# Configuration — <PROJECT_NAME>
+# Configuration — Penatika
 
-> **Document role:** Authoritative human-readable reference for runtime configuration semantics.
->
-> `.env.example`, deployment manifests, secret stores, or configuration schemas remain executable sources for actual keys/values. Never place real secrets in this document.
+> Defines configuration ownership and categories without inventing environment-variable names or provider settings before technology selection.
 
----
+## Metadata
 
-## 1. Principles
-
-- configuration varies by environment; code behavior rules should not;
-- secrets are separated from non-secret configuration;
-- defaults must be safe;
-- missing required configuration should fail clearly;
-- configuration changes that alter product behavior should be intentional and documented;
-- sensitive values must never be committed.
-
----
-
-## 2. Configuration Sources
-
-Precedence, highest first:
-
-1. `<RUNTIME OVERRIDE>`
-2. `<SECRET STORE / ENVIRONMENT>`
-3. `<ENV FILE FOR LOCAL ONLY>`
-4. `<SAFE CODE DEFAULT>`
-
-Document actual project precedence.
-
----
-
-## 3. Environment Variables
-
-| Variable | Required | Secret? | Default | Purpose |
-|---|---:|---:|---|---|
-| `<NAME>` | Yes/No | Yes/No | `<DEFAULT/NONE>` | `<PURPOSE>` |
-
-Rules:
-- use stable names;
-- do not overload one variable with multiple meanings;
-- removed variables should have migration guidance when used operationally;
-- secret variables should not have real example values.
-
----
-
-## 4. Application Configuration
-
-### Server
-
-| Setting | Meaning |
+| Field | Value |
 |---|---|
-| `<SETTING>` | `<MEANING>` |
+| Product | Penatika |
+| Status | Active conceptual baseline |
+| Last Updated | `2026-09-06` |
 
-### Database
+## 1. Configuration Principles
 
-| Setting | Meaning |
-|---|---|
-| `<SETTING>` | `<MEANING>` |
+- Configuration changes behavior within approved architecture; it must not silently redefine product requirements.
+- Secrets remain separate from non-secret configuration.
+- Client-delivered configuration is public and cannot contain authoritative secrets.
+- Environment-specific values must not be hard-coded into domain logic.
+- Safe defaults must not bypass authorization, validation, privacy, or assurance requirements.
+- Configuration names and schemas become authoritative only after stack and deployment decisions.
 
-### Cache
+## 2. Configuration Categories
 
-`<SETTINGS / N/A>`
+### Runtime and Environment
 
-### Messaging
+- environment identity;
+- public client origin(s);
+- backend and realtime endpoints;
+- regional/timezone behavior where required;
+- feature maturity flags with explicit ownership.
 
-`<SETTINGS / N/A>`
+### Identity and Session
 
-### Frontend
+- identity provider integration;
+- session lifetime;
+- pairing credential lifetime and limits;
+- participant and controller policies;
+- cookie/token controls appropriate to the selected clients.
 
-Only public/client-safe values may be exposed to browser bundles.
+### Classroom Session
 
----
+- command and payload bounds;
+- reconnect and stale-state policy;
+- session duration bounds;
+- save and retention settings;
+- degraded-mode capability after product decision.
 
-## 5. Secrets
+### AI and Speech
 
-Examples:
+- provider/model identifiers;
+- credentials and endpoint settings;
+- timeouts, retries, concurrency, quotas, and cost limits;
+- prompt/policy version;
+- provider data-retention controls;
+- fallback strategy if selected.
+
+### Mathematics Assurance
+
+- enabled validators and versions;
+- supported grade/topic scope;
+- validation timeouts and resource limits;
+- corpus or rule-set version.
+
+### Curriculum
+
+- controlled source identifier and version;
+- ingestion or retrieval endpoint;
+- integrity and licensing metadata;
+- active supported scope.
+
+### Observability
+
+- log level;
+- trace and metric exporters;
+- sampling;
+- redaction policy;
+- alerting integration;
+- environment and deployment markers.
+
+## 3. Secret Classification
+
+Secret examples expected after provider selection:
+
+- identity signing or client secrets;
 - database credentials;
-- API keys;
-- OAuth client secrets;
-- signing keys;
-- webhook secrets.
+- AI and speech provider credentials;
+- curriculum-source credentials if required;
+- telemetry ingestion secrets;
+- session-signing keys.
 
-Requirements:
-- stored in approved secret mechanism;
-- redacted from logs;
-- not committed;
-- rotatable where risk requires;
-- scoped with least privilege.
+Secrets must use an approved secret manager or local ignored mechanism and must never be committed, logged, embedded in client bundles, or copied into documentation.
 
----
+## 4. Environment Model
 
-## 6. Environment Matrix
+The environment topology is not selected. At minimum, implementation planning should distinguish local development, automated test, controlled evaluation, pilot/staging, and production when those environments become relevant.
 
-| Setting / Capability | Local | Test | Staging | Production |
-|---|---|---|---|---|
-| `<SETTING>` | `<VALUE TYPE>` | `<VALUE TYPE>` | `<VALUE TYPE>` | `<VALUE TYPE>` |
+Production-like data must not be copied into lower environments without an approved protected process.
 
-Do not document actual production secrets.
+## 5. Validation and Startup Behavior
 
----
+After implementation:
 
-## 7. Feature Flags
+- configuration should be validated at startup;
+- missing required secrets should fail clearly and safely;
+- invalid bounds or incompatible versions should not silently fall back;
+- public error output must not reveal secret values;
+- effective configuration should be observable without exposing secrets.
 
-| Flag | Owner | Default | Purpose | Removal Condition |
-|---|---|---|---|---|
-| `<FLAG>` | `<OWNER>` | Off | `<PURPOSE>` | `<WHEN>` |
+## 6. Open Decisions
 
-Feature flags should not become permanent undocumented configuration.
+- Configuration library and schema format.
+- Environment topology and deployment platform.
+- Secret manager.
+- Exact configuration keys and ownership.
+- Runtime feature-flag approach and governance.
+- Provider-specific retention and regional settings.
 
-For security-sensitive enforcement, feature flags require explicit analysis.
+## 7. Related Documents
 
----
+- [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
+- [Threat Model](../04_engineering/THREAT_MODEL.md)
+- [Deployment](./DEPLOYMENT.md)
 
-## 8. Validation
+## 8. Change Log
 
-At startup or config load:
-- required values are validated;
-- malformed URLs/durations/enums fail clearly;
-- incompatible settings fail clearly;
-- secrets are not printed in full.
-
----
-
-## 9. Dynamic Configuration
-
-If configuration can change without deployment:
-
-| Config | Source | Refresh | Consistency |
-|---|---|---|---|
-| `<CONFIG>` | `<SOURCE>` | `<METHOD>` | `<BEHAVIOR>` |
-
-Document failure behavior when config provider is unavailable.
-
----
-
-## 10. Configuration Changes
-
-A config change requires code/documentation review when it:
-- changes public behavior;
-- changes security boundary;
-- changes data retention;
-- changes integration endpoint;
-- changes retry/timeout behavior materially;
-- introduces operational risk.
-
----
-
-## 11. Local `.env.example`
-
-`.env.example` should:
-- include every commonly required local variable;
-- use safe placeholder values;
-- mark optional variables;
-- avoid secrets;
-- stay synchronized with current runtime expectations.
-
----
-
-## 12. Related Documents
-
-- Developer Setup: `./DEVELOPER_SETUP.md`
-- Deployment: `./DEPLOYMENT.md`
-- System Architecture: `../02_architecture/SYSTEM_ARCHITECTURE.md`
-- Security Standard: `../standards/08_SECURITY_STANDARD.md`
-
----
-
-## 13. Change Log
-
-| Version | Date | Change | Author |
-|---|---|---|---|
-| 0.1 | `<YYYY-MM-DD>` | Initial draft | `<AUTHOR>` |
+| Date | Change | Author |
+|---|---|---|
+| `2026-09-06` | Initial conceptual configuration baseline | Codex |

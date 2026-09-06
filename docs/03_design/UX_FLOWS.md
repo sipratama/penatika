@@ -1,303 +1,197 @@
-# UX Flows — <PROJECT_NAME>
+# UX Flows — Penatika
 
-> **Peran dokumen:** Source of truth untuk **alur pengalaman pengguna lintas halaman/feature**, termasuk entry point, decision point, recovery path, dan expected user outcome.
->
-> Detail behavior satu feature tetap berada di feature specification. Visual tokens dan reusable component rules berada di `DESIGN_SYSTEM.md`. Backend/security behavior berada di feature spec, architecture, dan engineering standards.
+> Defines cross-surface user journeys and visibility rules. Detailed feature behavior remains in feature specifications.
 
----
-
-## Metadata Dokumen
+## Metadata
 
 | Field | Value |
 |---|---|
-| Product | `<PROJECT_NAME>` |
-| Status | Draft / Review / Locked |
-| Owner | `<OWNER>` |
-| Last Updated | `<YYYY-MM-DD>` |
+| Product | Penatika |
+| Status | Draft baseline |
+| Version | `0.1` |
+| Last Updated | `2026-09-06` |
 
----
+## 1. Experience Model
 
-## 1. Prinsip UX Flow
+Penatika has three distinct experience contexts:
 
-UX flow harus:
+1. **Preparation workspace** — teacher creates, reviews, and edits lessons.
+2. **Private controller** — teacher controls the active session and sees private AI/validation status.
+3. **Classroom display** — students see only appropriate accepted teaching content.
 
-- menggambarkan tujuan user, bukan urutan screen semata;
-- mencakup happy path dan recovery path penting;
-- tidak menduplikasi seluruh functional requirement;
-- menyebut role/actor dan entry point;
-- menghubungkan flow ke capability/feature yang relevan;
-- menunjukkan kondisi yang mengubah arah flow;
-- mempertimbangkan loading, empty, validation, error, forbidden, dan degraded state bila relevan.
+These contexts may share implementation, but their visibility and interaction responsibilities must remain distinct.
 
----
+## 2. Visibility Matrix
 
-## 2. Actor Overview
+| Information or Action | Preparation | Private Controller | Classroom Display |
+|---|:---:|:---:|:---:|
+| Lesson editing | Yes | Limited or not required | No |
+| AI prompt or request details | Teacher only | Teacher only | No |
+| AI progress and provider failure | Teacher only | Teacher only | No |
+| Validation status and warning detail | Teacher only | Teacher only | Classroom-safe result only if required |
+| Current accepted lesson content | Yes | Yes | Yes |
+| Session navigation | Optional | Yes | Display result only |
+| Ink controls | Optional | Yes or teacher surface | No private controls |
+| Pairing credentials | Teacher only | Teacher only | Only bounded join affordance if required |
+| Internal diagnostics or secrets | No user surface | No user surface | Never |
 
-| Actor | Tujuan Utama | Flow Utama |
-|---|---|---|
-| `<ACTOR>` | `<GOAL>` | `UXF-...` |
+## 3. Flow UX-01 — Prepare a Lesson
 
----
+### Entry
 
-## 3. Flow Index
+Teacher chooses to create a new lesson.
 
-Gunakan stable flow ID:
+### Flow
 
-```text
-UXF-<DOMAIN>-<NUMBER>
-```
+1. Provide supported grade, Mathematics topic, and learning intent.
+2. Review available curriculum source/version context or a clear unavailable state.
+3. Start generation.
+4. Continue seeing progress without ambiguous frozen state.
+5. Review structured content, validation state, and warnings.
+6. Edit, accept, reject, or regenerate supported sections.
+7. Save a classroom-ready lesson version.
 
-| ID | Flow | Actor | Status | Related Feature |
-|---|---|---|---|---|
-| `UXF-AUTH-001` | `<FLOW>` | `<ACTOR>` | Draft / Locked | `<FEATURE>` |
+### Required States
 
----
+- empty input;
+- invalid or unsupported scope;
+- generating;
+- validating;
+- validation warning;
+- generation failure;
+- unsaved edits;
+- ready and saved.
 
-## 4. UXF-<DOMAIN>-001 — <FLOW_NAME>
+### Success
 
-### Tujuan User
+Teacher can identify which lesson version is ready for classroom use.
 
-> Sebagai `<ACTOR>`, saya ingin `<GOAL>`, sehingga `<OUTCOME>`.
+## 4. Flow UX-02 — Start and Pair a Session
 
-### Entry Point
+### Entry
 
-- `<ROUTE / ACTION / NOTIFICATION / DEEP LINK>`
+Teacher selects a reviewed lesson version.
 
-### Preconditions
+### Flow
 
-- `<PRECONDITION>`
+1. Start classroom session.
+2. Open or connect the classroom display.
+3. Present a bounded pairing mechanism.
+4. Pair the private controller.
+5. Confirm active session and participant status on the teacher surface.
+6. Show only classroom-ready content on the display.
 
-### Primary Flow
+### Required States
 
-```text
-<ENTRY>
-   ↓
-<STEP 1>
-   ↓
-<STEP 2>
-   ↓
-<DECISION?>
-  ↙       ↘
-Yes       No
- ↓         ↓
-<STEP>   <RECOVERY>
-   \       /
-      ↓
-   <OUTCOME>
-```
+- creating session;
+- waiting for display;
+- waiting for controller;
+- pairing credential expired;
+- unauthorized join;
+- connected;
+- partial connection;
+- reconnecting;
+- failed with retry or exit path.
 
-### Step Detail
+### Success
 
-| Step | User Action | System Response | UX Requirement |
-|---|---|---|---|
-| 1 | `<ACTION>` | `<RESPONSE>` | `<RULE>` |
-| 2 | `<ACTION>` | `<RESPONSE>` | `<RULE>` |
+Teacher understands which devices are connected and students never see private controller state.
 
-### Success Condition
+## 5. Flow UX-03 — Teach, Annotate, and Navigate
 
-- `<SUCCESS CONDITION>`
+### Flow
 
-### Related Requirements
+1. Teacher navigates lesson scenes or steps.
+2. Display updates to the authoritative accepted revision.
+3. Teacher writes, highlights, erases, undoes, redoes, or clears annotations.
+4. Input feedback remains responsive while synchronization status remains understandable.
+5. If synchronization fails, the display preserves a safe projection and the teacher sees the degraded state.
 
-- `CAP-...`
-- `FR-...`
+### Interaction Expectations
 
----
+- Equivalent mouse, touch, stylus, and keyboard actions behave consistently.
+- Destructive clear action is recoverable or confirmed.
+- Controls do not obscure classroom content unnecessarily.
+- Orientation and viewport changes preserve the logical scene.
 
-## 5. Alternate and Recovery Flows
+## 6. Flow UX-04 — Request Live Adaptation
 
-### AF-01 — <ALTERNATE_FLOW>
+### Flow
 
-**Trigger**  
-`<CONDITION>`
+1. Teacher initiates push-to-talk or direct adaptation.
+2. Controller shows listening/transcribing state only while explicitly active.
+3. Controller shows generating and validating progress.
+4. Teacher receives structured proposal, validation status, or failure.
+5. Until approval policy is resolved, teacher explicitly accepts, modifies, rejects, retries, or cancels.
+6. Accepted content updates the classroom display through authoritative session state.
 
-**Expected Experience**
+### Privacy Rule
 
-1. `<STEP>`
-2. `<STEP>`
-3. `<OUTCOME>`
+Raw transcript, prompt, provider response, internal reasoning, and private warnings never appear on the classroom display.
 
-### RF-01 — <RECOVERY_FLOW>
+### Failure Behavior
 
-**Failure**  
-`<FAILURE CONDITION>`
+Timeout, cancellation, provider failure, invalid output, or stale result leaves current classroom content unchanged.
 
-**User Must Be Able To**
-- understand what happened;
-- know whether their action succeeded;
-- retry safely when appropriate;
-- avoid accidental duplicate operations;
-- continue through an alternative path when available.
+## 7. Flow UX-05 — Degraded Connectivity and Recovery
 
-**Recovery Steps**
-1. `<STEP>`
-2. `<STEP>`
+1. Teacher surface shows whether the issue affects client connection, synchronization, AI, speech, validation, or another dependency.
+2. Classroom display retains the last safe projection where possible.
+3. Actions that cannot be committed are disabled, queued only if explicitly safe, or rejected with a clear state.
+4. On reconnect, clients reconcile against backend authority.
+5. Teacher receives recovery outcome without exposing private diagnostics to students.
 
----
+Exact offline/degraded capability remains an Open Product Decision.
 
-## 6. Cross-Product States
+## 8. Flow UX-06 — End and Save
 
-Gunakan pola yang konsisten lintas feature.
+1. Teacher requests session end.
+2. Penatika warns about unresolved generation, unsaved changes, or synchronization issues that affect save integrity.
+3. Teacher confirms end when needed.
+4. Backend performs an idempotent save.
+5. Teacher sees saved, retryable failure, or unresolved state.
+6. Classroom display moves to a safe ended-session presentation.
 
-### Loading
+## 9. Cross-Flow UX Rules
 
-- jangan tampilkan blank screen jika progress dapat dikomunikasikan;
-- hindari duplicate submission selama operation masih berjalan;
-- gunakan skeleton/spinner/progress berdasarkan konteks.
+- Teacher control is explicit at material decision points.
+- Draft, proposed, accepted, displayed, invalid, unsupported, and failed states are visually and semantically distinct.
+- Errors explain what happened and what the teacher can do next.
+- The system does not fabricate success when state is unknown.
+- Long-running AI work does not block safe navigation or annotation unless consistency requires it.
+- Classroom display avoids notifications or controls unrelated to students.
+- Product language for the initial market is Indonesian; final terminology and localization policy remain open.
 
-### Empty
+## 10. Accessibility Baseline
 
-Empty state harus menjelaskan:
-1. apa kondisi saat ini;
-2. mengapa belum ada data jika diketahui;
-3. action berikutnya jika tersedia.
+- Logical focus order and visible focus.
+- Keyboard access to core actions where keyboard input exists.
+- Labels for icon-only controls.
+- Adequate target sizes for touch and stylus-adjacent controls.
+- Status communication not dependent on color alone.
+- Reduced-motion behavior for non-essential animation.
+- Classroom readability tested at realistic viewing distance.
+- Accessible Mathematics semantics where supported by the chosen renderer.
 
-### Validation Error
+## 11. Open UX Decisions
 
-- tampilkan error sedekat mungkin dengan field/action;
-- jangan menghapus valid input yang sudah diberikan user;
-- fokuskan field bermasalah bila sesuai.
+- Exact navigation model for lesson scenes and progressive reveal.
+- Controller layout and one-handed interaction priorities.
+- Approval interaction per live adaptation type.
+- Formal accessibility conformance target.
+- Supported viewport, browser, input-device, and display matrix.
+- Indonesian terminology for assurance states and AI actions.
 
-### Server / Dependency Error
+## 12. Related Documents
 
-- jangan tampilkan raw stack trace/internal code ke user;
-- bedakan retryable dan non-retryable error bila pengalaman pengguna memerlukan;
-- jangan menyatakan operasi gagal jika status sebenarnya unknown tanpa recovery behavior.
+- [PRD](../00_product/PRD.md)
+- [Design System](./DESIGN_SYSTEM.md)
+- [Classroom Session](../01_features/classroom-session.md)
+- [Classroom Canvas](../01_features/classroom-canvas.md)
+- [Live AI Adaptation](../01_features/live-ai-adaptation.md)
 
-### Unauthorized / Forbidden
-
-- unauthenticated user diarahkan ke authentication flow bila sesuai;
-- authenticated-but-forbidden user mendapat explanation yang aman;
-- UI restriction bukan security enforcement.
-
-### Degraded / Offline
-
-- jelaskan capability apa yang masih tersedia;
-- hindari action yang akan gagal secara pasti;
-- gunakan queued/retry experience hanya jika architecture mendukung.
-
----
-
-## 7. Navigation Model
-
-### Primary Navigation
-
-| Destination | Actor | Purpose |
-|---|---|---|
-| `<DESTINATION>` | `<ACTOR>` | `<PURPOSE>` |
-
-### Navigation Rules
-
-- preserve user context where practical;
-- deep links should resolve predictably;
-- browser back behavior should not corrupt state;
-- protected routes must handle expired sessions;
-- navigation should not depend on hidden implementation state.
-
----
-
-## 8. Forms and Submission
-
-### Form Principles
-
-- field requirement harus terlihat sebelum submit bila memungkinkan;
-- client validation mempercepat feedback, server tetap authoritative;
-- submission harus mempunyai clear progress state;
-- destructive actions membutuhkan confirmation yang sebanding dengan risikonya;
-- retry harus mempertimbangkan idempotency.
-
-### Unsaved Changes
-
-`<POLICY / N/A>`
-
----
-
-## 9. Long-Running Operations
-
-Jika operation memerlukan waktu cukup lama:
-
-- berikan acknowledgment bahwa request diterima;
-- jelaskan apakah user harus menunggu atau dapat meninggalkan halaman;
-- tampilkan progress hanya jika progress meaningful;
-- sediakan final status;
-- recovery dari refresh/revisit harus jelas.
-
----
-
-## 10. Notifications and Return Paths
-
-| Trigger | Channel | Destination | Expected Action |
-|---|---|---|---|
-| `<TRIGGER>` | Email / Push / In-app | `<ROUTE>` | `<ACTION>` |
-
-Deep link harus mempertimbangkan:
-- authentication state;
-- permission;
-- expired/invalid resource;
-- already-completed action.
-
----
-
-## 11. Responsive Behavior
-
-Untuk flow kritis:
-
-| Flow | Mobile | Tablet | Desktop | Notes |
-|---|---|---|---|---|
-| `<FLOW>` | Supported | Supported | Supported | `<RULE>` |
-
-Jangan membuat mobile flow yang kehilangan capability kritis tanpa keputusan product eksplisit.
-
----
-
-## 12. Accessibility Flow Requirements
-
-Flow kritis harus dapat diselesaikan dengan mempertimbangkan:
-
-- keyboard navigation;
-- visible focus;
-- semantic labels;
-- screen-reader announcements untuk dynamic state penting;
-- error association;
-- non-color-only status indication;
-- reduced motion bila animasi bukan bagian esensial dari task.
-
----
-
-## 13. Analytics Checkpoints
-
-Catat hanya event product yang diperlukan untuk memahami funnel/outcome.
-
-| Flow Step | Event | Purpose |
-|---|---|---|
-| `<STEP>` | `<EVENT>` | `<WHY>` |
-
-Jangan menduplikasi telemetry implementation detail.
-
----
-
-## 14. Open UX Decisions
-
-| ID | Question | Impact | Owner |
-|---|---|---|---|
-| UXQ-01 | `<QUESTION>` | `<IMPACT>` | `<OWNER>` |
-
-Behavior decision yang sudah resolved harus dipindahkan ke feature spec atau design system sesuai ownership.
-
----
-
-## 15. Related Documents
-
-- Product Brief: `../00_product/PRODUCT_BRIEF.md`
-- PRD: `../00_product/PRD.md`
-- Feature Specs: `../01_features/`
-- Design System: `./DESIGN_SYSTEM.md`
-- System Architecture: `../02_architecture/SYSTEM_ARCHITECTURE.md`
-
----
-
-## 16. Change Log
+## 13. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
-| 0.1 | `<YYYY-MM-DD>` | Initial draft | `<AUTHOR>` |
+| `0.1` | `2026-09-06` | Initial multi-surface UX baseline | Codex |

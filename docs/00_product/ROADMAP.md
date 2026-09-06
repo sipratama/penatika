@@ -1,202 +1,113 @@
-# Product Roadmap — <PROJECT_NAME>
+# Product Roadmap — Penatika
 
-> **Peran dokumen:** Menjelaskan **arah perkembangan produk dan urutan outcome/milestone**, bukan menjadi task tracker atau implementation checklist.
->
-> Detail pekerjaan berada di issue tracker / project board / feature plan. Detail requirement berada di PRD dan feature specs.
+> Outcome-oriented sequencing for Penatika. This roadmap does not commit to calendar dates.
 
----
-
-## Metadata Dokumen
+## Metadata
 
 | Field | Value |
 |---|---|
-| Product | `<PROJECT_NAME>` |
-| Status | Draft / Active / Archived |
-| Owner | `<OWNER>` |
-| Horizon | `<TIME HORIZON>` |
-| Last Updated | `<YYYY-MM-DD>` |
+| Product | Penatika |
+| Status | Draft |
+| Version | `0.1` |
+| Owner | Open Question — belum ditetapkan |
+| Last Updated | `2026-09-06` |
 
----
+## 1. Current Product Stage
 
-## 1. Roadmap Principle
+Penatika is in post-discovery, pre-implementation initialization. The Minimum Product Context Gate has passed, but market efficacy, classroom usability, technology choices, and pilot metrics remain unvalidated.
 
-Roadmap ini berbasis **outcome**, bukan daftar feature sebanyak mungkin.
+## 2. Roadmap Principle
 
-Setiap milestone harus menjawab:
+Prioritize evidence that the complete teacher-to-classroom workflow improves teaching flow while preserving teacher control and content trust. Do not expand feature count before the core workflow is usable and observable.
 
-1. hypothesis atau problem apa yang ingin dibuktikan;
-2. outcome pengguna apa yang harus tersedia;
-3. evidence apa yang menentukan apakah kita lanjut;
-4. apa yang secara eksplisit belum dikerjakan.
-
-Roadmap dapat berubah ketika evidence baru muncul.
-
----
-
-## 2. Current Product Stage
-
-`Discovery / Validation / MVP / Early Product / Growth / Scale / Mature`
-
-### Current Objective
-
-<Outcome paling penting yang sedang dikejar saat ini.>
-
-### Current Evidence
-
-- `<WHAT WE KNOW>`
-- `<WHAT IS STILL UNCERTAIN>`
-
----
-
-## 3. Roadmap Overview
-
-| Horizon / Milestone | Outcome | Status |
-|---|---|---|
-| Now — `<MILESTONE>` | `<OUTCOME>` | Planned / Active / Complete |
-| Next — `<MILESTONE>` | `<OUTCOME>` | Planned |
-| Later — `<MILESTONE>` | `<OUTCOME>` | Candidate |
-
-`Now / Next / Later` dapat diganti dengan quarter atau release series jika lebih cocok.
-
----
-
-## 4. Now — <MILESTONE_NAME>
+## 3. Now — MVP Foundation and Vertical Slice
 
 ### Objective
 
-<Outcome yang ingin dicapai.>
-
-### Hypothesis
-
-> Jika `<WE DO X>`, maka `<TARGET USER>` akan `<EXPECTED BEHAVIOR/OUTCOME>` karena `<RATIONALE>`.
+Turn the initialized product and architecture baseline into one safe end-to-end vertical slice for the two prioritized Mathematics areas.
 
 ### Included Capabilities
 
-- `CAP-...`
-- `CAP-...`
+- `CAP-LESSON-001` — prepare and review a structured lesson.
+- `CAP-SESSION-001` — start and pair a classroom session.
+- `CAP-CANVAS-001` and `CAP-INK-001` — render, navigate, and annotate classroom content.
+- `CAP-ADAPT-001` — request one or more bounded live adaptations.
+- `CAP-MATH-001` — validate scoped fraction and algebra content and attach curriculum provenance.
+- `CAP-SESSION-002` — end and save the session.
 
-### Evidence / Exit Criteria
+### Required Decisions
 
-Milestone selesai ketika:
+- Curriculum source and usage rights.
+- Approval policy for live adaptation.
+- Minimum degraded-mode behavior.
+- Client, backend, persistence, identity, realtime, AI, speech, validation, and deployment technology baseline.
+- Versioned field-level contracts for lesson, scene, session, adaptation, and assurance.
 
-- `<MEASURABLE OR OBSERVABLE EVIDENCE>`
-- `<MEASURABLE OR OBSERVABLE EVIDENCE>`
+### Exit Evidence
 
-### Explicitly Deferred
+- A teacher can complete prepare, review, start, pair, present, adapt, annotate, and save in a controlled environment.
+- Private teacher state never appears on the classroom projection.
+- Supported Mathematics validation detects representative valid and invalid cases.
+- Failure and reconnect paths preserve safe authoritative state.
+- Architecture, contracts, and tests match the implemented vertical slice.
 
-- `<ITEM>`
-- `<ITEM>`
-
-### Key Risks
-
-- `<RISK>`
-
----
-
-## 5. Next — <MILESTONE_NAME>
+## 4. Next — Classroom Usability and Pilot Readiness
 
 ### Objective
 
-<Outcome>
+Evaluate whether Penatika improves teacher flow and confidence in realistic classroom environments.
 
-### Candidate Capabilities
+### Candidate Work
 
-- `CAP-...`
-- `CAP-...`
+- Refine interaction speed, controller ergonomics, and classroom readability.
+- Expand validation corpus within agreed MVP topics.
+- Validate supported devices, browsers, display resolutions, and network conditions.
+- Define privacy, retention, support, deployment, and operational procedures for pilot use.
+- Instrument pilot evidence without student profiling.
+- Incorporate valid prior Pendago discovery evidence where traceable.
 
 ### Entry Condition
 
-Milestone ini dimulai jika:
+The MVP vertical slice meets release-blocker and threat-model requirements.
 
-- `<CONDITION>`
+### Exit Evidence
 
-### Success Evidence
+Pilot design, success metrics, participating context, support plan, and risk acceptance are explicitly approved. Quantitative targets remain open until baseline evidence exists.
 
-- `<EVIDENCE>`
+## 5. Later — Candidate Directions
 
-### Key Unknowns
+These directions are not commitments:
 
-- `<UNKNOWN>`
-
----
-
-## 6. Later — Candidate Directions
-
-Ini bukan commitment.
-
-| Direction | Opportunity | Dependency / Trigger |
+| Direction | Opportunity | Revisit Trigger |
 |---|---|---|
-| `<DIRECTION>` | `<WHY>` | `<WHEN IT BECOMES RELEVANT>` |
+| Additional Mathematics topics and grades | Broader teacher usefulness | Initial validation and pilot evidence supports expansion |
+| Additional subjects | Wider market applicability | Subject-specific assurance and curriculum model is understood |
+| Lesson import | Reduce migration effort from existing materials | Core creation/editing workflow is stable |
+| Student participation | Interactive classroom learning | Teacher-first core succeeds and privacy/identity implications are resolved |
+| Advanced graphing or visualization | Richer Mathematics explanation | Structured scene model and assurance support it safely |
+| School workflows | Institutional adoption | Business model and administrator needs are validated |
 
-Hindari memberi tanggal pasti pada discovery yang belum tervalidasi.
+## 6. Explicitly Parked
 
----
+- Autonomous AI teaching.
+- Attendance management.
+- Student devices as a core prerequisite.
+- Proprietary smart-board dependence.
+- Feature expansion that bypasses teacher-control or content-assurance evidence.
 
-## 7. Strategic Bets
+## 7. Key Product Risks
 
-Gunakan hanya untuk investasi product yang material.
+- The controller may still distract teachers.
+- Classroom connectivity may be insufficient for the intended flow.
+- AI latency may interrupt teaching.
+- Deterministic validation coverage may be too narrow.
+- Curriculum data may be unavailable, ambiguous, or restricted.
+- Private and public projections may leak across surfaces.
 
-### BET-01 — <BET_NAME>
+See [RISKS.md](../06_delivery/RISKS.md) for the active risk register.
 
-**Belief**  
-<Kenapa ini layak dicoba?>
-
-**Potential Upside**  
-<Outcome jika benar.>
-
-**Failure Signal**  
-<Evidence bahwa asumsi ini salah.>
-
-**Decision Point**  
-<Kapan dievaluasi?>
-
----
-
-## 8. Product Debt / Foundation Work
-
-Roadmap boleh mencatat foundation work jika benar-benar membuka product outcome atau mengurangi risiko material.
-
-| Foundation | Why Now | Outcome Enabled |
-|---|---|---|
-| `<FOUNDATION>` | `<RATIONALE>` | `<OUTCOME>` |
-
-Jangan gunakan bagian ini sebagai backlog teknis umum.
-
----
-
-## 9. Deprioritized / Parked
-
-| Item | Reason | Revisit Trigger |
-|---|---|---|
-| `<ITEM>` | `<WHY NOT NOW>` | `<WHEN>` |
-
-Ini membantu mencegah ide lama kembali masuk tanpa konteks.
-
----
-
-## 10. Roadmap Changes
-
-Catat perubahan arah yang material.
-
-| Date | Change | Reason / Evidence |
-|---|---|---|
-| `<YYYY-MM-DD>` | `<CHANGE>` | `<EVIDENCE>` |
-
-Perubahan requirement detail tetap dicatat di PRD/feature spec, bukan di sini.
-
----
-
-## 11. Related Documents
-
-- Product Brief: `./PRODUCT_BRIEF.md`
-- PRD: `./PRD.md`
-- Feature Specs: `../01_features/`
-- Risks: `../06_delivery/RISKS.md`
-
----
-
-## 12. Change Log
+## 8. Roadmap Changes
 
 | Version | Date | Change | Author |
 |---|---|---|---|
-| 0.1 | `<YYYY-MM-DD>` | Initial draft | `<AUTHOR>` |
+| `0.1` | `2026-09-06` | Initial outcome-based roadmap after Product Context Gate | Codex |

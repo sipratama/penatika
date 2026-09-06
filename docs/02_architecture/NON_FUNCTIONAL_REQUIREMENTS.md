@@ -1,476 +1,167 @@
-# Non-Functional Requirements — <PROJECT_NAME>
+# Non-Functional Requirements — Penatika
 
-> **Document role:** Authoritative source for **measurable cross-cutting quality requirements and operational constraints**.
->
-> This document states required outcomes and thresholds. Architecture documents explain how the system is designed to meet them. Engineering standards define implementation practices.
+> Defines cross-product quality requirements. Numerical targets remain open until prototype measurements and pilot environments provide a baseline.
 
----
-
-## Document Metadata
+## Metadata
 
 | Field | Value |
 |---|---|
-| Project | `<PROJECT_NAME>` |
-| Status | Draft / Review / Locked |
+| Product | Penatika |
+| Status | Draft baseline |
 | Version | `0.1` |
-| Owner | `<OWNER>` |
-| Last Updated | `<YYYY-MM-DD>` |
+| Last Updated | `2026-09-06` |
 
----
+## 1. Quality Priorities
 
-## 1. How to Use This Document
+1. Teacher control and classroom safety.
+2. Mathematical and curriculum trustworthiness.
+3. Session consistency and privacy between surfaces.
+4. Teaching-flow responsiveness.
+5. Graceful degradation and recoverability.
+6. Accessibility and classroom readability.
+7. Maintainability and provider independence.
 
-A useful NFR should be:
+## 2. Correctness and Content Assurance
 
-- measurable or objectively verifiable;
-- relevant to actual product risk;
-- scoped to a workload, path, or environment;
-- clear about target vs hard requirement;
-- testable through automated or operational evidence where practical.
+- Supported structured content must pass schema validation before persistence or display.
+- Supported Mathematics claims must use deterministic validation where available.
+- Validation status must distinguish valid, invalid, unsupported, inconclusive, and error.
+- Curriculum claims must identify controlled source and version.
+- Content edits must invalidate affected stale assurance results.
+- AI self-reported confidence is not correctness evidence.
 
-Avoid vague statements such as:
+Release evidence must include a versioned corpus for Grade 5 fractions and Grade 7 basic algebra or linear equations.
 
-> The system must be fast, secure, scalable, and highly available.
+## 3. Session Consistency
 
-Prefer:
+- The backend owns one authoritative session revision.
+- State-changing commands must be authorized, revision-aware, bounded, and safe to retry where applicable.
+- Duplicate or stale commands must not silently create conflicting state.
+- Reconnection must converge on authoritative backend state.
+- Role-specific projections must be derived consistently from the same accepted state.
 
-> For authenticated API reads under the defined normal load, p95 server response time must remain below 300 ms excluding third-party latency.
+## 4. Responsiveness
 
-Do not invent aggressive targets without product or operational justification.
+- Local navigation and drawing feedback should feel immediate enough not to interrupt teaching.
+- Authoritative synchronization and live adaptation need separate latency budgets.
+- AI generation must expose progress, cancellation, timeout, and non-blocking failure behavior.
+- Numerical percentile targets must be set after instrumented prototypes run on target devices and networks.
 
----
+Before pilot, define and measure:
 
-## 2. Requirement Format
+- local input-to-feedback latency;
+- command-to-authoritative-projection latency;
+- reconnect convergence time;
+- push-to-talk transcription and adaptation latency;
+- lesson generation latency.
 
-Use stable IDs:
+## 5. Availability and Graceful Degradation
 
-```text
-NFR-<CATEGORY>-<NUMBER>
-```
+- A recoverable AI failure must not remove current classroom content.
+- The display should retain a safe last-known projection during temporary update failure.
+- Teacher surfaces must identify offline, reconnecting, degraded dependency, and failed states.
+- Retry ownership, timeout, fallback, and circuit-break behavior must be explicit per dependency.
+- Minimum degraded-mode capability is an Open Product Decision and must be resolved before pilot.
 
-Examples:
+No production availability percentage or SLO is set before deployment and support maturity are known.
 
-```text
-NFR-PERF-001
-NFR-AVAIL-001
-NFR-SEC-001
-NFR-OBS-001
-```
+## 6. Security
 
-Each requirement should define:
+- All protected actions require backend-enforced authentication and authorization.
+- Pairing credentials must be short-lived, purpose-bound, non-guessable, and replay-resistant.
+- Structured rendering must prevent arbitrary script execution.
+- Secrets, access tokens, and provider credentials must not ship in untrusted clients.
+- Sensitive traffic requires transport protection in production.
+- Expensive AI, speech, pairing, and session operations require abuse and resource controls.
 
-- requirement;
-- scope;
-- target/threshold;
-- verification method;
-- priority;
-- rationale where useful.
+See [THREAT_MODEL.md](../04_engineering/THREAT_MODEL.md).
 
----
+## 7. Privacy
 
-## 3. Performance
+- Student identity and student-device data are not required for core MVP.
+- Raw push-to-talk audio is not stored by default.
+- Logs and analytics must avoid full prompts, raw provider payloads, lesson content, session secrets, and private teacher state unless a specific approved purpose requires otherwise.
+- Retention, deletion, export, and evaluation-data policies must be decided before production use.
+- Teacher-private information must never appear in classroom projections.
 
-### NFR-PERF-001 — API Response Time
+## 8. Accessibility and Classroom Usability
 
-**Requirement**  
-`<REQUIREMENT>`
+- Core teacher actions must support keyboard access where a keyboard is available.
+- Focus, labels, error communication, target sizes, contrast, and reduced-motion behavior must meet the selected accessibility baseline.
+- Information cannot depend on color alone.
+- Classroom display content must be tested at realistic viewing distance and display resolution.
+- Mathematics content requires accessible semantics where the selected rendering approach supports it.
+- Mouse, touch, and stylus interactions require target-device testing.
 
-**Scope**  
-`<ENDPOINTS / WORKLOAD>`
+The formal conformance target remains an Open Product/Architecture Decision, but accessibility is not optional.
 
-**Target**
-- p50: `<VALUE>`
-- p95: `<VALUE>`
-- p99: `<VALUE>`
+## 9. Compatibility
 
-**Load Assumption**  
-`<RPS / CONCURRENT USERS / DATA SIZE>`
+Supported browsers, operating systems, devices, stylus behavior, screen resolutions, and network conditions are not yet selected. A compatibility matrix must be approved before pilot and verified using real target hardware where feasible.
 
-**Verification**  
-`<LOAD TEST / APM / BENCHMARK>`
+The product must not depend on a proprietary smart board.
 
-**Priority**  
-P0 / P1 / P2
+## 10. Scalability and Capacity
 
----
+Initial classroom, teacher, lesson, and concurrent-session volumes are unknown. Architecture should scale vertically and through stateless application replication where the selected technology permits, but no distributed decomposition is justified yet.
 
-### NFR-PERF-002 — Frontend Experience
+Before production capacity planning, define:
 
-Possible signals:
-
-- Largest Contentful Paint;
-- Interaction to Next Paint;
-- route transition;
-- initial JS budget;
-- image/media budget.
-
-Use only relevant metrics and define target device/network conditions.
-
----
-
-## 4. Capacity and Scalability
-
-### NFR-SCALE-001 — Initial Capacity
-
-| Dimension | Required Capacity | Growth Horizon |
-|---|---:|---|
-| Concurrent users | `<N>` | `<PERIOD>` |
-| Requests/sec | `<N>` | `<PERIOD>` |
-| Events/sec | `<N>` | `<PERIOD>` |
-| Data volume | `<SIZE>` | `<PERIOD>` |
-| File/object volume | `<SIZE>` | `<PERIOD>` |
-
-### Scaling Requirement
-
-`<REQUIREMENT>`
-
-Avoid requiring horizontal scaling if a simpler deployment meets realistic demand.
-
----
-
-## 5. Availability
-
-### NFR-AVAIL-001 — Service Availability
-
-**Target**  
-`<e.g. 99.9% monthly>`
-
-**Scope**  
-`<USER-FACING SERVICE / CRITICAL API>`
-
-**Excluded Conditions**
-- `<PLANNED MAINTENANCE OR NONE>`
-
-**Measurement Source**  
-`<SYNTHETIC / LB / APM / EXTERNAL MONITOR>`
-
-Do not set availability targets without understanding operational cost.
-
----
-
-## 6. Reliability and Resilience
-
-### NFR-REL-001 — Dependency Failure
-
-**Requirement**  
-`<EXPECTED BEHAVIOR WHEN A CRITICAL DEPENDENCY FAILS>`
-
-### NFR-REL-002 — Duplicate Processing
-
-**Requirement**  
-`<IDEMPOTENCY EXPECTATION>`
-
-### NFR-REL-003 — Data Integrity
-
-**Requirement**  
-`<NO LOST/CORRUPTED AUTHORITATIVE STATE UNDER DEFINED FAILURE CONDITIONS>`
-
-### NFR-REL-004 — Background Processing
-
-Define:
-- retry expectation;
-- dead-letter or terminal-failure behavior;
-- visibility/alerting requirement;
-- maximum acceptable processing delay.
-
----
-
-## 7. Recovery and Disaster Recovery
-
-### NFR-DR-001 — Recovery Point Objective
-
-**RPO**  
-`<VALUE>`
-
-### NFR-DR-002 — Recovery Time Objective
-
-**RTO**  
-`<VALUE>`
-
-### Backup Requirements
-
-- frequency: `<VALUE>`;
-- retention: `<VALUE>`;
-- encryption: `<YES/NO>`;
-- restore test cadence: `<VALUE>`.
-
-Use `N/A` explicitly when DR requirements are intentionally not established for the current phase.
-
----
-
-## 8. Security
-
-Security architecture and controls belong in threat model and standards. NFRs define required outcomes.
-
-### NFR-SEC-001 — Authentication
-
-`<REQUIREMENT>`
-
-### NFR-SEC-002 — Authorization
-
-`<REQUIREMENT>`
-
-### NFR-SEC-003 — Transport Security
-
-`<REQUIREMENT>`
-
-### NFR-SEC-004 — Sensitive Data
-
-`<REQUIREMENT>`
-
-### NFR-SEC-005 — Vulnerability / Dependency Response
-
-`<REQUIREMENT AND RESPONSE WINDOW IF APPLICABLE>`
-
-Verification may include automated scans, integration tests, review, or penetration testing depending on risk.
-
----
-
-## 9. Privacy
-
-### NFR-PRIV-001 — Data Minimization
-
-`<REQUIREMENT>`
-
-### NFR-PRIV-002 — Retention
-
-`<REQUIREMENT>`
-
-### NFR-PRIV-003 — Deletion / Export
-
-`<REQUIREMENT>`
-
-### NFR-PRIV-004 — Telemetry
-
-`<REQUIREMENT FOR PII/SENSITIVE DATA IN LOGS/ANALYTICS>`
-
----
-
-## 10. Observability
-
-### NFR-OBS-001 — Request Correlation
-
-`<REQUIREMENT>`
-
-### NFR-OBS-002 — Critical Failure Visibility
-
-`<REQUIREMENT>`
-
-### NFR-OBS-003 — Business-Critical Signals
-
-`<REQUIREMENT>`
-
-### NFR-OBS-004 — Alert Quality
-
-Alerts for critical production conditions should be actionable and should identify the affected service/path where practical.
-
-Avoid defining observability as "log everything."
-
----
-
-## 11. Maintainability
-
-### NFR-MAINT-001 — Architecture Boundaries
-
-`<REQUIREMENT>`
-
-### NFR-MAINT-002 — Automated Verification
-
-`<REQUIRED BUILD/LINT/TEST/ARCHITECTURE CHECKS>`
-
-### NFR-MAINT-003 — Change Safety
-
-`<BACKWARD COMPATIBILITY / MIGRATION / REVIEW EXPECTATION>`
-
-Do not use arbitrary code coverage percentages unless they serve a concrete quality objective.
-
----
-
-## 12. Testability
-
-### NFR-TEST-001 — Deterministic Testability
-
-Critical business behavior should be testable without depending on unstable external systems.
-
-### NFR-TEST-002 — External Dependencies
-
-`<MOCK / SANDBOX / CONTRACT TEST EXPECTATION>`
-
-### NFR-TEST-003 — Production-Like Verification
-
-`<STAGING / EPHEMERAL ENV / CONTAINERIZED DEPENDENCY EXPECTATION>`
-
----
-
-## 13. Compatibility
-
-### Supported Clients / Platforms
-
-| Platform | Minimum / Supported Version | Notes |
-|---|---|---|
-| Browser | `<VERSIONS>` | `<NOTES>` |
-| Mobile OS | `<VERSIONS OR N/A>` | `<NOTES>` |
-| API consumers | `<VERSION POLICY>` | `<NOTES>` |
-
-### Backward Compatibility
-
-`<POLICY>`
-
-Compatibility requirements should reflect real consumers.
-
----
-
-## 14. Accessibility
-
-Complete for user-facing products.
-
-### NFR-A11Y-001
-
-**Target**  
-`<e.g. WCAG 2.2 AA where applicable>`
-
-### Required Behaviors
-
-- keyboard accessibility;
-- visible focus;
-- semantic structure;
-- sufficient contrast;
-- screen-reader-compatible labels/status where relevant;
-- motion reduction where applicable.
-
-Define verification approach.
-
----
-
-## 15. Localization and Internationalization
-
-Use when relevant.
-
-| Concern | Requirement |
-|---|---|
-| Language | `<SUPPORTED LANGUAGES>` |
-| Locale | `<FORMAT RULES>` |
-| Time zone | `<RULE>` |
-| Currency | `<RULE>` |
-| Text expansion | `<EXPECTATION>` |
-
----
-
-## 16. Data Consistency
-
-### NFR-DATA-001
-
-`<STRONG/EVENTUAL CONSISTENCY REQUIREMENT FOR CRITICAL DATA>`
-
-### NFR-DATA-002
-
-`<MAXIMUM STALENESS OR SYNCHRONIZATION EXPECTATION>`
-
-Reference `DATA_MODEL.md` for ownership and lifecycle.
-
----
-
-## 17. Auditability
-
-Use for admin, financial, security-sensitive, or regulated operations.
-
-### NFR-AUDIT-001
-
-`<WHICH ACTIONS MUST BE AUDITABLE>`
-
-### Retention
-
-`<AUDIT RETENTION>`
-
-### Integrity
-
-`<PROTECTION AGAINST UNAUTHORIZED MODIFICATION>`
-
----
-
-## 18. Operational Requirements
-
-### Configuration
-
-`<ENVIRONMENT/SECRET CONFIG EXPECTATIONS>`
-
-### Deployability
-
-`<DEPLOYMENT EXPECTATION>`
-
-### Rollback
-
-`<ROLLBACK/RECOVERY EXPECTATION>`
-
-### Zero-Downtime
-
-`<REQUIRED / NOT REQUIRED / TARGET>`
-
-Avoid imposing enterprise-grade operations on prototypes without justification.
-
----
-
-## 19. Cost Constraints
-
-Use when cloud/API/model cost is material.
-
-### NFR-COST-001
-
-**Requirement**  
-`<BUDGET / UNIT COST / COST GROWTH EXPECTATION>`
-
-**Measurement**  
-`<HOW COST IS OBSERVED>`
-
----
-
-## 20. Compliance
-
-| Regulation / Policy | Applicability | Requirement |
-|---|---|---|
-| `<STANDARD>` | Required / Candidate / N/A | `<REQUIREMENT>` |
-
-Do not claim compliance merely because a control exists.
-
----
-
-## 21. NFR Summary Matrix
-
-| ID | Category | Requirement | Target | Priority | Verification |
-|---|---|---|---|---|---|
-| `NFR-...` | `<CATEGORY>` | `<SHORT>` | `<TARGET>` | P0/P1/P2 | `<METHOD>` |
-
-This matrix is an index; detailed requirements remain in their category sections.
-
----
-
-## 22. Exceptions and Tradeoffs
-
-Document intentionally accepted deviations.
-
-| NFR | Exception | Reason | Expiry / Review |
-|---|---|---|---|
-| `<ID>` | `<EXCEPTION>` | `<RATIONALE>` | `<DATE/MILESTONE>` |
-
-Material architectural tradeoffs should also be reflected in ADRs.
-
----
-
-## 23. Related Documents
-
-- System Architecture: `./SYSTEM_ARCHITECTURE.md`
-- Data Model: `./DATA_MODEL.md`
-- ADRs: `./adr/`
-- Feature Specs: `../01_features/`
-- Test Strategy: `../04_engineering/TEST_STRATEGY.md`
-- Threat Model: `../04_engineering/THREAT_MODEL.md`
-- Operations: `../05_operations/`
-- Engineering Standards: `../standards/`
-
----
-
-## 24. Change Log
+- expected concurrent sessions and participants;
+- command and annotation rates;
+- AI and speech request frequency;
+- lesson/session storage growth;
+- curriculum corpus size;
+- telemetry volume and cost.
+
+## 11. Observability
+
+- Correlate session, command, proposal, validation, and save operations without exposing secrets.
+- Measure state divergence attempts, stale commands, pairing failures, reconnects, dependency latency/failure, assurance outcomes, and degraded-mode recovery.
+- Use bounded metric cardinality.
+- Provide health checks and dependency status appropriate to selected runtime.
+- Define alerting and runbooks before production deployment.
+
+## 12. Maintainability and Portability
+
+- Product rules remain independent of UI, transport, database, and provider SDKs.
+- AI, speech, curriculum, and validation integrations use explicit adapters.
+- Structured models and cross-component contracts are versioned.
+- Material architecture changes require ADRs.
+- Database changes require migrations once persistence is selected.
+- Source structure must follow documented module ownership.
+
+## 13. AI Quality and Cost
+
+- AI behavior requires versioned evaluation scenarios for initial lesson and adaptation tasks.
+- Evaluation must include malformed output, prompt injection, incorrect Mathematics, curriculum mismatch, and provider failure.
+- Provider usage must have time, concurrency, size, and cost bounds.
+- Model/provider selection must compare quality, latency, privacy, reliability, and cost against product needs.
+
+## 14. Release Quality Gates
+
+Before a classroom pilot:
+
+- no critical teacher-private/classroom projection leakage;
+- no known session authorization bypass;
+- structured content and command contracts pass compatibility tests;
+- required Mathematics corpus passes selected assurance rules;
+- raw audio retention tests pass;
+- reconnect and degraded-state scenarios are exercised;
+- target-device accessibility and input evidence exists;
+- unresolved high risks have an owner and explicit disposition.
+
+## 15. Open Decisions
+
+- Numerical latency and reliability targets.
+- Formal accessibility conformance target.
+- Supported device/browser/network matrix.
+- Production availability and recovery objectives.
+- Data retention and deletion targets.
+- Capacity and cost budgets.
+
+## 16. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
-| 0.1 | `<YYYY-MM-DD>` | Initial draft | `<AUTHOR>` |
+| `0.1` | `2026-09-06` | Initial quality baseline grounded in MVP constraints | Codex |

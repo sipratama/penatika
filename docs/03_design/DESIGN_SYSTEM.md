@@ -1,436 +1,160 @@
-# Design System — <PROJECT_NAME>
+# Design System — Penatika
 
-> **Peran dokumen:** Source of truth untuk **prinsip visual, design tokens, reusable UI patterns, interaction behavior, accessibility, responsive rules, dan motion**.
->
-> Dokumen ini tidak menentukan business rules. Feature-specific behavior berada di feature specification dan UX flow.
+> Defines initial visual and interaction principles for teacher-private and classroom-facing surfaces. Brand identity and implementation technology are not yet selected.
 
----
-
-## Metadata Dokumen
+## Metadata
 
 | Field | Value |
 |---|---|
-| Product | `<PROJECT_NAME>` |
-| Status | Draft / Review / Locked |
-| Owner | `<OWNER>` |
-| Last Updated | `<YYYY-MM-DD>` |
+| Product | Penatika |
+| Status | Draft foundation |
+| Version | `0.1` |
+| Last Updated | `2026-09-06` |
 
----
+## 1. Design Principles
 
-## 1. Design Direction
+### Teacher Control Is Visible
 
-### Product Personality
+The interface clearly shows when AI is listening, generating, validating, proposing, accepted, rejected, or failed. Material classroom changes are not hidden automation.
 
-`<MODERN / TRUSTED / TECHNICAL / PLAYFUL / EDITORIAL / ETC.>`
+### Classroom Content Is Calm and Focused
 
-### Design Intent
+Student-facing presentation prioritizes lesson content, readability, and stable layout over application chrome.
 
-<Deskripsikan rasa dan kualitas pengalaman yang ingin dibangun.>
+### Private and Public Surfaces Are Distinct
 
-### Principles
+Teacher controls and warnings use a private surface model. Visual similarity must not cause private content to be projected accidentally.
 
-1. **<PRINCIPLE>** — <WHY>
-2. **<PRINCIPLE>** — <WHY>
-3. **<PRINCIPLE>** — <WHY>
+### Input Methods Are Equal Citizens
 
-### Anti-Patterns
+Mouse, touch, stylus, and keyboard interactions use consistent semantics and do not assume proprietary hardware.
 
-Hindari:
-- `<ANTI_PATTERN>`;
-- `<ANTI_PATTERN>`;
-- inconsistent one-off styling tanpa alasan.
+### Trust States Are Honest
 
----
+Validated, invalid, unsupported, inconclusive, ungrounded, and failed content states use distinct labels and do not imply certainty through decorative confidence indicators.
 
-## 2. Design Token Ownership
+## 2. Surface Roles
 
-Design token harus menjadi reusable source, bukan copy-paste value di setiap component.
+### Preparation Surface
 
-Recommended categories:
+- information-dense enough for review and editing;
+- supports provenance and assurance details;
+- separates source material, generated proposal, and teacher-authored changes.
 
-```text
-color
-typography
-spacing
-size
-radius
-shadow
-border
-motion
-breakpoint
-z-index
-```
+### Private Controller Surface
 
-Jika project menggunakan token file/code-generated system, executable token definitions adalah implementation source. Dokumen ini menjelaskan intent dan semantic meaning.
+- prioritizes fast session control and one-handed use where practical;
+- shows connection, AI, and validation states;
+- avoids small critical targets or deep navigation during teaching.
 
----
+### Classroom Display Surface
 
-## 3. Color
+- maximizes legibility at distance;
+- avoids private controls, diagnostics, and distracting progress indicators;
+- maintains a safe visual state during recoverable failure.
 
-### Semantic Colors
+## 3. Semantic State Vocabulary
 
-| Token | Purpose | Example |
-|---|---|---|
-| `color.background.default` | Main surface | `<VALUE>` |
-| `color.text.primary` | Primary text | `<VALUE>` |
-| `color.action.primary` | Primary action | `<VALUE>` |
-| `color.status.success` | Success feedback | `<VALUE>` |
-| `color.status.warning` | Warning | `<VALUE>` |
-| `color.status.danger` | Destructive/error | `<VALUE>` |
+The design system must provide tokens and components for:
 
-Jangan gunakan warna sebagai satu-satunya pembeda status.
+- neutral/inactive;
+- active/live;
+- draft;
+- generating/processing;
+- proposed;
+- accepted/ready;
+- validated;
+- warning;
+- invalid/error;
+- unsupported/inconclusive;
+- degraded/offline/reconnecting;
+- private/teacher-only.
 
-### Brand Palette
+Exact colors are not selected. Color must not be the only state indicator.
 
-`<PALETTE / LINK>`
+## 4. Typography and Mathematics
 
----
+- Classroom typography must be tested at realistic viewing distance.
+- Preparation and controller typography must remain readable under dense status information.
+- Mathematical notation requires a rendering approach that supports clear layout and accessible semantics.
+- Font families, scale, line lengths, and notation renderer remain Open Design/Architecture Decisions.
 
-## 4. Typography
+## 5. Layout and Spacing
 
-| Role | Token / Style | Usage |
-|---|---|---|
-| Display | `<STYLE>` | Hero / major marketing |
-| Heading 1 | `<STYLE>` | Page title |
-| Heading 2 | `<STYLE>` | Major section |
-| Body | `<STYLE>` | Primary reading |
-| Label | `<STYLE>` | Controls |
-| Code / Mono | `<STYLE>` | Technical content |
+- Classroom layout favors stable composition and large readable content regions.
+- Controller layout favors reachable primary actions and clear destructive-action separation.
+- Preparation layout supports comparison and editing without hiding assurance states.
+- Responsive behavior must preserve semantic hierarchy instead of only shrinking desktop layout.
 
-Rules:
-- maintain readable line length;
-- avoid font-size-only hierarchy;
-- preserve minimum readable size;
-- avoid excessive font families/weights.
+Exact breakpoints and token values follow target-device selection.
 
----
+## 6. Initial Component Families
 
-## 5. Spacing and Layout
+The first implementation is expected to need:
 
-### Spacing Scale
+- lesson intent form;
+- lesson section editor;
+- curriculum provenance indicator;
+- assurance status and warning panel;
+- session status and participant indicator;
+- pairing affordance;
+- scene navigation controls;
+- push-to-talk control and listening state;
+- AI proposal preview and decision controls;
+- structured classroom content renderer;
+- ink tool palette;
+- connection/degraded-state banner;
+- destructive confirmation and recoverable undo feedback.
 
-`<4 / 8-based / custom>`
+Components must not embed authorization assumptions that belong to the backend.
 
-| Token | Value | Typical Use |
-|---|---:|---|
-| `space.1` | `<VALUE>` | Tight |
-| `space.2` | `<VALUE>` | Small |
-| `space.3` | `<VALUE>` | Component |
-| `space.4` | `<VALUE>` | Section |
+## 7. Digital Ink Interaction
 
-### Grid
-
-`<GRID RULES>`
+- Tool state must remain visible to the teacher.
+- Write, highlight, and erase must have distinguishable cursors or affordances.
+- Undo/redo scope must be understandable.
+- Clear is visually separated from frequent actions.
+- Touch gestures and stylus strokes must not conflict without a defined rule.
+- Ink feedback and committed synchronization state may be distinct but must not mislead the teacher.
 
-### Content Width
+## 8. Motion
 
-`<MAX WIDTH / CONTAINER RULES>`
+- Use motion to explain state change, not to decorate the classroom display.
+- Long-running progress must remain understandable without continuous distracting animation.
+- Support reduced-motion preferences.
+- Avoid motion that shifts lesson content unexpectedly during teaching.
 
----
+## 9. Accessibility Requirements
 
-## 6. Breakpoints
+- Visible focus and logical keyboard order.
+- Programmatic names for controls and state messages.
+- Sufficient text and non-text contrast.
+- Touch targets appropriate to the selected baseline.
+- Error and assurance state conveyed with text/icon semantics in addition to color.
+- No essential interaction dependent exclusively on hover, pressure, or gesture.
+- Classroom projection remains understandable for students who cannot perceive color differences.
 
-| Name | Range | Intent |
-|---|---|---|
-| Mobile | `<RANGE>` | Compact single-column |
-| Tablet | `<RANGE>` | Intermediate |
-| Desktop | `<RANGE>` | Full layout |
-| Wide | `<RANGE>` | Optional |
+Formal conformance target remains open but must be chosen before pilot readiness.
 
-Breakpoints harus mengikuti content behavior, bukan device brand tertentu.
+## 10. Content and Language
 
----
+- Initial product language is Indonesian.
+- Teacher-facing copy should be concise, actionable, and avoid anthropomorphizing AI authority.
+- Validation copy distinguishes wrong, unsupported, inconclusive, and system failure.
+- Classroom copy must be appropriate for the selected grade context.
+- Final glossary and localization strategy remain open.
 
-## 7. Core Components
+## 11. Open Design Decisions
 
-Setiap reusable component harus mempunyai:
-- purpose;
-- variants;
-- states;
-- sizing;
-- accessibility behavior;
-- responsive behavior jika relevan.
+- Brand identity, logo, palette, and typography.
+- Component implementation framework.
+- Mathematics notation renderer.
+- Exact target-device breakpoints and touch-target baseline.
+- Scene navigation and content-block visual grammar.
+- Controller information density and adaptation approval pattern.
 
-### Button
-
-**Variants**
-- Primary
-- Secondary
-- Tertiary / Ghost
-- Destructive
-
-**States**
-- Default
-- Hover
-- Focus
-- Active
-- Disabled
-- Loading
-
-**Rules**
-- satu primary action dominan per context bila memungkinkan;
-- disabled state tidak menggantikan explanation;
-- loading button harus mencegah accidental duplicate submission bila action tidak repeatable.
-
-### Input
-
-States:
-- Default
-- Focus
-- Filled
-- Invalid
-- Disabled
-- Read-only
-
-Error message harus associated dengan field secara semantic.
-
-### Other Components
-
-Document when used:
-- Select / Combobox
-- Checkbox / Radio
-- Tabs
-- Dialog
-- Drawer
-- Toast
-- Tooltip
-- Table
-- Pagination
-- Card
-- Badge
-- Breadcrumb
-- Navigation
-- Stepper / Progress
-- Empty State
-- Skeleton
-
----
-
-## 8. Form Pattern
-
-### Label
-
-- visible label preferred;
-- placeholder bukan pengganti label;
-- optional/required convention harus konsisten.
-
-### Validation
-
-- client validation untuk immediate feedback;
-- server response tetap authoritative;
-- preserve user input after validation failure;
-- group summary dapat digunakan untuk form panjang.
-
-### Destructive Action
-
-Gunakan confirmation ketika consequence sulit dipulihkan.
-
----
-
-## 9. Feedback and Status
-
-### Success
-Jelaskan outcome yang berhasil, bukan hanya “Success”.
-
-### Warning
-Gunakan untuk consequence/attention yang belum menjadi failure.
-
-### Error
-Error harus:
-- understandable;
-- actionable bila memungkinkan;
-- tidak mengekspos internal details;
-- mempertahankan context user.
-
-### Toast
-Gunakan untuk transient feedback yang tidak memerlukan permanent context.
-
-Critical failure tidak boleh hanya disampaikan melalui toast yang cepat hilang.
-
----
-
-## 10. Loading
-
-Pilih pattern berdasarkan konteks:
-
-| Pattern | Use When |
-|---|---|
-| Skeleton | Structure predictable |
-| Spinner | Short indeterminate wait |
-| Progress | Meaningful progress known |
-| Background status | User can leave flow |
-
-Hindari skeleton yang sangat berbeda dari final layout.
-
----
-
-## 11. Empty States
-
-Empty state harus mengandung kombinasi yang relevan:
-
-- title;
-- explanation;
-- illustration/icon bila membantu;
-- primary next action;
-- secondary education/help.
-
-Bedakan:
-- first-use empty;
-- no search result;
-- filtered empty;
-- permission-limited empty;
-- error disguised as empty (avoid).
-
----
-
-## 12. Tables and Data-Dense UI
-
-Rules:
-- prioritize readable alignment;
-- numeric values align consistently;
-- support horizontal overflow intentionally on small screens;
-- row actions predictable;
-- loading/empty/error states defined;
-- sorting/filtering state visible;
-- pagination behavior consistent.
-
----
-
-## 13. Navigation Patterns
-
-Define:
-- primary navigation;
-- secondary navigation;
-- breadcrumbs;
-- contextual actions;
-- mobile navigation behavior.
-
-Navigation labels should use user language, not internal module names where those differ.
-
----
-
-## 14. Motion
-
-### Motion Principles
-
-Motion harus:
-- clarify relationship;
-- acknowledge interaction;
-- guide attention;
-- communicate progress/state;
-- never delay task completion unnecessarily.
-
-### Timing
-
-| Category | Duration |
-|---|---:|
-| Micro interaction | `<VALUE>` |
-| Component transition | `<VALUE>` |
-| Page/section transition | `<VALUE>` |
-
-### Reduced Motion
-
-Respect `prefers-reduced-motion` or platform equivalent for non-essential movement.
-
----
-
-## 15. Icons and Illustration
-
-### Icons
-- use one coherent icon family when possible;
-- decorative icons should not receive unnecessary accessible labels;
-- action icons without visible text need accessible names;
-- avoid ambiguous icon-only critical actions.
-
-### Illustration
-`<STYLE / USAGE RULES>`
-
----
-
-## 16. Content and Microcopy
-
-### Tone
-
-`<TONE>`
-
-### Rules
-- action labels should describe action;
-- avoid unnecessary jargon in user-facing copy;
-- destructive confirmation names the consequence;
-- errors explain what user can do next;
-- technical identifiers may be shown only when useful for support/debugging.
-
----
-
-## 17. Accessibility
-
-Target: `<e.g. WCAG 2.2 AA where applicable>`
-
-Required patterns:
-- keyboard operability;
-- visible focus;
-- semantic structure;
-- label/control association;
-- sufficient contrast;
-- accessible names;
-- status announcements;
-- touch target sizing;
-- reduced motion;
-- no color-only meaning.
-
----
-
-## 18. Responsive Adaptation
-
-Responsive design bukan sekadar mengecilkan desktop.
-
-For each major component, define:
-- what reflows;
-- what stacks;
-- what becomes drawer/menu;
-- what remains always visible;
-- what can collapse;
-- what must never disappear.
-
----
-
-## 19. Design QA Checklist
-
-Before considering a new UI pattern complete:
-
-- [ ] uses existing tokens where applicable;
-- [ ] variants/states are defined;
-- [ ] loading/empty/error behavior exists;
-- [ ] keyboard behavior is verified;
-- [ ] responsive behavior is verified;
-- [ ] contrast and semantics are reviewed;
-- [ ] reduced motion is considered;
-- [ ] pattern does not duplicate an existing component without reason.
-
----
-
-## 20. Exceptions
-
-Document intentional deviations.
-
-| Component / Area | Exception | Reason | Review |
-|---|---|---|---|
-| `<AREA>` | `<EXCEPTION>` | `<RATIONALE>` | `<DATE/MILESTONE>` |
-
----
-
-## 21. Related Documents
-
-- UX Flows: `./UX_FLOWS.md`
-- PRD: `../00_product/PRD.md`
-- Feature Specs: `../01_features/`
-- Frontend Standard: `../standards/05_FRONTEND_STANDARD.md`
-- Accessibility NFR: `../02_architecture/NON_FUNCTIONAL_REQUIREMENTS.md`
-
----
-
-## 22. Change Log
+## 12. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
-| 0.1 | `<YYYY-MM-DD>` | Initial draft | `<AUTHOR>` |
+| `0.1` | `2026-09-06` | Initial design principles and component scope | Codex |

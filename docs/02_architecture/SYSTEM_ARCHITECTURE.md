@@ -1,673 +1,354 @@
-# System Architecture — <PROJECT_NAME>
+# System Architecture — Penatika
 
-> **Document role:** Authoritative source for the system's high-level technical structure, boundaries, runtime interactions, and architectural invariants.
->
-> Product behavior belongs in the PRD and feature specs. Decision rationale belongs in ADRs. Exact public interfaces belong in machine-readable contracts. Detailed coding conventions belong in engineering standards.
-
----
+> **Peran dokumen:** Canonical baseline untuk system boundaries, dependency direction, data ownership, trust boundaries, dan architecture invariants Penatika.
 
 ## Document Metadata
 
 | Field | Value |
 |---|---|
-| Project | `<PROJECT_NAME>` |
-| Status | Draft / Review / Locked |
+| Product | Penatika |
+| Status | Draft baseline |
 | Version | `0.1` |
-| Architecture Owner | `<OWNER>` |
-| Last Updated | `<YYYY-MM-DD>` |
-
----
+| Last Updated | `2026-09-06` |
+| Base Profile | `fullstack` |
+| Modifiers | `ai-enabled` |
+| Deployment Maturity | Pre-implementation; target environment not decided |
 
 ## 1. Architecture Summary
 
 ### System Purpose
 
-<Describe what the system does in technical/product terms in 2–4 sentences.>
+Penatika coordinates teacher preparation, a private teacher controller, a student-facing classroom display, structured lesson content, live AI adaptation, deterministic Mathematics assurance, curriculum grounding, and saved classroom sessions.
 
-### Architecture Style
+### Selected Baseline
 
-`<MODULAR MONOLITH / HEXAGONAL / LAYERED / MICROSERVICES / EVENT-DRIVEN / OTHER>`
+- Multiple client surfaces interact with one backend-owned application boundary.
+- The initial backend is a modular monolith with explicit domain modules.
+- Classroom session state is authoritative on the backend and projected differently to teacher and display surfaces.
+- Classroom content uses a versioned structured model; arbitrary generated HTML or executable AI output is not supported.
+- AI providers are proposal generators, not authorities for session state, mathematical correctness, curriculum truth, authorization, or policy.
+- Persistence, realtime transport, identity provider, client frameworks, programming languages, cloud, and external providers remain open decisions.
 
-### Primary Runtime Components
+### Why This Shape
 
-- `<FRONTEND>`
-- `<BACKEND>`
-- `<DATABASE>`
-- `<CACHE>`
-- `<MESSAGE BROKER>`
-- `<EXTERNAL SERVICE>`
+The MVP has tightly coupled workflows and shared consistency rules but no confirmed independent deployment or scaling requirement. A modular monolith minimizes distributed-system overhead while preserving boundaries that can be extracted later only if evidence justifies it.
 
-Only list components that actually exist or are explicitly planned.
-
----
-
-## 2. Architecture Objectives
-
-The architecture should optimize for:
-
-1. `<OBJECTIVE>`
-2. `<OBJECTIVE>`
-3. `<OBJECTIVE>`
-
-Examples:
-
-- rapid product iteration;
-- clear domain boundaries;
-- predictable deployment;
-- secure handling of user data;
-- horizontal scalability for stateless workloads;
-- low operational complexity.
-
-### Non-Objectives
-
-The architecture is not currently optimized for:
-
-- `<NON_OBJECTIVE>`
-- `<NON_OBJECTIVE>`
-
-This section prevents premature complexity.
-
----
-
-## 3. System Context
-
-Describe actors and external systems.
+## 2. System Context
 
 ```text
-+-----------------+
-|      User       |
-+--------+--------+
-         |
-         v
-+-----------------+
-|   Web / App UI  |
-+--------+--------+
-         |
-         v
-+-----------------+        +------------------+
-|     Backend     |------->| External Service |
-+--------+--------+        +------------------+
-         |
-         v
-+-----------------+
-|    Database     |
-+-----------------+
+Teacher
+  ├─ Preparation Client
+  └─ Private Controller Client
+             │
+             │ authorized application + realtime interactions
+             ▼
+      Penatika Backend
+       ├─ Identity & Access
+       ├─ Lesson
+       ├─ Classroom Session
+       ├─ Classroom Scene
+       ├─ AI Orchestration
+       ├─ Mathematics Assurance
+       └─ Curriculum
+             │
+             ├─ Persistence
+             ├─ AI Provider
+             ├─ Speech Recognition
+             └─ Controlled Curriculum Source
+             │
+             ▼
+     Classroom Display Client
+       classroom-safe projection only
 ```
 
-Replace this diagram with the actual system context.
+Students consume the classroom display but do not require a Penatika device identity in the MVP.
 
-### External Actors
+## 3. Main Runtime Components
 
-| Actor | Interaction |
+### 3.1 Preparation Client
+
+Responsibilities:
+
+- capture lesson intent;
+- present structured generation and validation state;
+- support teacher review and editing;
+- save and select lesson versions.
+
+It does not own authoritative lesson or curriculum provenance.
+
+### 3.2 Private Controller Client
+
+Responsibilities:
+
+- pair with an active classroom session;
+- show private AI progress, suggestions, warnings, and controls;
+- submit navigation, annotation, and adaptation commands;
+- show connection and synchronization state.
+
+It must be treated as an untrusted client for authorization.
+
+### 3.3 Classroom Display Client
+
+Responsibilities:
+
+- render classroom-safe structured scene projections;
+- show current lesson content and accepted annotations;
+- preserve a safe last-known projection during recoverable disruption;
+- exclude teacher-private and internal AI state.
+
+It has no authority to issue teacher commands.
+
+### 3.4 Penatika Backend
+
+The backend is initially one deployable application with explicit internal modules and infrastructure adapters.
+
+#### Identity and Access Module
+
+- resolves teacher identity and participant authorization;
+- creates bounded pairing credentials;
+- enforces session roles and access to projections.
+
+Identity technology and account lifecycle remain open.
+
+#### Lesson Module
+
+- owns lesson identity, drafts, immutable version identity, and readiness state;
+- coordinates generation without depending directly on provider SDKs;
+- retains supported provenance and validation references.
+
+#### Classroom Session Module
+
+- owns session lifecycle, participants, roles, current lesson position, authoritative revision, accepted classroom state, degradation status, and save outcome;
+- orders and reconciles state-changing commands;
+- produces role-specific projections.
+
+#### Classroom Scene Module
+
+- owns the supported structured scene model and schema version;
+- validates scene and annotation commands;
+- derives student-facing content projections;
+- rejects arbitrary executable content.
+
+#### AI Orchestration Module
+
+- translates application intents into bounded provider requests;
+- isolates provider/model-specific behavior;
+- enforces context, timeout, cost, resource, privacy, and output-schema controls;
+- returns proposals, never authoritative session mutations.
+
+#### Mathematics Assurance Module
+
+- classifies content requiring deterministic validation;
+- owns normalized inputs, validation result semantics, and validator version references;
+- remains independent of AI provider confidence.
+
+#### Curriculum Module
+
+- owns controlled curriculum source metadata, versions, supported scope, and provenance;
+- provides grounded reference context through supported interfaces;
+- does not permit provider output to redefine curriculum truth.
+
+### 3.5 Infrastructure Adapters
+
+Adapters implement persistence, realtime communication, AI generation, speech recognition, curriculum ingestion/retrieval, deterministic validation engines, telemetry, and clocks. Domain/application modules depend on ports rather than vendor SDKs.
+
+## 4. Architecture Style and Dependency Direction
+
+```text
+Client / Transport Adapters
+            ↓
+      Application Use Cases
+            ↓
+        Domain Modules
+            ↑
+      Defined Ports
+            ↑
+ Infrastructure / Providers
+```
+
+Rules:
+
+- Domain rules do not depend on HTTP, realtime library, database ORM, UI framework, or provider SDK.
+- Infrastructure may depend inward on application/domain ports.
+- Modules communicate through explicit supported interfaces, not another module's internal persistence representation.
+- Cross-module mutations occur through the owning module.
+- Technology selection must preserve these boundaries or document an ADR change.
+
+## 5. Module and Data Ownership
+
+| Data / State | Authoritative Owner | Notes |
+|---|---|---|
+| Teacher identity and authorization grants | Identity and Access | Provider/schema open |
+| Lesson draft and lesson version | Lesson | Version identity must remain stable |
+| Classroom session lifecycle and revision | Classroom Session | Backend authoritative |
+| Participant role and pairing state | Identity and Access with Session coordination | Pairing secret is ephemeral and bounded |
+| Structured scene and supported element schema | Classroom Scene | Versioned contract required before implementation |
+| Accepted scene state and annotations | Classroom Session through Scene commands | Client cache is not authoritative |
+| AI request/proposal lifecycle | AI Orchestration | Proposal is untrusted until checks complete |
+| Mathematics validation semantics/results | Mathematics Assurance | Independent of AI provider |
+| Curriculum source/version/provenance | Curriculum | Controlled reference data |
+| Operational telemetry | Observability infrastructure | Must exclude unnecessary sensitive payloads |
+
+## 6. Primary Runtime Flows
+
+### 6.1 Lesson Preparation
+
+1. Preparation client submits lesson intent.
+2. Lesson module resolves controlled curriculum context.
+3. AI Orchestration requests a structured proposal.
+4. Classroom Scene validates structure.
+5. Mathematics Assurance validates supported claims.
+6. Lesson module exposes proposal and assurance state to the teacher.
+7. Teacher edits and saves a stable lesson version.
+
+### 6.2 Session Start and Pairing
+
+1. Teacher starts a session from a reviewed lesson version.
+2. Classroom Session creates the authoritative state and revision.
+3. Identity and Access authorizes display and controller participants.
+4. Pairing credentials are short-lived, single-purpose, and server-validated.
+5. Session module returns role-specific projections.
+
+### 6.3 Live Adaptation
+
+1. Controller sends an authorized request bound to session and scene revision.
+2. Speech adapter transcribes ephemeral audio if applicable.
+3. AI Orchestration produces a structured proposal.
+4. Scene, Curriculum, and Mathematics modules perform applicable checks.
+5. Teacher surface receives private result and warnings.
+6. Accepted proposal becomes a revision-aware session command.
+7. Session publishes updated role-specific projections.
+
+### 6.4 Reconnect and Save
+
+1. Client presents its last observed revision.
+2. Session module returns current authoritative state or supported delta.
+3. Stale local changes are rejected or reconciled through explicit commands.
+4. Teacher ends and saves once using an idempotent application operation.
+
+## 7. Trust Boundaries
+
+| Boundary | Trust Position |
 |---|---|
-| `<ACTOR>` | `<INTERACTION>` |
+| Teacher and display clients → backend | Untrusted input; authenticate, authorize, validate, and bound |
+| Pairing credential → session access | Limited proof for a single purpose; not broad account authority |
+| AI/speech provider → application | Untrusted external dependency and output |
+| Curriculum source → curriculum module | Controlled only after source, version, integrity, and usage policy are established |
+| Backend → persistence | Privileged boundary using least-privilege credentials |
+| Teacher-private projection → classroom display | Explicit confidentiality boundary |
 
-### External Systems
+## 8. Security and Privacy Baseline
 
-| System | Purpose | Protocol | Criticality |
-|---|---|---|---|
-| `<SYSTEM>` | `<PURPOSE>` | HTTPS / Kafka / SMTP / etc. | Low / Medium / High |
+- Server-side authentication and authorization are required for protected actions.
+- Pairing tokens must be purpose-bound, expiring, non-guessable, and replay-resistant.
+- Raw push-to-talk audio is ephemeral by default and excluded from logs and ordinary persistence.
+- Secrets, tokens, raw provider payloads, and private teacher state must not appear in classroom projections.
+- AI output, user input, lesson content, and curriculum content are untrusted for rendering and prompt control.
+- Structured rendering must use allow-listed element types and safe encoding.
+- Resource limits apply to uploads if introduced, AI requests, context, sessions, commands, and payloads.
+- Retention, deletion, export, and audit policies require product decisions before production use.
 
----
+## 9. Reliability and Degradation Baseline
 
-## 4. Container / Runtime View
+- The classroom display should retain a safe last-known projection during recoverable update failures.
+- Failed AI or validation operations must not mutate authoritative classroom state.
+- Commands that may be retried require idempotency and revision checks.
+- Reconnection resolves against backend authority.
+- Dependency timeouts, retry ownership, and circuit-breaking policy must be explicit after providers are selected.
+- The minimum degraded-mode capability remains an Open Product Decision.
+- Latency objectives require prototype measurement before numerical targets are set.
 
-Describe independently deployable or operationally meaningful components.
+## 10. AI and Assurance Boundaries
 
-| Component | Responsibility | Technology | Deployment Unit |
-|---|---|---|---|
-| `<WEB>` | `<RESPONSIBILITY>` | `<TECH>` | `<UNIT>` |
-| `<API>` | `<RESPONSIBILITY>` | `<TECH>` | `<UNIT>` |
-| `<WORKER>` | `<RESPONSIBILITY>` | `<TECH>` | `<UNIT>` |
+- Provider prompts and models are replaceable adapters.
+- Prompt and policy versions must be traceable when they materially affect output.
+- AI evaluation is required for scoped lesson and adaptation tasks before pilot.
+- Deterministic validation is preferred for supported Mathematics claims.
+- Unsupported/inconclusive validation is an explicit state, not success.
+- Curriculum claims identify controlled source and version.
+- AI must not receive unnecessary teacher or student data.
 
-### Deployment Relationships
+## 11. Persistence Baseline
 
-```text
-<Client>
-   |
-   v
-<Frontend>
-   |
-   v
-<Backend/API>
-   |        \
-   v         v
-<DB>      <Broker>
-             |
-             v
-          <Worker>
-```
+Persistent domain data is required for lesson versions, curriculum provenance, session saves, assurance results, and authorization-related records. The database technology and physical schema are not selected.
 
-Use diagrams only when they clarify a real boundary.
+The conceptual model is defined in [DATA_MODEL.md](./DATA_MODEL.md). Migrations will become mandatory when a physical persistence technology is selected.
 
----
+## 12. Contracts
 
-## 5. Frontend Architecture
+Cross-component contracts are required before application source implementation, including:
 
-Complete when the project contains a frontend.
+- structured lesson and scene schema;
+- role-specific session projections;
+- session command and revision semantics;
+- AI proposal envelope;
+- assurance result and curriculum provenance.
 
-### Responsibilities
+No OpenAPI, AsyncAPI, or schema directory is created during initialization because transport, protocol, and initial field-level models are not yet sufficiently decided. Contract creation is the next architecture step after those decisions.
 
-The frontend owns:
+## 13. Observability Baseline
 
-- rendering and interaction;
-- client-side navigation;
-- presentation state;
-- input collection and local validation;
-- consuming server contracts;
-- accessibility and responsive behavior.
+- Use correlation identifiers across session, command, AI request, validation, and save operations.
+- Record structured lifecycle and failure-category events without sensitive payloads.
+- Measure synchronization failures, stale commands, pairing failures, provider latency/failures, validation outcomes, degraded-mode entry, and recovery.
+- Avoid high-cardinality labels containing teacher content, prompts, or session secrets.
+- Production SLOs and alert thresholds remain open until workload and deployment evidence exist.
 
-The frontend does **not** own authoritative security or business rules unless explicitly stated.
+## 14. Architecture Invariants
 
-### Structure
+- `INV-001`: Only the Classroom Session module may commit authoritative session lifecycle and revision changes.
+- `INV-002`: Clients never become authorization or classroom-state authorities.
+- `INV-003`: Classroom display receives only a classroom-safe projection.
+- `INV-004`: AI provider output never directly mutates authoritative state.
+- `INV-005`: Only supported structured content may be rendered; arbitrary executable output is rejected.
+- `INV-006`: Mathematics validation status cannot be derived solely from AI provider claims.
+- `INV-007`: Curriculum claims identify a controlled source and version.
+- `INV-008`: Raw push-to-talk audio is not stored by default.
+- `INV-009`: Every accepted state-changing command is bound to an authorized actor, session, and revision context.
+- `INV-010`: Infrastructure and vendor adapters do not own product policy.
 
-```text
-src/
-├── app/
-├── features/
-├── components/
-├── services/
-├── hooks/
-├── state/
-├── types/
-└── utils/
-```
+## 15. Selected Architecture Decisions
 
-Replace with the actual structure.
+- [ADR-0001 — Use a Modular Monolith for the Initial Backend](./adr/ADR-0001-modular-monolith-backend.md)
+- [ADR-0002 — Keep Classroom Session State Backend-Authoritative](./adr/ADR-0002-backend-authoritative-session-state.md)
+- [ADR-0003 — Use Versioned Structured Classroom Content](./adr/ADR-0003-structured-classroom-content.md)
+- [ADR-0004 — Separate AI Generation from Mathematical and Curriculum Authority](./adr/ADR-0004-ai-assurance-boundary.md)
 
-### State Strategy
+## 16. Open Architecture Decisions
 
-| State Type | Owner / Mechanism |
-|---|---|
-| Server state | `<TOOL / PATTERN>` |
-| Local UI state | `<TOOL / PATTERN>` |
-| Form state | `<TOOL / PATTERN>` |
-| Global client state | `<TOOL / PATTERN OR NONE>` |
-
-### Frontend Boundaries
-
-- `<BOUNDARY>`
-- `<BOUNDARY>`
-
----
-
-## 6. Backend Architecture
-
-### Responsibilities
-
-The backend owns:
-
-- authoritative business rules;
-- authentication/authorization enforcement;
-- domain state transitions;
-- persistence coordination;
-- external integration orchestration;
-- server-side validation;
-- reliability controls;
-- audit-relevant behavior.
-
-### Module / Domain Boundaries
-
-| Module | Responsibility | Owns Data? | May Depend On |
-|---|---|---:|---|
-| `<MODULE>` | `<RESPONSIBILITY>` | Yes / No | `<DEPENDENCIES>` |
-
-### Dependency Direction
-
-```text
-Transport / Delivery
-        ↓
-Application
-        ↓
-Domain
-        ↑
-Ports / Interfaces
-        ↑
-Infrastructure
-```
-
-Replace this if the project uses another architecture.
-
-The chosen dependency rule should be explicit and consistently enforced.
-
----
-
-## 7. Domain and Data Ownership
-
-### Domain Boundaries
-
-Describe the important domain boundaries and who owns each state transition.
-
-### Data Ownership
-
-| Data / Aggregate | Owning Module | Authoritative Store |
+| ID | Decision | Needed Before |
 |---|---|---|
-| `<DATA>` | `<MODULE>` | `<STORE>` |
-
-Avoid shared ownership of the same mutable data where possible.
-
----
-
-## 8. Data Architecture
-
-### Primary Datastores
-
-| Store | Purpose | Data Type |
-|---|---|---|
-| `<POSTGRESQL>` | `<PURPOSE>` | Transactional |
-| `<REDIS>` | `<PURPOSE>` | Cache / ephemeral |
-| `<OBJECT STORAGE>` | `<PURPOSE>` | Files |
-
-### Schema Management
-
-Persistent schema changes are managed through version-controlled migrations.
-
-### Transactions
-
-Define transaction boundaries and consistency expectations.
-
-- `<RULE>`
-- `<RULE>`
-
-### Data Retention
-
-`<POLICY OR LINK>`
-
-### Backup / Recovery Assumptions
-
-`<POLICY OR LINK>`
-
-Detailed entity definitions belong in `DATA_MODEL.md` and migrations.
-
----
-
-## 9. API Architecture
-
-### API Style
-
-`<REST / GRAPHQL / RPC / MIXED>`
-
-### Contract Source
-
-`<contracts/openapi/openapi.yaml>`
-
-### API Principles
-
-- explicit versioning strategy;
-- stable error model;
-- predictable pagination where needed;
-- idempotency for relevant mutating operations;
-- authentication and authorization at server boundaries;
-- backward-compatible evolution where practical.
-
-### Error Model
-
-Describe the common error envelope and how domain errors map to transport errors.
-
-Do not duplicate the full OpenAPI definition here.
-
----
-
-## 10. Event and Async Architecture
-
-Complete when asynchronous communication exists.
-
-### Broker
-
-`<KAFKA / RABBITMQ / SQS / NONE>`
-
-### Event Contract Source
-
-`<contracts/asyncapi/asyncapi.yaml>`
-
-### Event Principles
-
-- event names describe facts, not commands, unless intentionally modeled otherwise;
-- consumers should tolerate retries;
-- idempotency strategy must be explicit;
-- ordering assumptions must be documented;
-- poison messages and dead-letter behavior must be defined;
-- schema evolution must be backward compatible where required.
-
-### Key Events
-
-| Event | Producer | Consumers | Delivery Semantics |
-|---|---|---|---|
-| `<EVENT>` | `<MODULE>` | `<CONSUMERS>` | At-least-once / etc. |
-
----
-
-## 11. Authentication and Authorization
-
-### Authentication
-
-`<SESSION / JWT / OIDC / KEYCLOAK / CLERK / OTHER>`
-
-### Authorization Model
-
-`<RBAC / ABAC / OWNERSHIP / POLICY-BASED / MIXED>`
-
-### Enforcement Boundary
-
-Authoritative authorization is enforced at:
-
-`<BACKEND / GATEWAY / SERVICE>`
-
-### Identity Flow
-
-```text
-User
-  ↓
-Identity Provider
-  ↓
-Application
-  ↓
-Authorization Check
-  ↓
-Protected Resource
-```
-
-Reference detailed security decisions through ADRs or the threat model.
-
----
-
-## 12. Security and Trust Boundaries
-
-Identify the major trust boundaries.
-
-Examples:
-
-```text
-Internet
-  |
-  | trust boundary
-  v
-Frontend / Edge
-  |
-  | trust boundary
-  v
-Backend
-  |
-  | trust boundary
-  v
-Database / Internal Services
-```
-
-### Security Invariants
-
-- secrets are not stored in source code;
-- client input is untrusted;
-- authorization is not delegated only to the UI;
-- sensitive values are not written to logs;
-- external callbacks are validated;
-- privileged operations are auditable where required.
-
-Add project-specific invariants.
-
-Detailed threats belong in `THREAT_MODEL.md`.
-
----
-
-## 13. Caching
-
-Complete when caching exists.
-
-| Cache | Purpose | Key Strategy | TTL | Invalidation |
-|---|---|---|---|---|
-| `<CACHE>` | `<PURPOSE>` | `<KEY>` | `<TTL>` | `<STRATEGY>` |
-
-Caching must not become an undocumented source of truth.
-
-State which data may be stale and for how long.
-
----
-
-## 14. Reliability and Failure Handling
-
-### Timeouts
-
-All remote calls should have explicit timeout behavior.
-
-### Retries
-
-Retry only failures that are safe and meaningful to retry.
-
-### Idempotency
-
-Define idempotency requirements for operations vulnerable to duplicate execution.
-
-### Circuit Breaking / Degradation
-
-`<STRATEGY OR N/A>`
-
-### Partial Failure
-
-Describe behavior when dependencies fail.
-
-| Dependency | Failure Behavior | User Impact | Recovery |
-|---|---|---|---|
-| `<DEPENDENCY>` | `<BEHAVIOR>` | `<IMPACT>` | `<RECOVERY>` |
-
----
-
-## 15. Observability
-
-### Logs
-
-Structured logs should include enough context to correlate important operations without exposing sensitive data.
-
-### Metrics
-
-Track system and business signals relevant to reliability.
-
-### Tracing
-
-Use distributed tracing when cross-service or external-call visibility is materially useful.
-
-### Correlation
-
-Define the request/correlation identifier strategy.
-
-### Health
-
-Document:
-
-- liveness;
-- readiness;
-- dependency health;
-- background worker health.
-
----
-
-## 16. Deployment Architecture
-
-### Environments
-
-| Environment | Purpose | Data |
-|---|---|---|
-| Local | Developer execution | Local/mock |
-| Test | Automated testing | Ephemeral |
-| Staging | Pre-production verification | Non-production |
-| Production | Live users | Production |
-
-Adjust to project reality.
-
-### Runtime Platform
-
-`<DOCKER / KUBERNETES / OPENSHIFT / VERCEL / VPS / SERVERLESS / OTHER>`
-
-### Deployment Diagram
-
-```text
-Internet
-   |
-   v
-<Edge / LB>
-   |
-   +------> <Frontend>
-   |
-   +------> <Backend>
-               |
-        +------+------+
-        |             |
-        v             v
-      <DB>         <Broker>
-```
-
-### Configuration
-
-Runtime configuration comes from environment-specific configuration and secret management, not hard-coded values.
-
-See `docs/05_operations/CONFIGURATION.md`.
-
----
-
-## 17. Scalability
-
-Document real expected pressure points.
-
-### Expected Load
-
-| Dimension | Current / Initial | Expected Growth |
-|---|---:|---:|
-| Users | `<N>` | `<N>` |
-| Requests/sec | `<N>` | `<N>` |
-| Events/sec | `<N>` | `<N>` |
-| Stored data | `<SIZE>` | `<SIZE>` |
-
-### Scaling Strategy
-
-- `<STATELESS HORIZONTAL SCALING>`
-- `<DB INDEX / REPLICA / PARTITIONING IF NEEDED>`
-- `<WORKER SCALING>`
-- `<CDN / CACHE>`
-
-Do not introduce distributed architecture only for hypothetical scale.
-
----
-
-## 18. Performance Assumptions
-
-High-level performance targets belong in `NON_FUNCTIONAL_REQUIREMENTS.md`.
-
-This document should explain the architectural strategy used to meet them.
-
-Examples:
-
-- read-heavy paths may use caching;
-- long-running work moves to background processing;
-- large files use object storage;
-- expensive queries require indexing and measurement.
-
----
-
-## 19. Architecture Invariants
-
-These are rules that must remain true unless an ADR explicitly changes them.
-
-### INV-01 — `<INVARIANT>`
-
-<Example: Domain modules must not depend directly on HTTP controllers.>
-
-### INV-02 — `<INVARIANT>`
-
-<Example: Public API schemas are defined in OpenAPI before implementation changes are considered complete.>
-
-### INV-03 — `<INVARIANT>`
-
-<Example: Only the payment module may mutate authoritative payment state.>
-
-Architecture invariants are especially important for AI-assisted development.
-
----
-
-## 20. Architecture Decision Records
-
-Material decisions are stored under:
-
-```text
-docs/02_architecture/adr/
-```
-
-Relevant ADRs:
-
-| ADR | Decision | Status |
-|---|---|---|
-| `ADR-0001` | `<DECISION>` | Accepted |
-
-Do not duplicate ADR rationale in this document. Summarize and link.
-
----
-
-## 21. Known Constraints
-
-### Technical Constraints
-
-- `<CONSTRAINT>`
-
-### Operational Constraints
-
-- `<CONSTRAINT>`
-
-### Legacy / Integration Constraints
-
-- `<CONSTRAINT>`
-
----
-
-## 22. Known Architecture Risks
-
-| Risk | Impact | Mitigation |
-|---|---|---|
-| `<RISK>` | `<IMPACT>` | `<MITIGATION>` |
-
-Project-level risk ownership belongs in `docs/06_delivery/RISKS.md`.
-
----
-
-## 23. Open Architecture Questions
-
-| ID | Question | Decision Needed By | Owner |
-|---|---|---|---|
-| AQ-01 | `<QUESTION>` | `<MILESTONE>` | `<OWNER>` |
-
-When resolved, create an ADR if the decision is architecturally material.
-
----
-
-## 24. Change Rules
-
-Update this document when:
-
-- a system boundary changes;
-- a deployable component is added or removed;
-- ownership of domain data changes;
-- integration topology changes materially;
-- security or trust boundaries change;
-- persistence architecture changes;
-- reliability architecture changes.
-
-Do not update this document for routine internal refactoring that preserves the architecture.
-
----
-
-## 25. Related Documents
-
-- Product Brief: `../00_product/PRODUCT_BRIEF.md`
-- PRD: `../00_product/PRD.md`
-- Feature Specs: `../01_features/`
-- Data Model: `./DATA_MODEL.md`
-- NFR: `./NON_FUNCTIONAL_REQUIREMENTS.md`
-- ADRs: `./adr/`
-- Test Strategy: `../04_engineering/TEST_STRATEGY.md`
-- Threat Model: `../04_engineering/THREAT_MODEL.md`
-- Deployment: `../05_operations/DEPLOYMENT.md`
-- Standards: `../standards/`
-
----
-
-## 26. Change Log
+| OAD-001 | Client application strategy and frontend framework(s) | Source scaffolding |
+| OAD-002 | Backend language and framework | Source scaffolding |
+| OAD-003 | Database and migration technology | Persistent implementation |
+| OAD-004 | Identity, authentication, and account model | Protected workflow implementation |
+| OAD-005 | Realtime transport and reconnect protocol | Session contract implementation |
+| OAD-006 | AI provider/model strategy and fallback | AI integration implementation |
+| OAD-007 | Speech recognition strategy | Push-to-talk implementation |
+| OAD-008 | Mathematics validator approach per content type | Assurance implementation |
+| OAD-009 | Curriculum source ingestion and retrieval approach | Curriculum implementation |
+| OAD-010 | Deployment platform, environments, secret management, and regional requirements | Deployment planning |
+| OAD-011 | Background execution and queue needs | When measured request duration or reliability requires it |
+| OAD-012 | Contract protocols and schema tooling | Before application source implementation |
+
+## 17. Architecture Evolution Rules
+
+- Do not split services without evidence for independent deployment, scaling, failure isolation, or ownership.
+- Add asynchronous infrastructure only when a concrete workflow requires buffering, durable long-running work, or fan-out.
+- Create or update an ADR for material boundary, datastore, provider strategy, deployment topology, or authorization changes.
+- Keep public/cross-component contracts synchronized with implementation.
+
+## 18. Related Documents
+
+- [Product Brief](../00_product/PRODUCT_BRIEF.md)
+- [PRD](../00_product/PRD.md)
+- [Data Model](./DATA_MODEL.md)
+- [Non-Functional Requirements](./NON_FUNCTIONAL_REQUIREMENTS.md)
+- [Threat Model](../04_engineering/THREAT_MODEL.md)
+- [Test Strategy](../04_engineering/TEST_STRATEGY.md)
+
+## 19. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
-| 0.1 | `<YYYY-MM-DD>` | Initial draft | `<AUTHOR>` |
+| `0.1` | `2026-09-06` | Initial technology-neutral architecture baseline | Codex |

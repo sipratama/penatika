@@ -1,8 +1,8 @@
-# Product Requirements Document (PRD) — <PROJECT_NAME>
+# Product Requirements Document (PRD) — Penatika
 
-> **Peran dokumen:** Source of truth untuk **apa yang harus disediakan product pada level capability, cross-feature behavior, user journey, dan release scope**.
+> **Peran dokumen:** Source of truth untuk capability, cross-feature behavior, product rules, dan release scope Penatika.
 >
-> Product purpose, target user, success metrics, dan product-level assumptions berada di `PRODUCT_BRIEF.md`. Detailed behavior satu feature berada di `docs/01_features/<feature>.md`. Technical design berada di architecture/ADR/contracts.
+> Product purpose dan product-level assumptions berada di [Product Brief](./PRODUCT_BRIEF.md). Detailed behavior berada di feature specifications. Technical design berada di architecture, ADR, dan contracts bila sudah dipilih.
 
 ---
 
@@ -10,38 +10,34 @@
 
 | Field | Value |
 |---|---|
-| Product | `<PROJECT_NAME>` |
-| Status | Draft / Review / Locked |
+| Product | Penatika |
+| Status | Draft |
 | Version | `0.1` |
-| Owner | `<OWNER>` |
-| Last Updated | `<YYYY-MM-DD>` |
-| Target Release / Phase | `<MILESTONE>` |
+| Owner | Open Question — belum ditetapkan |
+| Last Updated | `2026-09-06` |
+| Target Phase | MVP baseline dan classroom pilot preparation |
 
 ---
 
 ## 1. Product Summary
 
-<Jelaskan product dalam 2–4 kalimat dari sisi capability dan user outcome. Jangan mengulang seluruh Product Brief.>
+Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, dan mengadaptasi pelajaran Matematika pada classroom display. Guru menggunakan preparation workspace dan private smartphone controller, sementara backend menjaga authoritative classroom session state dan AI menghasilkan structured proposals yang tunduk pada approval, mathematics validation, dan curriculum grounding.
 
 ### Product Brief Reference
 
-Canonical product intent:
-
-`./PRODUCT_BRIEF.md`
-
-Jika product purpose, target users, strategic outcome, success metric, atau product-level assumption berubah, update Product Brief.
+- [Product Brief — Penatika](./PRODUCT_BRIEF.md)
 
 ---
 
 ## 2. Actors
 
-Hanya actor yang diperlukan untuk memahami product behavior.
-
-| Actor | Primary Goal | Access / Responsibility |
+| Actor | Goal | MVP Scope |
 |---|---|---|
-| `<ACTOR>` | `<GOAL>` | `<SCOPE>` |
-
-Detailed persona/context tetap berada di Product Brief.
+| Teacher | Prepare, control, adapt, annotate, and save a lesson | Primary authenticated or authorized actor; identity mechanism belum dipilih |
+| Classroom Viewer | View appropriate teaching content on the classroom display | Display participant; tidak mendapat private controls atau AI working state |
+| Student | Receive the classroom experience | Beneficiary; tidak menggunakan student device pada MVP |
+| External AI Capability | Produce lesson or adaptation proposals | Untrusted integration, bukan decision-maker |
+| Curriculum Source | Supply controlled curriculum reference data | Authoritative source belum dipilih |
 
 ---
 
@@ -49,111 +45,177 @@ Detailed persona/context tetap berada di Product Brief.
 
 ### In Scope
 
-- `<CAPABILITY>`
-- `<CAPABILITY>`
+- AI-assisted lesson preparation dan teacher review.
+- Curriculum-aware content context.
+- Cloud-mediated classroom session dan device pairing.
+- Separate teacher-private dan student-facing surfaces.
+- Structured classroom scene dan content elements.
+- Live adaptation melalui voice atau direct controls.
+- Mouse, touch, stylus, dan digital ink interaction.
+- Deterministic mathematics validation bila memungkinkan.
+- Session saving dan recovery baseline.
+- Graceful degradation untuk dependency failure yang dapat ditoleransi.
 
 ### Out of Scope
 
-- `<OUT_OF_SCOPE>`
-- `<OUT_OF_SCOPE>`
-
-Product Brief menjelaskan MVP hypothesis/boundary. PRD menerjemahkannya menjadi capability scope yang lebih konkret.
+- Autonomous teaching.
+- Student-device participation.
+- PDF atau PowerPoint import.
+- Attendance dan school administration.
+- Advanced graphing atau 3D visualization.
+- Proprietary-hardware dependency.
+- Non-Mathematics subject support.
 
 ---
 
 ## 4. Product Capabilities
 
-Gunakan stable capability ID:
+### CAP-LESSON-001 — Prepare an AI-Assisted Lesson
 
-```text
-CAP-<DOMAIN>-<NUMBER>
-```
+**Description:** Guru membuat initial lesson draft menggunakan grade, topic, learning intent, dan controlled curriculum context, kemudian meninjau serta mengubahnya sebelum digunakan.
 
-### CAP-<DOMAIN>-001 — <CAPABILITY_NAME>
+**User Outcome:** Guru memulai kelas dengan material terstruktur yang sudah ditinjau, bukan raw AI response.
 
-**Description**  
-<Jelaskan capability dari sudut pandang product.>
+**Actor:** Teacher
 
-**User Outcome**  
-<Outcome yang diterima user.>
+**Feature Spec:** [lesson-preparation.md](../01_features/lesson-preparation.md)
 
-**Primary Actors**
-- `<ACTOR>`
+### CAP-SESSION-001 — Start and Pair a Classroom Session
 
-**Priority**  
-P0 / P1 / P2
+**Description:** Guru memulai cloud teaching session, membuka classroom display, dan memasangkan smartphone controller tanpa screen mirroring atau shared Wi-Fi dependency.
 
-**Related Feature Specs**
-- `../01_features/<feature>.md`
+**User Outcome:** Guru mempunyai private controller dan student-facing display yang terhubung ke state sesi yang sama.
 
-### CAP-<DOMAIN>-002 — <CAPABILITY_NAME>
+**Actor:** Teacher, Classroom Viewer
 
-**Description**  
-<Description>
+**Feature Spec:** [classroom-session.md](../01_features/classroom-session.md)
 
-**User Outcome**  
-<Outcome>
+### CAP-CANVAS-001 — Present and Manipulate Structured Classroom Content
 
-**Priority**  
-P0 / P1 / P2
+**Description:** Penatika merender structured lesson content dan memungkinkan navigation serta direct manipulation yang konsisten pada classroom surface.
 
-**Related Feature Specs**
-- `../01_features/<feature>.md`
+**User Outcome:** Guru dapat mengajar dari classroom canvas yang dapat diubah tanpa memperlihatkan internal AI workflow.
+
+**Actor:** Teacher, Classroom Viewer
+
+**Feature Spec:** [classroom-canvas.md](../01_features/classroom-canvas.md)
+
+### CAP-INK-001 — Annotate with Digital Ink
+
+**Description:** Guru dapat menulis, highlight, erase, undo, redo, dan clear menggunakan mouse, touch, atau stylus sesuai kemampuan perangkat.
+
+**User Outcome:** Guru dapat menjelaskan dan menekankan materi dengan interaction yang natural.
+
+**Actor:** Teacher
+
+**Feature Spec:** [classroom-canvas.md](../01_features/classroom-canvas.md)
+
+### CAP-ADAPT-001 — Request Live AI Adaptation
+
+**Description:** Guru dapat meminta perubahan terhadap contoh, pertanyaan, penjelasan, atau visual melalui push-to-talk atau direct command. AI menghasilkan structured proposal dan tidak menjadi authoritative state owner.
+
+**User Outcome:** Guru dapat berimprovisasi tanpa berpindah ke generic chatbot.
+
+**Actor:** Teacher, External AI Capability
+
+**Feature Spec:** [live-ai-adaptation.md](../01_features/live-ai-adaptation.md)
+
+### CAP-MATH-001 — Validate Mathematics and Ground Curriculum Claims
+
+**Description:** Penatika memvalidasi hasil matematika secara deterministik bila rule/engine tersedia dan menautkan curriculum claims ke controlled, versioned curriculum data.
+
+**User Outcome:** Guru menerima confidence dan warning yang lebih tepat sebelum content digunakan di kelas.
+
+**Actor:** Teacher, Curriculum Source
+
+**Feature Spec:** [mathematics-assurance.md](../01_features/mathematics-assurance.md)
+
+### CAP-SESSION-002 — Save the Teaching Session
+
+**Description:** Guru dapat mengakhiri dan menyimpan authoritative session state beserta lesson version dan classroom changes yang termasuk dalam retention policy.
+
+**User Outcome:** Hasil mengajar dapat dipertahankan untuk continuity atau review yang diizinkan.
+
+**Actor:** Teacher
+
+**Feature Spec:** [classroom-session.md](../01_features/classroom-session.md)
 
 ---
 
 ## 5. Primary User Journeys
 
-PRD hanya menyimpan cross-feature journey.
+### J-01 — Prepare a Lesson
 
-Detailed within-feature flow berada di Feature Spec. UX interaction detail dapat berada di `../03_design/UX_FLOWS.md`.
+1. Guru memilih grade, topic, dan learning intent.
+2. Penatika menggunakan curriculum context yang tersedia dan meminta AI menghasilkan structured lesson proposal.
+3. Penatika menunjukkan generation dan validation state pada teacher surface.
+4. Guru meninjau, mengubah, menerima, atau menghasilkan ulang bagian lesson.
+5. Guru menyimpan lesson version yang siap digunakan.
 
-### J-01 — <JOURNEY_NAME>
+**Outcome:** Tersedia teacher-reviewed lesson version untuk classroom session.
 
-**Actor:** `<ACTOR>`  
-**Goal:** `<GOAL>`
+### J-02 — Start and Pair the Classroom
 
-```text
-<ENTRY>
-   ↓
-<STEP>
-   ↓
-<STEP>
-   ↓
-<OUTCOME>
-```
+1. Guru memilih lesson version dan memulai classroom session.
+2. Classroom display bergabung sebagai student-facing participant.
+3. Guru memasangkan smartphone controller melalui pairing mechanism yang aman.
+4. Backend mengotorisasi setiap participant dan mengirim authoritative session state sesuai surface.
 
-**Success Condition**
-- `<CONDITION>`
+**Outcome:** Teacher controller dan classroom display berada pada sesi yang sama dengan visibility yang berbeda.
 
-**Related Capabilities**
-- `CAP-...`
-- `CAP-...`
+### J-03 — Teach and Adapt
+
+1. Guru menavigasi lesson dan memberi annotation.
+2. Guru meminta adaptation menggunakan push-to-talk atau direct control.
+3. Penatika mengubah request menjadi structured AI proposal.
+4. Policy, curriculum grounding, dan mathematics validation diterapkan sesuai content type.
+5. Guru menerima status atau suggestion secara privat.
+6. Content hanya menjadi authoritative classroom state sesuai approval policy yang berlaku.
+
+**Outcome:** Classroom content berubah tanpa guru keluar dari teaching flow.
+
+### J-04 — Recover and Save
+
+1. Jika koneksi atau AI dependency bermasalah, Penatika mempertahankan safe last-known classroom state dan menunjukkan degraded status pada teacher surface.
+2. Setelah reconnect, client melakukan synchronization terhadap authoritative backend state.
+3. Guru mengakhiri dan menyimpan sesi.
+
+**Outcome:** Session tidak menghasilkan conflicting authoritative state dan dapat disimpan sesuai policy.
 
 ---
 
 ## 6. Product-Wide Rules
 
-Hanya aturan lintas-feature atau product-wide.
-
 | ID | Rule |
 |---|---|
-| PR-001 | `<PRODUCT-WIDE RULE>` |
-| PR-002 | `<PRODUCT-WIDE RULE>` |
-
-Rule yang hanya berlaku pada satu feature harus berada di Feature Spec.
+| PR-001 | Guru tetap menjadi decision-maker untuk classroom content dan pacing. |
+| PR-002 | Teacher-private controls, AI working state, dan sensitive warnings tidak boleh tampil otomatis pada classroom display. |
+| PR-003 | Backend-managed session state adalah authoritative untuk synchronization lintas perangkat. |
+| PR-004 | Classroom content harus menggunakan supported structured content model; arbitrary AI-generated HTML atau executable content dilarang. |
+| PR-005 | AI output diperlakukan sebagai untrusted proposal dan harus melewati schema validation serta policy checks sebelum dapat memengaruhi authoritative state. |
+| PR-006 | Scoped mathematical claims harus melewati deterministic validation bila validator tersedia; failure atau unsupported validation harus terlihat bagi guru. |
+| PR-007 | Curriculum claims harus mereferensikan controlled curriculum source dan version. |
+| PR-008 | Raw push-to-talk audio tidak disimpan secara default. |
+| PR-009 | Student devices tidak boleh menjadi prerequisite untuk core classroom workflow. |
+| PR-010 | Pairing tidak boleh bergantung pada screen mirroring atau keberadaan perangkat pada shared Wi-Fi. |
+| PR-011 | Client tidak boleh menjadi authorization authority hanya karena mempunyai pairing code, cached state, atau hidden UI control. |
+| PR-012 | Degraded mode tidak boleh mengubah stale atau unvalidated proposal menjadi authoritative classroom content. |
 
 ---
 
 ## 7. Roles and Permissions Overview
 
-Ini adalah product-level overview, bukan authoritative security implementation.
+| Capability | Teacher | Classroom Viewer | Student Device |
+|---|:---:|:---:|:---:|
+| Create or edit lesson | Yes | No | Not supported |
+| Start or end session | Yes | No | Not supported |
+| Pair controller | Yes, subject to authorization | No | Not supported |
+| View student-facing content | Yes | Yes | Not supported |
+| View private AI suggestions and validation details | Yes | No | Not supported |
+| Change authoritative classroom state | Yes, through supported commands | No | Not supported |
+| Save session | Yes | No | Not supported |
 
-| Capability / Action | `<ROLE_A>` | `<ROLE_B>` | `<ROLE_C>` |
-|---|---:|---:|---:|
-| `<ACTION>` | Yes | No | Own only |
-
-Detailed authorization rule tetap berada di Feature Spec dan trusted backend/security boundary.
+Exact identity, authentication, and session authorization mechanisms remain an Open Architecture Decision.
 
 ---
 
@@ -161,186 +223,184 @@ Detailed authorization rule tetap berada di Feature Spec dan trusted backend/sec
 
 ### Cross-Product Experience Expectations
 
-- `<EXPECTATION>`
-- `<EXPECTATION>`
+- Classroom display prioritizes readability, focus, and absence of private controls.
+- Teacher controller prioritizes one-handed or quick interaction where practical.
+- AI generation must expose progress without blocking unrelated safe teaching actions.
+- Teacher must be able to distinguish draft, proposed, validated, warning, accepted, and displayed content states.
+- Mouse, touch, stylus, and keyboard behavior must be consistent for equivalent actions.
 
 ### Required States
 
-Aplikasi harus menangani state yang relevan secara konsisten:
+- Empty or no lesson selected.
+- Draft generation in progress.
+- Validation in progress.
+- Proposal ready for teacher action.
+- Validation warning or failure.
+- Session ready, paired, active, reconnecting, degraded, ending, saved, and failed.
+- Unsaved changes.
+- Permission denied or invalid pairing.
+- Unsupported input or content operation.
 
-- loading;
-- empty;
-- success;
-- validation error;
-- server/dependency error;
-- unauthorized/forbidden;
-- offline/degraded jika applicable.
+### Responsive and Accessibility
 
-### Responsive / Accessibility
-
-- `<REQUIREMENT>`
-- `<REQUIREMENT>`
-
-Detailed UI pattern/tokens berada di Design System.
+- Teacher and display surfaces must support their distinct viewport and interaction contexts.
+- Core actions must be keyboard accessible where the device provides a keyboard.
+- Focus, contrast, labels, target size, and motion behavior must be appropriate for classroom use.
+- Mathematical expressions require an accessible representation where technically feasible; the exact rendering technology remains open.
 
 ---
 
 ## 9. Notifications and User Communication
 
-Isi bila product mempunyai email, push, in-app notification, atau transactional communication.
+MVP requires in-product communication for:
 
-| Trigger | Audience | Channel | Purpose |
-|---|---|---|---|
-| `<TRIGGER>` | `<ACTOR>` | Email / Push / In-app | `<PURPOSE>` |
+- AI generation progress and failure;
+- validation status and warnings;
+- pairing status;
+- connection and synchronization status;
+- unsaved session state;
+- recovery or conflict resolution outcome.
 
-Final copy boleh hidup di dedicated content source.
+Email, push notification, and cross-session messaging are not required for the core MVP.
 
 ---
 
 ## 10. Search, Filter, Sort, and Discovery
 
-Isi hanya bila relevan.
-
-### Search
-- `<EXPECTED PRODUCT BEHAVIOR>`
-
-### Filter
-- `<EXPECTED PRODUCT BEHAVIOR>`
-
-### Sort
-- `<EXPECTED PRODUCT BEHAVIOR>`
-
-### Discovery / Recommendation
-- `<EXPECTED PRODUCT BEHAVIOR OR N/A>`
-
-Query/index/search architecture tidak berada di PRD.
+Search, filtering, and sorting across a lesson library are not yet defined as MVP requirements. Basic selection of an existing lesson may be needed, but library scale and discovery behavior remain open.
 
 ---
 
 ## 11. Analytics and Product Instrumentation
 
-**Success metric targets tidak didefinisikan ulang di sini.**
+Instrumentation should provide privacy-minimized evidence for:
 
-Canonical metrics berada di:
+- completion or abandonment of core journeys;
+- AI proposal lifecycle;
+- validation outcomes;
+- pairing and synchronization reliability;
+- degraded-mode activation and recovery;
+- explicit teacher acceptance, rejection, or modification where captured.
 
-`./PRODUCT_BRIEF.md#11-success-metrics`
-
-PRD hanya memetakan event/instrumentation yang diperlukan untuk mengukur product behavior/outcome.
-
-| Event | Trigger | Key Properties | Supports Metric / Question |
-|---|---|---|---|
-| `<EVENT_NAME>` | `<WHEN>` | `<PROPERTIES>` | `<METRIC / QUESTION>` |
-
-Jangan memasukkan sensitive data ke analytics tanpa kebutuhan dan review yang jelas.
+Exact analytics provider, event schema, retention, and pilot metrics are not decided. No student profiling is required for MVP.
 
 ---
 
 ## 12. Data and Privacy Expectations
 
-Product-level expectation:
-
-- `<WHAT USER DATA IS REQUIRED>`
-- `<WHAT USER CAN VIEW / EDIT / DELETE>`
-- `<RETENTION OR CONSENT EXPECTATION>`
-- `<DATA EXPORT / ACCOUNT DELETION EXPECTATION>`
-
-Physical data model berada di Data Model dan migrations/schema.
+- Collect only teacher, lesson, session, and operational data needed for product behavior.
+- Do not require student identity or student device data for core MVP.
+- Raw push-to-talk audio must be ephemeral by default and excluded from normal persistence and logs.
+- Text commands, generated proposals, annotations, and session history require explicit retention decisions before implementation.
+- Private teacher information must not leak to classroom display or analytics.
+- Authorization must be enforced by backend behavior, not client visibility.
 
 ---
 
 ## 13. Integrations
 
-Product-level dependency pada external systems.
+| Integration | Purpose | Status |
+|---|---|---|
+| AI model/provider | Lesson and live adaptation proposals | Open Architecture Decision |
+| Speech recognition | Push-to-talk command transcription | Open Architecture Decision |
+| Curriculum source | Controlled and versioned curriculum grounding | Open Product and Architecture Decision |
+| Mathematics validation engine | Deterministic validation for scoped content | Open Architecture Decision |
 
-| Integration | Product Purpose | Critical? | Related Feature |
-|---|---|---:|---|
-| `<SERVICE>` | `<PURPOSE>` | Yes / No | `<FEATURE>` |
-
-Technical protocol, retry, timeout, auth, dan compatibility berada di contracts/architecture/standards.
+Integrations must be isolated behind supported application boundaries and must not become authoritative owners of classroom state.
 
 ---
 
 ## 14. Release Scope
 
-### Required for Release
+### Required for MVP Baseline
 
-- `CAP-...`
-- `CAP-...`
+- `CAP-LESSON-001`
+- `CAP-SESSION-001`
+- `CAP-CANVAS-001`
+- `CAP-INK-001`
+- `CAP-ADAPT-001`
+- `CAP-MATH-001`
+- `CAP-SESSION-002`
+- Required security, privacy, validation, degraded-state, and recovery behavior.
 
 ### Can Be Deferred
 
-- `CAP-...`
+- Advanced lesson library discovery.
+- Additional subjects or grade ranges.
+- Student-device participation.
+- Import and advanced visualization capabilities.
+- Commercial billing or school administration.
 
 ### Product Release Blockers
 
-Release belum product-complete jika:
-
-- `<BLOCKER CONDITION>`
-- `<BLOCKER CONDITION>`
-
-Technical release gate berada di Release Checklist dan CI/CD standard.
+- Teacher-private information can appear on classroom display.
+- Unauthorized participant can control or join a session.
+- Unstructured or executable AI output can reach classroom rendering.
+- Supported mathematical content can bypass required validation without a visible state.
+- Curriculum claims cannot identify the source version used.
+- Session state can diverge across clients without deterministic reconciliation.
+- Raw audio is retained by default or exposed through logs.
+- Critical failure states have no recoverable teacher experience.
 
 ---
 
 ## 15. Delivery Dependencies
 
-Bagian ini hanya untuk dependency yang menghambat delivery capability saat ini.
-
-Product/business assumptions tetap authoritative di Product Brief.
-
-| Dependency | Needed For | Risk | Status |
-|---|---|---|---|
-| `<DEPENDENCY>` | `<CAPABILITY>` | Low / Medium / High | Open / Ready |
+- Product decisions `Q-01` through `Q-04` from the Product Brief.
+- Architecture decisions for identity, realtime synchronization, persistence, AI, speech, mathematics validation, and deployment.
+- A curriculum source and permitted usage model.
+- A test corpus for fractions, algebra, and linear equations.
+- Pilot environment assumptions and target device/browser evidence.
 
 ---
 
 ## 16. Open Product Decisions
 
-| ID | Decision / Question | Owner | Blocking? | Target |
-|---|---|---|---:|---|
-| PD-01 | `<QUESTION>` | `<OWNER>` | Yes / No | `<MILESTONE>` |
-
-Jika decision:
-- mengubah architecture → buat/update ADR;
-- mengubah detailed feature behavior → update Feature Spec;
-- mengubah product purpose/metric/assumption → update Product Brief.
+| ID | Decision |
+|---|---|
+| OPD-001 | Exact approval policy for each live AI adaptation type. |
+| OPD-002 | Authoritative curriculum source, version, and content licensing. |
+| OPD-003 | Minimum degraded-mode capability during internet or AI outage. |
+| OPD-004 | Pilot scope, success metrics, and quantitative targets. |
+| OPD-005 | Lesson/session retention, history, export, and deletion expectations. |
+| OPD-006 | Product ownership and requirement approval authority. |
+| OPD-007 | Business model and commercial release path. |
 
 ---
 
 ## 17. Feature Specification Index
 
-| Feature | Spec | Status | Related Capability |
-|---|---|---|---|
-| `<FEATURE>` | `../01_features/<feature>.md` | Draft / Locked | `CAP-...` |
-
-PRD tidak boleh menduplikasi seluruh Functional Requirements dari Feature Specs.
+| Capability | Feature Specification | Status |
+|---|---|---|
+| `CAP-LESSON-001` | [Lesson Preparation](../01_features/lesson-preparation.md) | Draft |
+| `CAP-SESSION-001`, `CAP-SESSION-002` | [Classroom Session](../01_features/classroom-session.md) | Draft |
+| `CAP-CANVAS-001`, `CAP-INK-001` | [Classroom Canvas](../01_features/classroom-canvas.md) | Draft |
+| `CAP-ADAPT-001` | [Live AI Adaptation](../01_features/live-ai-adaptation.md) | Draft |
+| `CAP-MATH-001` | [Mathematics Assurance](../01_features/mathematics-assurance.md) | Draft |
 
 ---
 
 ## 18. Product Acceptance
 
-Scope fase ini dianggap terpenuhi ketika:
+The MVP product baseline is acceptable when:
 
-- [ ] seluruh P0 capabilities tersedia;
-- [ ] primary user journeys dapat diselesaikan;
-- [ ] relevant feature Acceptance Criteria terpenuhi;
-- [ ] instrumentation yang diperlukan untuk canonical product metrics tersedia;
-- [ ] tidak ada unresolved product blocker;
-- [ ] out-of-scope behavior tidak masuk tanpa keputusan eksplisit.
-
-Engineering Definition of Done berada di `AGENTS.md` dan engineering standards.
+- required capabilities satisfy their feature acceptance criteria;
+- product-wide rules are covered by tests or explicit evidence;
+- open decisions that block implementation or pilot are resolved;
+- contracts and data definitions match implementation;
+- release blockers are absent;
+- relevant security, privacy, accessibility, reliability, and AI evaluation evidence is available.
 
 ---
 
 ## 19. Related Documents
 
-- Product Brief: `./PRODUCT_BRIEF.md`
-- Roadmap: `./ROADMAP.md`
-- Feature Specs: `../01_features/`
-- UX Flows: `../03_design/UX_FLOWS.md`
-- System Architecture: `../02_architecture/SYSTEM_ARCHITECTURE.md`
-- NFR: `../02_architecture/NON_FUNCTIONAL_REQUIREMENTS.md`
-- Data Model: `../02_architecture/DATA_MODEL.md`
+- [Product Brief](./PRODUCT_BRIEF.md)
+- [Product Roadmap](./ROADMAP.md)
+- [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
+- [UX Flows](../03_design/UX_FLOWS.md)
+- [Test Strategy](../04_engineering/TEST_STRATEGY.md)
+- [Threat Model](../04_engineering/THREAT_MODEL.md)
 
 ---
 
@@ -348,4 +408,4 @@ Engineering Definition of Done berada di `AGENTS.md` dan engineering standards.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
-| 0.1 | `<YYYY-MM-DD>` | Initial draft | `<AUTHOR>` |
+| `0.1` | `2026-09-06` | Initial capability baseline from confirmed Product Brief | Codex |
