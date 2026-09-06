@@ -8,13 +8,13 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.2` |
+| Version | `0.3` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 
 ## 1. Current Product Stage
 
-Penatika is in post-discovery, pre-implementation initialization. The Minimum Product Context Gate has passed and the narrow first-pilot design is defined, but classroom usability, pilot results, market hypotheses, and technology choices remain unvalidated.
+Penatika is in post-discovery, pre-implementation initialization. The Minimum Product Context Gate has passed, the narrow first-pilot design is defined, and the Pendago legacy baseline review is complete, but classroom usability, pilot results, market hypotheses, and technology choices remain unvalidated.
 
 ## 2. Roadmap Principle
 
@@ -41,6 +41,7 @@ Turn the initialized product and architecture baseline into one safe end-to-end 
 - Client, backend, persistence, identity, realtime, AI, speech, validation, and deployment technology baseline.
 - Versioned field-level contracts for lesson, scene, session, adaptation, and assurance.
 - Privacy, retention, product ownership, deployment/support, target-device, and risk-readiness gates required before real-classroom Stage B.
+- Any future Pendago reuse must be explicitly classified and mapped through the approved [legacy decision migration review](../06_delivery/PENDAGO_MIGRATION_REVIEW.md); legacy contracts do not become active Penatika contracts without re-derivation and validation.
 
 ### Exit Evidence
 
@@ -64,7 +65,7 @@ Evaluate whether Penatika improves teacher flow and confidence in realistic clas
 - Validate supported devices, browsers, display resolutions, and network conditions.
 - Define privacy, retention, support, deployment, and operational procedures for pilot use.
 - Instrument pilot evidence without student profiling.
-- Incorporate valid prior Pendago discovery evidence where traceable.
+- Use Pendago material only through the approved [legacy decision migration review](../06_delivery/PENDAGO_MIGRATION_REVIEW.md), without promoting deferred capabilities into the first-pilot scope.
 
 ### Entry Condition
 
@@ -114,5 +115,6 @@ See [RISKS.md](../06_delivery/RISKS.md) for the active risk register.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.3` | `2026-09-06` | Record completed Pendago baseline review and controlled future legacy reuse | Codex |
 | `0.2` | `2026-09-06` | Lock staged first-pilot scope, evidence targets, and expansion trigger | Codex |
 | `0.1` | `2026-09-06` | Initial outcome-based roadmap after Product Context Gate | Codex |

@@ -12,7 +12,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.5` |
+| Version | `0.6` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 | Primary Market | Indonesia |
@@ -320,12 +320,12 @@ Diagnostic metrics include proposal decisions, p50/p95 AI and transcription late
 | Q-02 | AI action mana yang memerlukan explicit approval sebelum tampil di classroom display? | AI request authorizes generation, not publication. AI-generated student-facing semantic content requires post-generation teacher approval after private preview and applicable validation. Deterministic non-generative presentation actions may execute directly. Unsupported/inconclusive assurance may require explicit warned override; known-invalid, stale, unauthorized, policy-violating, privacy-violating, or structurally unsafe proposals are blocked and cannot be overridden. See ADR-0006. |
 | Q-03 | Fungsi minimum apa yang harus tetap tersedia saat konektivitas atau AI provider terganggu? | Penatika MVP is resilience-oriented rather than offline-first. AI and speech dependency failures degrade only affected capabilities while reviewed lesson presentation and supported classroom controls continue when backend authority remains available. Speech failure falls back to non-voice interaction. If the classroom display disconnects, student-facing mutations pause while safe teacher-private work may continue. If backend authority cannot be reached, clients preserve the last-known safe classroom projection but do not create new authoritative mutations, publish proposals, complete saves, or queue new offline commands for automatic replay. Recovery must reconcile against backend-authoritative state before mutation resumes. Degraded mode never bypasses approval, assurance, authorization, privacy, structured-content, curriculum provenance, or revision rules. See ADR-0007. |
 | Q-04 | Seberapa luas pilot pertama di luar dua topik Matematika prioritas? | The first Penatika pilot remains limited to Grade 5 Fractions and Grade 7 Basic Algebra / Linear Equations; no additional Mathematics topic or grade is added merely for breadth. The pilot uses a staged teacher rehearsal followed by a limited classroom pilot, targeting 6–8 Mathematics teachers and at least 12 evaluated teacher sessions across both stages. Success is determined by hard safety/trust gates plus core workflow completion, teacher-control confidence, teaching-flow fit, reuse intent, and live-adaptation usefulness. The pilot is directional product evidence and does not claim statistical educational efficacy or market representativeness. See PILOT_PLAN.md. |
+| Q-05 | Bagian mana dari materi Pendago / AI Teaching Canvas yang masih valid untuk dimigrasikan? | Pendago / AI Teaching Canvas is treated as a reviewed legacy input rather than a parallel source of truth. Product principles compatible with the current Penatika baseline—including teacher-first workflow, private controller and classroom display, cloud pairing, structured content, backend authority, Mathematics assurance, curriculum grounding, digital ink, live adaptation, and the Grade 5 / Grade 7 validation slices—are retained through their current Penatika canonical documents. Conflicting legacy decisions such as generative Auto Mode and offline client mutation authority are superseded by ADR-0006 and ADR-0007. Exact legacy contracts, taxonomies, and implementation mechanics are reference-only until re-derived against current Penatika requirements. Post-MVP capabilities remain deferred. See [PENDAGO_MIGRATION_REVIEW.md](../06_delivery/PENDAGO_MIGRATION_REVIEW.md). |
 
 ### Open
 
 | ID | Question | Decision Needed By |
 |---|---|---|
-| Q-05 | Bagian mana dari materi Pendago / AI Teaching Canvas yang masih valid untuk dimigrasikan? | Sebelum requirements baseline dikunci |
 | Q-06 | Business model, payer, dan commercial path apa yang dituju? | Sebelum commercial release planning |
 | Q-07 | Siapa owner product dan approver requirement Penatika? | Sebelum requirement locking |
 
@@ -336,6 +336,7 @@ Diagnostic metrics include proposal decisions, p50/p95 AI and transcription late
 - [Product Requirements Document](./PRD.md)
 - [Product Roadmap](./ROADMAP.md)
 - [MVP Pilot Plan](../06_delivery/PILOT_PLAN.md)
+- [Pendago → Penatika Legacy Decision Migration Review](../06_delivery/PENDAGO_MIGRATION_REVIEW.md)
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
 - [ADR-0006 — Teacher Approval and AI Publication Policy](../02_architecture/adr/ADR-0006-teacher-approval-ai-publication-policy.md)
@@ -348,6 +349,7 @@ Diagnostic metrics include proposal decisions, p50/p95 AI and transcription late
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.6` | `2026-09-06` | Resolve Q-05 through an explicit Pendago legacy-decision migration review | Codex |
 | `0.5` | `2026-09-06` | Resolve Q-04 with a narrow staged pilot and evidence thresholds | Codex |
 | `0.4` | `2026-09-06` | Resolve Q-03 with resilience-oriented degradation and no offline authority | Codex |
 | `0.3` | `2026-09-06` | Resolve Q-02 with separate AI generation and publication authorization | Codex |

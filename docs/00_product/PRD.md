@@ -12,7 +12,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.5` |
+| Version | `0.6` |
 | Owner | Open Question — belum ditetapkan |
 | Last Updated | `2026-09-06` |
 | Target Phase | MVP baseline dan classroom pilot preparation |
@@ -224,6 +224,9 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | PR-028 | Pilot telemetry must be privacy-minimized and must not require student profiling or raw-audio retention. |
 | PR-029 | Pilot results are directional product evidence and must not be represented as statistically valid learning-outcome, nationwide teacher-demand, or educational-efficacy evidence. |
 | PR-030 | Missing product/usability thresholds with all safety gates passing leads to iteration within the current pilot scope rather than automatic feature/topic expansion. |
+| PR-031 | Pendago / AI Teaching Canvas material is legacy input and is not authoritative for Penatika unless explicitly reviewed and mapped into a current canonical Penatika document. |
+| PR-032 | When a legacy Pendago decision conflicts with the current Penatika Product Brief, PRD, feature specification, or Accepted ADR, the current Penatika decision takes precedence. |
+| PR-033 | Legacy field-level contracts, taxonomies, and implementation mechanics must be re-derived and revalidated against current Penatika requirements before they can become active Penatika contracts. |
 
 ---
 
@@ -431,6 +434,7 @@ The MVP product baseline is acceptable when:
 - [Product Brief](./PRODUCT_BRIEF.md)
 - [Product Roadmap](./ROADMAP.md)
 - [MVP Pilot Plan](../06_delivery/PILOT_PLAN.md)
+- [Pendago → Penatika Legacy Decision Migration Review](../06_delivery/PENDAGO_MIGRATION_REVIEW.md)
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
 - [ADR-0006 — Teacher Approval and AI Publication Policy](../02_architecture/adr/ADR-0006-teacher-approval-ai-publication-policy.md)
@@ -445,6 +449,7 @@ The MVP product baseline is acceptable when:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.6` | `2026-09-06` | Add legacy-authority and contract revalidation rules for resolved Q-05 | Codex |
 | `0.5` | `2026-09-06` | Resolve OPD-004 with staged pilot scope, gates, and metrics | Codex |
 | `0.4` | `2026-09-06` | Resolve OPD-003 with resilience-oriented degradation and truthful recovery/save behavior | Codex |
 | `0.3` | `2026-09-06` | Resolve OPD-001 with post-generation teacher approval and execution classes | Codex |

@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft / Approved Baseline |
-| Version | `0.1` |
+| Version | `0.2` |
 | Date | `2026-09-06` |
 | Owner | Open — named product/requirement approver required before real-classroom Stage B |
 
@@ -56,7 +56,7 @@ The first pilot does not include:
 - student accounts, student devices, or student profiling;
 - attendance or school-administration workflows;
 - advanced graphing or 3D visualization;
-- lesson import, including unreviewed Pendago migration;
+- lesson import, including direct Pendago content or contract migration;
 - commercial, billing, or payer workflows;
 - autonomous teaching;
 - learning-outcome efficacy claims;
@@ -383,7 +383,6 @@ The aggregate pilot report must also include participant/session counts, topic r
 
 ## 19. Open Follow-Ups
 
-- `Q-05`: reviewed Pendago / AI Teaching Canvas migration scope.
 - `Q-06` / `OPD-007`: business model and commercial path.
 - `Q-07` / `OPD-006`: named product owner and requirement approval authority.
 - `OPD-005`: lesson/session retention, history, export, and deletion expectations.
@@ -397,4 +396,5 @@ The aggregate pilot report must also include participant/session counts, topic r
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-06` | Remove resolved Q-05 legacy migration follow-up without changing pilot scope or metrics | Codex |
 | `0.1` | `2026-09-06` | Establish narrow staged MVP pilot scope, gates, metrics, and evidence rules | Codex |
