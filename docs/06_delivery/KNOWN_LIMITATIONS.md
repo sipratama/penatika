@@ -4,8 +4,8 @@
 
 ## Current Repository Limitations
 
-- No application source code or executable prototype exists; client architecture is selected but not scaffolded.
-- Backend language/framework, database, identity system, realtime transport, providers, package manager, and deployment platform are not selected.
+- No application source code or executable prototype exists; client and backend architecture are selected but not scaffolded.
+- The backend baseline is Java 25 LTS + Spring Boot 4.x, but the JDK distribution, exact framework patch, build tool, database, identity system, realtime transport, providers, contracts, and deployment platform are not selected.
 - No OpenAPI, AsyncAPI, or structured schema contracts exist yet.
 - Developer setup contains no application install/run commands.
 - Deployment, runbook, and release checklist remain conditional.
@@ -28,7 +28,7 @@
 - Formal accessibility target.
 - Exact identity/pairing implementation where relevant.
 - Field-level contracts.
-- Remaining backend technology, provider, and deployment decisions.
+- Remaining persistence, identity, realtime, contract, provider, build-tool, and deployment decisions.
 - Numerical latency/reliability targets where evidence is required.
 
 ## Trust and Quality Limitations

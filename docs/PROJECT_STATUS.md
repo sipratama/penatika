@@ -23,7 +23,7 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.2 |
+| Version | 0.3 |
 | Last Updated | 2026-09-06 |
 | Current Phase | Architecture & Technology Decisioning |
 | Implementation State | Pre-source / Pre-scaffolding |
@@ -57,8 +57,8 @@ created.
 | Data-lifecycle policy | COMPLETE | [DATA_RETENTION_POLICY.md](./06_delivery/DATA_RETENTION_POLICY.md) |
 | First-pilot definition | COMPLETE | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) |
 | Pendago legacy review | COMPLETE | [PENDAGO_MIGRATION_REVIEW.md](./06_delivery/PENDAGO_MIGRATION_REVIEW.md) |
-| Initial architecture principles | ESTABLISHED | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) + ADR-0001–ADR-0008 |
-| Architecture / technology decisions | ACTIVE | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) OAD-002–OAD-012 |
+| Initial architecture principles | ESTABLISHED | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) + ADR-0001–ADR-0009 |
+| Architecture / technology decisions | ACTIVE | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) OAD-003–OAD-012 |
 | Field-level contracts | PENDING | create only after relevant OAD decisions |
 | Source scaffolding | PENDING | after blocking OADs/contracts |
 | Application implementation | PENDING | after source scaffolding |
@@ -98,7 +98,7 @@ tracks status only and does not redefine the OAD descriptions.
 | ID | Decision | Status |
 |---|---|---|
 | OAD-001 | Client application strategy and frontend framework(s) | COMPLETE |
-| OAD-002 | Backend language and framework | NEXT |
+| OAD-002 | Backend language and framework | COMPLETE |
 | OAD-003 | Database and migration technology | PENDING |
 | OAD-004 | Identity, authentication, and account model | PENDING |
 | OAD-005 | Realtime transport and reconnect protocol | PENDING |
@@ -108,7 +108,7 @@ tracks status only and does not redefine the OAD descriptions.
 | OAD-009 | Curriculum ingestion, normalization, integrity/versioning, local-context modeling, and retrieval | PENDING |
 | OAD-010 | Deployment platform, environments, secret management, and regional requirements | PENDING |
 | OAD-011 | Background execution and queue needs | CONDITIONAL |
-| OAD-012 | Contract protocols and schema tooling | PENDING |
+| OAD-012 | Contract protocols and schema tooling | NEXT |
 
 OAD-011 remains evidence-triggered and must not be selected merely because a
 queue is common or familiar.
@@ -122,10 +122,12 @@ Architecture reasoning is not duplicated here.
 
 Immediate next decision work:
 
-1. OAD-002 — Backend Language and Framework
+1. OAD-012 — Contract Protocols and Schema Tooling
 
-OAD-001 is complete. Contracts and source scaffolding remain PENDING. Later
-OAD sequencing will follow dependency and evidence requirements.
+Client and backend platform boundaries are now selected. Cross-component
+contract strategy must be established before source scaffolding. Contracts
+remain PENDING until OAD-012 is resolved, and source scaffolding remains
+PENDING. Later OAD sequencing will follow dependency and evidence requirements.
 
 ## Open Non-Product Follow-Ups
 
@@ -133,7 +135,7 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 ### Architecture / Implementation
 
-- OAD-002 through OAD-012 as applicable;
+- OAD-003 through OAD-012 as applicable;
 - field-level structured contracts;
 - physical persistence model/migrations;
 - identity implementation;

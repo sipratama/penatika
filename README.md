@@ -53,7 +53,7 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 |---|---|
 | Base profile | `fullstack` |
 | Modifier | `ai-enabled` |
-| Initial backend shape | Modular monolith dengan explicit domain modules |
+| Backend | Java 25 LTS + Spring Boot 4.x modular monolith |
 | Classroom state | Backend-authoritative, revision-aware |
 | Classroom content | Versioned structured model; bukan arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; bukan authority |
@@ -63,7 +63,6 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | Business Model | Teacher-first freemium SaaS; Teacher Pro sebagai paid offer pertama; institutional path kemudian |
 | Client strategy | Browser-first React + TypeScript + Vite |
 | Client surfaces | Teacher Web (Preparation + Controller) dan Classroom Display Web terpisah |
-| Backend | Belum diputuskan — OAD-002 |
 | Deployment target | Belum diputuskan |
 
 Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architecture/adr/).
@@ -142,7 +141,6 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 ## Open Architecture and Implementation Decisions
 
 - Curriculum ingestion, provenance contracts, local-context modeling, serta usage/licensing untuk official guidance.
-- Backend language/framework.
 - Persistence dan migration technology.
 - Identity/authentication.
 - Realtime transport/reconnect protocol.

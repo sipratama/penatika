@@ -16,6 +16,8 @@ Penatika currently contains canonical product, feature, architecture, design, en
 
 Client architecture is selected: React, TypeScript, Vite, and browser-first Teacher Web + Classroom Display. No frontend source exists and no dependency installation command exists yet. Package manager and exact runtime version are not selected merely by this ADR.
 
+Backend architecture is selected: Java 25 LTS, Spring Boot 4.x, and one deployable modular monolith. No backend source exists. The exact Spring Boot patch, supported OpenJDK-compatible JDK distribution, and build tool will be selected during source scaffolding.
+
 Do not invent setup commands before the remaining stack is selected.
 
 ## 2. Current Prerequisites
@@ -25,7 +27,7 @@ Do not invent setup commands before the remaining stack is selected.
 - A Markdown-capable editor.
 - Access to the repository.
 
-No Node.js, JVM, .NET, Go, Rust, database, container, or cloud prerequisite is currently authoritative.
+No Node.js or Java installation is currently required to validate this documentation-only repository. Java 25 will become the backend runtime prerequisite when source scaffolding begins, but the JDK distribution and installation procedure are not yet selected. No database, container, or cloud prerequisite is currently authoritative.
 
 ## 3. Validate the Initialized Repository
 
@@ -55,7 +57,7 @@ Read selectively:
 Resolve and record at minimum:
 
 - client strategy and frontend framework — resolved by ADR-0008;
-- backend language/framework;
+- backend language/framework — resolved by ADR-0009;
 - database and migration tooling;
 - authentication approach;
 - realtime protocol;
@@ -88,11 +90,12 @@ When source exists, this document must add exact, executed instructions for:
 
 ## 8. Open Decisions
 
-Frontend source has not been scaffolded and no frontend dependency commands exist. Backend language/framework, database, identity, realtime transport, providers, and deployment remain open.
+Frontend and backend source have not been scaffolded, and no dependency installation or application run commands exist. Database, identity, realtime transport, contracts, providers, deployment, build tool, JDK distribution, and exact framework patches remain open.
 
 ## 9. Change Log
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-06` | Record Java 25 LTS / Spring Boot 4.x modular-monolith backend without adding setup commands | Codex |
 | `2026-09-06` | Record resolved client architecture without adding application setup commands | Codex |
 | `2026-09-06` | Initial pre-source developer setup baseline | Codex |

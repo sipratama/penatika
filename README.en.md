@@ -53,7 +53,7 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 |---|---|
 | Base profile | `fullstack` |
 | Modifier | `ai-enabled` |
-| Initial backend shape | Modular monolith with explicit domain modules |
+| Backend | Java 25 LTS + Spring Boot 4.x modular monolith |
 | Classroom state | Backend-authoritative and revision-aware |
 | Classroom content | Versioned structured model; no arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; not an authority |
@@ -63,7 +63,6 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 | Business Model | Teacher-first freemium SaaS; Teacher Pro as the first paid offer; institutional path later |
 | Client strategy | Browser-first React + TypeScript + Vite |
 | Client surfaces | Teacher Web (Preparation + Controller) and separate Classroom Display Web |
-| Backend | Not decided — OAD-002 |
 | Deployment target | Not decided |
 
 Material decisions are recorded in [`docs/02_architecture/adr/`](./docs/02_architecture/adr/).
@@ -142,7 +141,6 @@ This validator checks local Markdown links and unresolved core metadata placehol
 ## Open Architecture and Implementation Decisions
 
 - Curriculum ingestion, provenance contracts, local-context modeling, and official-guidance usage/licensing.
-- Backend language/framework.
 - Persistence and migration technology.
 - Identity/authentication.
 - Realtime transport and reconnect protocol.

@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.6` |
+| Version | `0.7` |
 | Last Updated | `2026-09-06` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
@@ -27,7 +27,10 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - Teacher Web contains Preparation and private Controller modes; Classroom Display is a separate browser application entry/build boundary.
 - No native mobile client is used in the MVP.
 - Frontend clients are browser application layers and do not become a BFF or application authority.
-- The initial backend is a modular monolith with explicit domain modules.
+- The authoritative backend uses Java 25 LTS and Spring Boot 4.x.
+- The backend remains one deployable modular monolith with explicit domain/application modules and no microservice split.
+- Core domain/application behavior remains framework-light Java where practical; Spring-specific, persistence, provider, and transport concerns belong at composition and adapter boundaries.
+- Persistence, identity, realtime, AI, speech, Mathematics, curriculum, and deployment technologies remain open adapter-level decisions where applicable.
 - Classroom session state is authoritative on the backend and projected differently to teacher and display surfaces.
 - Classroom content uses a versioned structured model; arbitrary generated HTML or executable AI output is not supported.
 - AI providers are proposal generators, not authorities for session state, mathematical correctness, curriculum truth, authorization, or policy.
@@ -35,7 +38,6 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - Deterministic non-generative direct actions use explicitly supported command classes rather than the AI proposal path.
 - Penatika is resilience-oriented, not offline-first; dependency failures degrade affected capabilities without creating competing state authority.
 - Loss of backend authority freezes new authoritative mutations instead of promoting a client to temporary authority.
-- Persistence, realtime transport, identity provider, backend language/framework, cloud, and external providers remain open decisions.
 
 ### Why This Shape
 
@@ -52,6 +54,8 @@ Teacher
              │ authorized application + realtime interactions
              ▼
       Penatika Backend
+      Java 25 / Spring Boot 4.x
+      one deployable modular monolith
        ├─ Identity & Access
        ├─ Lesson
        ├─ Classroom Session
@@ -119,7 +123,9 @@ It has no authority to issue teacher commands.
 
 ### 3.4 Penatika Backend
 
-The backend is initially one deployable application with explicit internal modules and infrastructure adapters.
+The backend is one deployable Java 25 LTS / Spring Boot 4.x application with explicit internal modules and infrastructure adapters. It remains a modular monolith; no microservice split is selected.
+
+Core domain and application behavior should remain framework-light Java where practical. Spring-specific composition, delivery, persistence, and provider integration concerns belong primarily at adapter boundaries. Domain models must not depend on transport models, database entities, provider SDKs, or AI SDK types.
 
 #### Identity and Access Module
 
@@ -392,12 +398,12 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 - [ADR-0006 — Teacher Approval and AI Publication Policy](./adr/ADR-0006-teacher-approval-ai-publication-policy.md)
 - [ADR-0007 — Graceful Degradation Without Offline Authority](./adr/ADR-0007-graceful-degradation-without-offline-authority.md)
 - [ADR-0008 — Use Browser-First React Clients with Separate Teacher and Classroom Display Boundaries](./adr/ADR-0008-browser-first-react-client-strategy.md)
+- [ADR-0009 — Use Java 25 LTS and Spring Boot for the Authoritative Backend](./adr/ADR-0009-java-spring-boot-backend.md)
 
 ## 16. Open Architecture Decisions
 
 | ID | Decision | Needed Before |
 |---|---|---|
-| OAD-002 | Backend language and framework | Source scaffolding |
 | OAD-003 | Database and migration technology | Persistent implementation |
 | OAD-004 | Identity, authentication, and account model | Protected workflow implementation |
 | OAD-005 | Realtime transport and reconnect protocol | Session contract implementation |
@@ -430,6 +436,7 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.7` | `2026-09-06` | Resolve OAD-002 with Java 25 LTS / Spring Boot modular-monolith backend | Codex |
 | `0.6` | `2026-09-06` | Resolve OAD-001 with browser-first React client architecture | Codex |
 | `0.5` | `2026-09-06` | Align security and persistence wording with the approved product data-lifecycle baseline | Codex |
 | `0.4` | `2026-09-06` | Apply resilience-oriented degradation and recovery architecture from ADR-0007 | Codex |
