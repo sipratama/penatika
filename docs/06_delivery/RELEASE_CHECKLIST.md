@@ -51,7 +51,8 @@ Record exact version, commit, environment, executed commands, results, unresolve
 
 - Release versioning and changelog policy.
 - CI/CD platform and required checks.
-- Pilot approval and support process.
+- Pilot support and operational release process.
+- Product Stage B go/no-go authority is already defined by `PRODUCT_GOVERNANCE.md` and `PILOT_PLAN.md`.
 - Quantitative AI, reliability, performance, and accessibility thresholds.
 
 ## Last Reviewed

@@ -4,6 +4,16 @@
 >
 > Dokumen ini dibaca saat project baru dibuat dari Annotasi Template atau ketika user meminta repository diinisialisasi. Setelah initialization selesai, AI tidak perlu membacanya untuk feature development biasa kecuali diminta.
 
+> **Penatika project execution status:**
+> - Project Discovery: COMPLETE
+> - Minimum Product Context Gate: PASS
+> - Project Initialization: COMPLETE
+>
+> For current project phase/status, see [PROJECT_STATUS.md](./PROJECT_STATUS.md).
+>
+> After initialization, normal work should use `AGENTS.md`, `PROJECT_STATUS.md`
+> when phase context is needed, and the relevant canonical project documents.
+
 ---
 
 ## 1. Core Principle
@@ -1127,15 +1137,20 @@ Profile, modifiers, technology, dan deployment target boleh diberikan jika meman
 
 Discovery selesai ketika:
 
-- [ ] project name diketahui;
-- [ ] core problem cukup jelas;
-- [ ] primary user cukup jelas;
-- [ ] desired outcome cukup jelas;
-- [ ] initial scope/MVP hypothesis cukup jelas;
-- [ ] important known constraints dicatat atau eksplisit `None known yet`;
-- [ ] assumptions dibedakan dari confirmed facts;
-- [ ] remaining material questions eksplisit;
-- [ ] Minimum Product Context Gate = `PASS`.
+- [x] project name diketahui;
+- [x] core problem cukup jelas;
+- [x] primary user cukup jelas;
+- [x] desired outcome cukup jelas;
+- [x] initial scope/MVP hypothesis cukup jelas;
+- [x] important known constraints dicatat atau eksplisit `None known yet`;
+- [x] assumptions dibedakan dari confirmed facts;
+- [x] remaining material questions eksplisit;
+- [x] Minimum Product Context Gate = `PASS`.
+
+Penatika Discovery Status: COMPLETE
+
+Evidence is represented by the current Product Brief, PRD, and
+[PROJECT_STATUS.md](./PROJECT_STATUS.md).
 
 ---
 
@@ -1143,21 +1158,29 @@ Discovery selesai ketika:
 
 Initialization selesai ketika:
 
-- [ ] Discovery Definition of Done terpenuhi;
-- [ ] base profile dipilih atau direkomendasikan berdasarkan product context;
-- [ ] Product Brief menggambarkan product nyata;
-- [ ] PRD mempunyai capability/scope yang diketahui;
-- [ ] initial feature specs dibuat hanya untuk sufficiently understood capabilities;
-- [ ] System Architecture menggambarkan baseline nyata, bukan template fiction;
-- [ ] conditional docs diputuskan setelah profile diketahui;
-- [ ] irrelevant docs hanya dihapus setelah cukup evidence;
-- [ ] contract folders hanya dibuat bila boundary benar-benar ada;
-- [ ] source structure hanya dibuat berdasarkan actual architecture/stack;
-- [ ] active docs tidak memakai unresolved bootstrap metadata placeholders;
-- [ ] project README dibuat terakhir dan menggambarkan project nyata;
-- [ ] validation dijalankan bila tooling tersedia;
-- [ ] open product/architecture decisions dilaporkan;
-- [ ] remaining limitations/risks eksplisit.
+- [x] Discovery Definition of Done terpenuhi;
+- [x] base profile dipilih atau direkomendasikan berdasarkan product context;
+- [x] Product Brief menggambarkan product nyata;
+- [x] PRD mempunyai capability/scope yang diketahui;
+- [x] initial feature specs dibuat hanya untuk sufficiently understood capabilities;
+- [x] System Architecture menggambarkan baseline nyata, bukan template fiction;
+- [x] conditional docs diputuskan setelah profile diketahui;
+- [x] irrelevant docs hanya dihapus setelah cukup evidence;
+- [x] contract folders hanya dibuat bila boundary benar-benar ada;
+- [x] source structure hanya dibuat berdasarkan actual architecture/stack;
+- [x] active docs tidak memakai unresolved bootstrap metadata placeholders;
+- [x] project README dibuat terakhir dan menggambarkan project nyata;
+- [x] validation dijalankan bila tooling tersedia;
+- [x] open product/architecture decisions dilaporkan;
+- [x] remaining limitations/risks eksplisit.
+
+Penatika Initialization Status: COMPLETE
+
+Initialization complete does NOT mean implementation complete.
+
+The next phase is Architecture & Technology Decisioning.
+
+For current phase/status, see [PROJECT_STATUS.md](./PROJECT_STATUS.md).
 
 Initialization **tidak berarti semua requirements atau architecture harus final**.
 

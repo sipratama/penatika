@@ -74,6 +74,10 @@ The repository does not yet contain application source code, package manifests, 
 
 ## Documentation Map
 
+### Project Status
+
+- [Project Status](./docs/PROJECT_STATUS.md) — current project phase, completed milestones, and pending architecture work.
+
 ### Product
 
 - [Product Brief](./docs/00_product/PRODUCT_BRIEF.md)

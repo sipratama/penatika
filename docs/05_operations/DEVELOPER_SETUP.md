@@ -40,12 +40,13 @@ This validates Markdown links and unresolved core metadata placeholders. It does
 Read selectively:
 
 1. `AGENTS.md`;
-2. relevant section of `docs/00_product/PRD.md`;
-3. relevant feature specification in `docs/01_features/`;
-4. `docs/02_architecture/SYSTEM_ARCHITECTURE.md` and relevant ADRs;
-5. relevant contracts after they are created;
-6. relevant standards in `docs/standards/`;
-7. source and tests after they exist.
+2. `docs/PROJECT_STATUS.md` when current phase / unresolved architecture decisions need to be understood;
+3. relevant section of `docs/00_product/PRD.md`;
+4. relevant feature specification in `docs/01_features/`;
+5. `docs/02_architecture/SYSTEM_ARCHITECTURE.md` and relevant ADRs;
+6. relevant contracts after they are created;
+7. relevant standards in `docs/standards/`;
+8. source and tests after they exist.
 
 ## 5. Before Source Scaffolding
 

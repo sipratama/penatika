@@ -74,6 +74,10 @@ Repository belum memiliki application source code, package manifest, database mi
 
 ## Documentation Map
 
+### Project Status
+
+- [Project Status](./docs/PROJECT_STATUS.md) — fase proyek saat ini, milestone yang selesai, dan pekerjaan arsitektur yang tertunda.
+
 ### Product
 
 - [Product Brief](./docs/00_product/PRODUCT_BRIEF.md) — why, who, value, principles, constraints, assumptions.

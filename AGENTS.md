@@ -49,6 +49,7 @@ Once the gate passes, follow the initialization sequence defined in `docs/PROJEC
 | Concern | Authoritative Source |
 |---|---|
 | Project initialization / discovery workflow | `docs/PROJECT_INITIALIZATION.md` |
+| Current project phase / completion checkpoint | `docs/PROJECT_STATUS.md` (routing/status only; linked canonical documents remain authoritative) |
 | Product purpose, users, outcomes, constraints | `docs/00_product/PRODUCT_BRIEF.md` |
 | Product capabilities and scope | `docs/00_product/PRD.md` |
 | Product ownership / requirement approval | `docs/00_product/PRODUCT_GOVERNANCE.md` |
@@ -72,6 +73,12 @@ When sources conflict, do not choose whichever is easiest to implement. Follow t
 ## 3. Read Selectively
 
 Do **not** read all project documentation by default.
+
+For project orientation, "what next?" questions, phase transitions, or
+architecture planning, read `docs/PROJECT_STATUS.md` after `AGENTS.md`.
+
+When an OAD or major project phase is completed, keep `docs/PROJECT_STATUS.md`
+synchronized.
 
 ### During New Project Initialization
 
