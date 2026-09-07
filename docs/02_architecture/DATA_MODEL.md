@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft conceptual baseline |
-| Version | `0.4` |
+| Version | `0.5` |
 | Last Updated | `2026-09-07` |
 | Database Technology | PostgreSQL 18.x |
 
@@ -284,27 +284,97 @@ Known conceptual attributes:
 
 Assurance references required to explain or reproduce retained accepted content follow the owning lesson/session lifecycle. Unaccepted content retains only privacy-minimized result metadata where needed for bounded diagnostics or pilot evidence.
 
-### Curriculum Source Version
+### Curriculum Source
 
-Controlled reference describing curriculum authority level, origin, and version.
+Stable controlled source identity, independent of any particular version. Per
+[ADR-0015](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md).
 
 Known conceptual attributes:
 
-- authority level: `NORMATIVE`, `OFFICIAL_GUIDANCE`, or `LOCAL_CONTEXT`;
-- stable source identity, title, and source version or decision number;
-- jurisdiction, subject, phase or effective scope, and relevant reference identity;
-- retrieval or matching provenance;
-- local-context identity/version when applicable;
-- integrity and licensing metadata;
-- activation status.
+- authority level and source kind;
+- stable source identifier and official title;
+- issuing authority and jurisdiction;
+- subject;
+- official location/reference;
+- applicable scope;
+- content-use / licensing review status.
 
 **Owner:** Curriculum module
 
-Controlled curriculum source/version metadata may be archived beyond teacher-content retention for provenance, integrity, supersession tracking, and historical reproducibility. Teacher-specific or local-context data follows teacher-owned data policy.
+A registered source is not automatically active; registration is metadata
+acquisition, not authority activation.
+
+### Curriculum Source Version
+
+One immutable official source version belonging to a `Curriculum Source`.
+
+Known conceptual attributes:
+
+- owning `Curriculum Source`;
+- official version / decision number;
+- publication/effective metadata where applicable;
+- subject and applicable phase/scope;
+- acquisition provenance;
+- source-artifact integrity digest (SHA-256 baseline);
+- verification, activation, and supersession state.
+
+**Owner:** Curriculum module
+
+Controlled curriculum source/version metadata may be archived beyond teacher-content retention for provenance, integrity, supersession tracking, and historical reproducibility. Teacher-specific or local-context data follows teacher-owned data policy. Large source binaries are not required to be stored in the primary database; raw-artifact archival remains a separate implementation/operations decision.
+
+### Curriculum Corpus Version
+
+Penatika's own immutable normalization of one or more `Curriculum Source Version` records for a defined scope. Distinct from, and versioned separately from, the official source version — a normalization correction does not change the official source version.
+
+Known conceptual attributes:
+
+- corpus identity/version;
+- source-version references;
+- normalization/schema version;
+- corpus integrity digest;
+- creation/review information;
+- validation, activation, and supersession state.
+
+**Owner:** Curriculum module
+
+Once activated, a corpus version is immutable. A correction creates a new `Curriculum Corpus Version`; the old version is not edited in place, and historical lesson provenance remains bound to the corpus version that was active when it was created.
+
+### Curriculum Entry
+
+Atomic grounding unit inside a `Curriculum Corpus Version`. The unit boundary preserves curriculum meaning and source reference rather than arbitrary chunking.
+
+Known conceptual attributes:
+
+- owning `Curriculum Corpus Version`;
+- authority level;
+- subject and phase/scope;
+- curriculum element/domain where applicable;
+- controlled source reference;
+- normalized topic classification and controlled topic aliases/bindings;
+- source-supported statement/content allowed by source policy;
+- source/corpus provenance.
+
+**Owner:** Curriculum module
+
+### Local Curriculum Context Version
+
+Teacher-owned `LOCAL_CONTEXT` overlay (for example, ATP sequencing, KSP/KOSP-derived context, or explicit teacher sequencing decisions).
+
+Known conceptual attributes:
+
+- owning `TeacherAccount`;
+- explicit `LOCAL_CONTEXT` classification;
+- version and lifecycle state;
+- sequencing/context content;
+- traceability reference when used for lesson grounding.
+
+**Owner:** Curriculum module, teacher-authorized
+
+Local context can never mutate or be promoted to `NORMATIVE` corpus entries. When local context affects sequencing without contradicting the normative source, both provenances are retained; a genuine contradiction produces an explicit conflict/warning state rather than a silent merge.
 
 ### Curriculum Reference
 
-Links lesson or content claims to an authority level, controlled curriculum source version, relevant phase/scope, reference identity, retrieval or matching provenance, and optional local-context version.
+Links a retained lesson/content claim to a `Curriculum Source Version`, a `Curriculum Corpus Version`, a `Curriculum Entry`, the relevant phase/scope, retrieval or matching provenance, and an optional `Local Curriculum Context Version`.
 
 **Owner:** Curriculum module
 
@@ -339,7 +409,12 @@ Classroom Session 1 ── * Adaptation Request
 Adaptation Request 1 ── 0..* AI Proposal
 Lesson Version / AI Proposal / Scene Element 1 ── 0..* Mathematics Validation Result
 Lesson Version / Scene Element * ── * Curriculum Reference
-Curriculum Reference * ── 1 Curriculum Source Version
+Curriculum Source 1 ── * Curriculum Source Version
+Curriculum Source Version * ── * Curriculum Corpus Version
+Curriculum Corpus Version 1 ── * Curriculum Entry
+Curriculum Reference * ── 1 Curriculum Entry
+Curriculum Reference * ── 0..1 Local Curriculum Context Version
+TeacherAccount 1 ── * Local Curriculum Context Version
 Classroom Session 1 ── 0..* Session Snapshot or Save Record
 ```
 
@@ -367,6 +442,10 @@ Classroom Session 1 ── 0..* Session Snapshot or Save Record
 - Accepted AI content follows the owning lesson/session lifecycle, while rejected or unaccepted proposal bodies do not become durable history.
 - Required assurance and curriculum provenance cannot be independently removed while a retained artifact depends on it.
 - Product state distinguishes ordinary-access removal, primary purge, and backup expiry.
+- An activated `Curriculum Corpus Version` is immutable; a normalization correction creates a new corpus version rather than mutating the activated one in place.
+- A newer official `Curriculum Source Version` does not automatically become active, and source supersession does not rewrite the provenance of previously saved lesson/session `Curriculum Reference` records.
+- A `Local Curriculum Context Version` can never become or override a `NORMATIVE` `Curriculum Entry`.
+- Curriculum retrieval that finds no adequate grounding produces an explicit `NO_MATCH`/`UNGROUNDED` state rather than falling back to unverified AI knowledge.
 
 ## 5. Data Classification
 
@@ -452,6 +531,7 @@ Table and column names are not defined here.
 - [ADR-0005 — Layered Curriculum Authority](./adr/ADR-0005-layered-curriculum-authority.md)
 - [ADR-0011 — OIDC with Backend-Managed Browser Sessions and Scoped Pairing](./adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
 - [ADR-0014 — PostgreSQL with Flyway and SQL-First Hexagonal Persistence](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
+- [ADR-0015 — Versioned Controlled Curriculum Corpus with Deterministic Retrieval](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
 - [PRD](../00_product/PRD.md)
 - [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
@@ -461,6 +541,7 @@ Table and column names are not defined here.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.5` | `2026-09-07` | Resolve OAD-009: refine curriculum concepts into Curriculum Source, Curriculum Source Version, Curriculum Corpus Version, Curriculum Entry, and Local Curriculum Context Version | Claude |
 | `0.4` | `2026-09-07` | Resolve OAD-003: record PostgreSQL/Flyway/Spring JDBC physical persistence baseline and likely integrity expectations while remaining conceptual | Claude |
 | `0.3` | `2026-09-07` | Define local teacher accounts, OIDC identity links, revocable browser sessions, scoped pairing grants, and participant authority | Codex |
 | `0.2` | `2026-09-06` | Resolve the conceptual retention, history, export, deletion, and backup-expiry lifecycle baseline | Codex |

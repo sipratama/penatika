@@ -55,6 +55,7 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 | Modifier | `ai-enabled` |
 | Backend | Java 21 LTS + Spring Boot 4.x module-first Hexagonal modular monolith |
 | Persistence | PostgreSQL 18.x + Flyway 13.x + Spring JDBC/JdbcClient SQL-first adapters |
+| Curriculum | Controlled versioned curriculum corpus with deterministic metadata-first retrieval; no live-web/vector authority |
 | Classroom state | Backend-authoritative and revision-aware |
 | Classroom content | Versioned structured model; no arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; not an authority |
@@ -147,7 +148,7 @@ This validator checks local Markdown links and unresolved core metadata placehol
 
 ## Open Architecture and Implementation Decisions
 
-- Curriculum ingestion, provenance contracts, local-context modeling, and official-guidance usage/licensing.
+- Curriculum corpus data/import artifact does not exist yet (architecture is selected: controlled versioned corpus, see ADR-0015); the Official Guidance licensing review remains pending.
 - Physical persistence schema and migrations (technology is selected: PostgreSQL + Flyway).
 - Concrete OIDC provider, session store, and deployment/security configuration.
 - Realtime transport and reconnect protocol.

@@ -22,7 +22,7 @@
 
 ## Unresolved Behavior
 
-- Curriculum ingestion, normalization, integrity/versioning, local-context modeling, retrieval, and official-guidance usage/licensing.
+- Curriculum architecture is selected (ADR-0015: controlled versioned corpus with deterministic metadata-first retrieval), but no normalized curriculum corpus/import artifact, physical curriculum schema, ingestion tooling, or runtime retrieval implementation exists yet. Official Guidance substantial-content usage remains pending explicit licensing/usage review; no legal approval is claimed.
 - Supported structured content blocks.
 - Target device/browser/display matrix.
 - Formal accessibility target.
@@ -36,7 +36,7 @@
 - Deterministic validation cannot be assumed to cover all Mathematics content.
 - Unsupported or inconclusive content must remain explicitly labeled.
 - AI quality, latency, privacy, and cost have not been evaluated against candidate providers.
-- Normative curriculum authority is selected, but operational curriculum grounding cannot be claimed until ingestion, integrity/versioning, provenance, retrieval, and applicable guidance-usage implementation are complete and tested.
+- Normative curriculum authority and its ingestion/versioning/retrieval architecture are selected, but operational curriculum grounding cannot be claimed until the corpus, physical schema, retrieval implementation, and applicable guidance-usage review are complete and tested.
 - Market and classroom efficacy are product hypotheses, not validated outcomes.
 
 ## Prior Product Context

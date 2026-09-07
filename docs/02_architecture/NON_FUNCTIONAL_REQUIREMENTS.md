@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.5` |
+| Version | `0.6` |
 | Last Updated | `2026-09-07` |
 
 ## 1. Quality Priorities
@@ -171,6 +171,19 @@ Before production capacity planning, define:
 
 No database SLO, RPO, or RTO is set by this section; see [Open Decisions](#15-open-decisions).
 
+### Curriculum Integrity and Reliability Requirements
+
+- Runtime grounding uses only activated controlled `Curriculum Corpus Version` data ([ADR-0015](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)).
+- Official source and normalized corpus integrity must be verifiable (SHA-256 baseline).
+- Activated corpus versions are immutable; corrections create a new version rather than mutating an activated one.
+- Source version and corpus version are retained for reproducibility of previously saved lesson/session curriculum provenance.
+- Curriculum runtime must not depend on official-source-website availability.
+- No unreviewed source may become `NORMATIVE` runtime authority.
+- No-match/ungrounded retrieval must be an explicit state, not a silent AI fallback.
+- Retrieval relevance, similarity score, or AI confidence cannot change curriculum authority level.
+
+No numerical curriculum-retrieval SLO is required by this section.
+
 ## 13. AI Quality and Cost
 
 - AI behavior requires versioned evaluation scenarios for initial lesson and adaptation tasks.
@@ -227,6 +240,7 @@ Before a classroom pilot:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.6` | `2026-09-07` | Add curriculum integrity/reliability requirements for the versioned controlled corpus baseline (ADR-0015) | Claude |
 | `0.5` | `2026-09-07` | Add persistence quality requirements for the PostgreSQL/Flyway/Spring JDBC baseline (ADR-0014) | Claude |
 | `0.4` | `2026-09-07` | Add OIDC, backend-session, CSRF, object-authorization, and scoped-pairing security evidence requirements | Codex |
 | `0.3` | `2026-09-06` | Add enforceable privacy and release gates for the approved data-lifecycle policy | Codex |

@@ -55,6 +55,7 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | Modifier | `ai-enabled` |
 | Backend | Java 21 LTS + Spring Boot 4.x module-first Hexagonal modular monolith |
 | Persistence | PostgreSQL 18.x + Flyway 13.x + Spring JDBC/JdbcClient SQL-first adapters |
+| Curriculum | Controlled versioned curriculum corpus dengan deterministic metadata-first retrieval; no live-web/vector authority |
 | Classroom state | Backend-authoritative, revision-aware |
 | Classroom content | Versioned structured model; bukan arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; bukan authority |
@@ -147,7 +148,7 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 
 ## Open Architecture and Implementation Decisions
 
-- Curriculum ingestion, provenance contracts, local-context modeling, serta usage/licensing untuk official guidance.
+- Curriculum corpus data/import artifact belum dibuat (arsitektur sudah dipilih: controlled versioned corpus, lihat ADR-0015); licensing review untuk official guidance masih tertunda.
 - Physical persistence schema dan migrations (teknologi sudah dipilih: PostgreSQL + Flyway).
 - Concrete OIDC provider, session store, dan deployment/security configuration.
 - Realtime transport/reconnect protocol.

@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.3` |
+| Version | `0.4` |
 | Last Updated | `2026-09-07` |
 | Review Trigger | Identity, provider, contract, deployment, retention, or student-data decisions |
 
@@ -94,6 +94,16 @@ Out of scope for this baseline: payment, student accounts, school administration
 | T-026 | Pairing or participant credential replay | Re-entry after grant consumption, replacement, or revocation | Five-minute single-use pairing grants; revocable participant sessions; replay rejection; attempt/rate limits |
 | T-027 | Stale or replaced controller continues sending commands | Concurrent or unauthorized classroom mutation | At most one active mutation-authorized controller; explicit replacement revokes prior authority; authorization and revision checks on every command |
 | T-028 | Classroom display attempts teacher-role escalation | Private-data access or classroom control | Separate display participant session; classroom-safe projection only; backend role/object enforcement; no teacher-account privilege |
+| T-029 | Curriculum source-artifact tampering during acquisition/ingestion | Corrupted or falsified content presented as official curriculum | SHA-256 source/corpus integrity digest; controlled source registry; acquisition provenance |
+| T-030 | Malicious or corrupted imported curriculum content | Unsafe or incorrect grounding presented to teachers/students | Schema/integrity validation before human review; human review before activation |
+| T-031 | Curriculum normalization error (wrong phase/topic mapping, meaning-changing typo) | Misaligned or incorrect curriculum grounding | Human review boundary; new immutable corpus version required for correction; no in-place mutation |
+| T-032 | Curriculum authority-level escalation (guidance/local context promoted to normative) | False national-authority claim | Structurally distinct `NORMATIVE`/`OFFICIAL_GUIDANCE`/`LOCAL_CONTEXT` levels; retrieval rank/similarity/AI confidence cannot promote authority |
+| T-033 | Unauthorized activation of a national curriculum source/corpus version | Unreviewed content becomes runtime authority | Explicit accountable human review and activation step; no crawler/AI self-activation |
+| T-034 | Stale or superseded corpus accidentally used for new generation | Outdated or incorrect curriculum grounding | Explicit activation state per corpus version; supersession requires deliberate review-and-activate, not automatic replacement |
+| T-035 | Teacher local-context cross-account access | Unauthorized read/use of another teacher's local curriculum context | `LocalCurriculumContextVersion` ownership/authorization by `TeacherAccount`; object-level authorization |
+| T-036 | Local context presented as normative | Teacher/classroom misled about national curriculum truth | Explicit `LOCAL_CONTEXT` classification; conflict/warning state instead of silent merge with normative claims |
+| T-037 | Provenance stripping from grounded curriculum claims | Ungrounded claim presented as grounded | Retrieval provenance required to reconstruct source/corpus/entry/match method; explicit `NO_MATCH`/`UNGROUNDED` state when absent |
+| T-038 | AI/provider substitutes model knowledge for controlled curriculum source | Fabricated curriculum grounding | Curriculum retrieval reads only activated PostgreSQL corpus data; AI provider adapters do not read curriculum tables directly; AI never self-authorizes curriculum truth |
 
 ## 6. Security Invariants
 
@@ -110,6 +120,8 @@ Out of scope for this baseline: payment, student accounts, school administration
 - Client visibility is not authorization.
 - Curriculum provenance cannot be supplied solely by the AI provider.
 - Official guidance or local context cannot be promoted to national normative authority by AI, retrieval ranking, or implementation convenience.
+- Curriculum content is not active runtime authority merely because it was downloaded or normalized; activation requires explicit accountable human review.
+- An activated curriculum corpus version is immutable; corrections and official-source supersession both require a new version and explicit re-activation, never in-place mutation.
 
 ## 7. Privacy Baseline
 
@@ -153,10 +165,14 @@ grants are session/role-bound, single-use, revocable, and expire after five
 minutes. MVP permits one active controller and one active display per classroom
 session; explicit replacement revokes prior participant authority.
 
-OAD-005 remains responsible for realtime credential carriage and reconnect
-protocol. The concrete OIDC provider, physical session store, exact session
-timeouts, cookie/path/header names, and CSRF mechanism remain implementation or
-deployment decisions.
+Realtime credential carriage and reconnect protocol are resolved by
+[ADR-0012](../02_architecture/adr/ADR-0012-sse-realtime-push-with-existing-http-commands.md)
+(SSE push reusing this identity model; no new realtime-specific credential).
+[ADR-0014](../02_architecture/adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
+selects PostgreSQL as the initial authoritative persistence for revocable
+browser/session security state; the concrete OIDC provider, exact physical
+session table/schema, exact session timeouts, cookie/path/header names, and
+CSRF mechanism remain implementation or deployment decisions.
 
 ## 9. External Provider Review
 
@@ -194,7 +210,6 @@ Before selecting AI or speech providers, evaluate:
 - Exact browser-session idle and absolute timeouts.
 - Physical browser/participant session store.
 - Exact cookie name/path, transient OIDC transaction mechanism, and CSRF implementation/header names.
-- OAD-005 realtime credential transport and reconnect authentication semantics.
 - Future account-linking or identity-recovery UX if introduced.
 - Technical retention enforcement and physical purge evidence.
 - Backup expiry evidence.
@@ -203,7 +218,8 @@ Before selecting AI or speech providers, evaluate:
 - Applicable legal obligations.
 - Provider-side processing/retention configuration and technical enforcement for transient transcription, prompt, and provider payload data within the approved policy.
 - AI/speech provider data-processing terms.
-- Curriculum data integrity and publishing process.
+- Implementation evidence for curriculum activation review, source-artifact integrity verification, and exact operational authorization mechanism ([ADR-0015](../02_architecture/adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md) resolves the architecture; implementation/operational evidence remains open).
+- Applicable licensing/legal review outcome for Official Guidance substantial-content usage.
 - Applicable Indonesian legal or institutional obligations; no compliance claim is made yet.
 - Production incident response and vulnerability-reporting process.
 
@@ -227,11 +243,13 @@ Review this threat model before:
 - [Test Strategy](./TEST_STRATEGY.md)
 - [Security Standard](../standards/08_SECURITY_STANDARD.md)
 - [ADR-0011 — OIDC with Backend-Managed Browser Sessions and Scoped Pairing](../02_architecture/adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
+- [ADR-0015 — Versioned Controlled Curriculum Corpus with Deterministic Retrieval](../02_architecture/adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
 
 ## 14. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.4` | `2026-09-07` | Add curriculum-specific threats/mitigations (ADR-0015); correct stale OAD-005/persistence wording; remove resolved curriculum-architecture item from Open Security Decisions | Claude |
 | `0.3` | `2026-09-07` | Resolve identity/session threats with OIDC, backend-managed sessions, CSRF controls, local account linkage, and scoped pairing | Codex |
 | `0.2` | `2026-09-06` | Align privacy and open-decision wording with the approved data-lifecycle baseline | Codex |
 | `0.1` | `2026-09-06` | Initial multi-surface and AI threat model | Codex |

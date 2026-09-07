@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.12` |
+| Version | `0.13` |
 | Last Updated | `2026-09-07` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
@@ -46,7 +46,12 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - MVP permits at most one active mutation-authorized controller and one active classroom display per classroom session.
 - Pairing grants are classroom-session-bound, role/purpose-bound, single-use, revocable, and expire after five minutes.
 - Core domain/application behavior remains framework-light Java where practical; Spring-specific, persistence, provider, and transport concerns belong at composition and adapter boundaries.
-- Persistence, realtime, AI, speech, Mathematics, curriculum, concrete identity provider, and deployment technologies remain open adapter-level decisions where applicable.
+- AI, speech, Mathematics validator, concrete OIDC provider/deployment configuration, and deployment technologies remain open adapter-level decisions where applicable; persistence (ADR-0014), realtime transport (ADR-0012), and curriculum (ADR-0015) are resolved.
+- Curriculum uses a controlled, versioned, human-verified corpus with deterministic metadata-first retrieval; runtime authority never depends on live web retrieval, AI model memory, or vector/embedding similarity ranking.
+- A registered controlled source produces an immutable `CurriculumSourceVersion`; Penatika's own normalization is a separately versioned, immutable `CurriculumCorpusVersion` that requires human review and explicit activation before runtime use.
+- Runtime curriculum retrieval reads only activated corpus data from PostgreSQL through the Curriculum module's persistence adapter; it does not depend on official-website availability, PDF parsing, web scraping, or AI-provider availability.
+- Local school/teacher curriculum context is a versioned `LOCAL_CONTEXT` overlay that cannot mutate or be promoted to `NORMATIVE` corpus entries.
+- AI Orchestration receives a provider-neutral `CurriculumContextBundle`; AI provider payloads do not become the curriculum model, and no AI provider owns retrieval authority.
 - Cross-component wire interfaces follow contract-first design: contract, compatibility review, implementation, then conformance evidence.
 - Synchronous HTTPS/JSON APIs use OpenAPI 3.1.x; justified reusable wire structures use JSON Schema Draft 2020-12.
 - RFC 9457 Problem Details is the HTTP error baseline.
@@ -209,7 +214,9 @@ field-level authentication contracts remain open implementation decisions.
 - owns curriculum authority levels, controlled source metadata, versions, supported scope, and provenance;
 - provides grounded reference context through supported interfaces;
 - distinguishes national normative authority, official interpretive guidance, and local school/teacher context;
-- does not permit provider output to redefine curriculum truth.
+- does not permit provider output to redefine curriculum truth;
+- per [ADR-0015](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md), uses deterministic metadata-first retrieval (authority level, subject, grade→phase, topic) against an explicitly activated `CurriculumCorpusVersion`, never AI model memory or live web retrieval;
+- returns an explicit `NO_MATCH`/`UNGROUNDED` state when controlled retrieval finds no adequate grounding, rather than falling back to unverified AI knowledge.
 
 ### 3.5 Infrastructure Adapters
 
@@ -258,8 +265,8 @@ Rules:
 ### 6.1 Lesson Preparation
 
 1. Preparation client submits lesson intent.
-2. Lesson module resolves controlled curriculum context.
-3. AI Orchestration requests a structured proposal.
+2. Lesson module resolves controlled curriculum context: Curriculum module performs deterministic metadata-first retrieval (subject, grade→phase, topic) against activated `CurriculumCorpusVersion` data and any applicable teacher `LocalCurriculumContextVersion`, and returns a provider-neutral `CurriculumContextBundle` with retrieval provenance, or an explicit `NO_MATCH`/`UNGROUNDED` state.
+3. AI Orchestration requests a structured proposal using the resolved curriculum context.
 4. Classroom Scene validates structure.
 5. Mathematics Assurance validates supported claims.
 6. Lesson module exposes proposal and assurance state to the teacher.
@@ -488,6 +495,7 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 - [ADR-0012 — Use Server-Sent Events for Realtime Push with Existing HTTP Commands](./adr/ADR-0012-sse-realtime-push-with-existing-http-commands.md)
 - [ADR-0013 — Use Java 21 LTS with Module-First Hexagonal Backend Architecture](./adr/ADR-0013-java21-module-first-hexagonal-backend.md)
 - [ADR-0014 — Use PostgreSQL with Flyway and SQL-First Hexagonal Persistence](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
+- [ADR-0015 — Use a Versioned Controlled Curriculum Corpus with Deterministic Retrieval](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
 
 ## 16. Open Architecture Decisions
 
@@ -496,7 +504,6 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 | OAD-006 | AI provider/model strategy and fallback | AI integration implementation |
 | OAD-007 | Speech recognition strategy | Push-to-talk implementation |
 | OAD-008 | Mathematics validator approach per content type | Assurance implementation |
-| OAD-009 | Curriculum ingestion, normalization, integrity/versioning, local-context modeling, and retrieval approach | Curriculum implementation |
 | OAD-010 | Deployment platform, environments, secret management, and regional requirements | Deployment planning |
 | OAD-011 | Background execution and queue needs | When measured request duration or reliability requires it |
 
@@ -521,6 +528,7 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.13` | `2026-09-07` | Resolve OAD-009 with controlled versioned curriculum corpus, deterministic metadata-first retrieval, explicit activation, and local-context overlays | Claude |
 | `0.12` | `2026-09-07` | Resolve OAD-003 with PostgreSQL 18.x, Flyway 13.x, and SQL-first Hexagonal persistence adapters | Claude |
 | `0.11` | `2026-09-07` | Refine backend baseline to Java 21 LTS and explicit module-first Hexagonal Architecture; ADR-0013 supersedes ADR-0009 | Claude |
 | `0.10` | `2026-09-07` | Resolve OAD-005 with SSE realtime push, existing HTTP commands, and inactive AsyncAPI | Claude |
