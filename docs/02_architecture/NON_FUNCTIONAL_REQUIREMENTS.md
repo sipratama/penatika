@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.7` |
+| Version | `0.8` |
 | Last Updated | `2026-09-07` |
 
 ## 1. Quality Priorities
@@ -251,6 +251,7 @@ Before a classroom pilot:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.8` | `2026-09-07` | Add AI generation gateway requirements for the OpenRouter bounded-generation baseline (ADR-0017) | Claude |
 | `0.7` | `2026-09-07` | Add Mathematics validator requirements for the scoped deterministic exact-arithmetic baseline (ADR-0016) | Claude |
 | `0.6` | `2026-09-07` | Add curriculum integrity/reliability requirements for the versioned controlled corpus baseline (ADR-0015) | Claude |
 | `0.5` | `2026-09-07` | Add persistence quality requirements for the PostgreSQL/Flyway/Spring JDBC baseline (ADR-0014) | Claude |

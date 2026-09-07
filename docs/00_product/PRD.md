@@ -12,9 +12,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.9` |
+| Version | `0.10` |
 | Owner | `sipratama — Product Owner / Requirement Approver` |
-| Last Updated | `2026-09-06` |
+| Last Updated | `2026-09-07` |
 | Target Phase | MVP baseline dan classroom pilot preparation |
 
 ---
@@ -252,6 +252,10 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | PR-056 | Institutional licensing is a later commercial path and does not automatically introduce school-administration capabilities into MVP scope. |
 | PR-057 | Commercial launch requires evidence for product value, unit economics, willingness to pay, billing correctness, support readiness, privacy/legal readiness, and Product Owner approval. |
 | PR-058 | Commercial metrics remain separate from the Q-04 first-pilot pass/fail thresholds unless the Product Owner explicitly approves a future pilot-policy change. |
+| PR-059 | Penatika AI is limited to explicitly supported Mathematics-teaching capabilities and is not a general-purpose chatbot. Unsupported software, website, coding, research, or other general-purpose tasks do not gain generation access merely because they mention Mathematics. Requests that can be identified as unsupported before expensive generation must be rejected or redirected before the main semantic model is invoked. |
+| PR-060 | Backend-enforced AI resource controls bound request size, requested output quantity, rate, concurrency, and available AI allowance before expensive generation. Exhaustion affects new AI generation only and must not weaken safety/trust controls or corrupt the active classroom session. |
+| PR-061 | Each teacher's AI usage is subject to an application-owned daily allowance window. The teacher must be able to understand current allowance usage, remaining allowance, exhaustion state, and reset timing without needing to understand provider-token billing. Exact numeric quotas and weighting remain evidence-driven configuration. |
+| PR-062 | Authorized Penatika internal operations must be able to inspect privacy-minimized aggregate and per-teacher AI usage/cost metadata for operations, abuse detection, quota tuning, and unit-economics analysis. This does not create a school-administrator MVP role and does not authorize access to unnecessary teacher-private content. |
 
 ---
 
@@ -491,6 +495,7 @@ The MVP product baseline is acceptable when:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.10` | `2026-09-07` | Resolve OAD-006 with bounded-AI-capability, resource-control, per-teacher allowance, and internal usage-visibility rules (ADR-0017) | Claude |
 | `0.9` | `2026-09-06` | Resolve `OPD-007` and add teacher-first commercial and release-readiness rules | Codex |
 | `0.8` | `2026-09-06` | Resolve `OPD-006` and add founder-led product and requirement approval rules | Codex |
 | `0.7` | `2026-09-06` | Resolve `OPD-005` with product-wide retention, history, export, and deletion requirements | Codex |

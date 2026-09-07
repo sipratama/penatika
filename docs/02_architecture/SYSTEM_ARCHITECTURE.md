@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.14` |
+| Version | `0.15` |
 | Last Updated | `2026-09-07` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
@@ -46,7 +46,14 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - MVP permits at most one active mutation-authorized controller and one active classroom display per classroom session.
 - Pairing grants are classroom-session-bound, role/purpose-bound, single-use, revocable, and expire after five minutes.
 - Core domain/application behavior remains framework-light Java where practical; Spring-specific, persistence, provider, and transport concerns belong at composition and adapter boundaries.
-- AI, speech, Mathematics validator, concrete OIDC provider/deployment configuration, and deployment technologies remain open adapter-level decisions where applicable; persistence (ADR-0014), realtime transport (ADR-0012), and curriculum (ADR-0015) are resolved.
+- Speech, concrete OIDC provider/deployment configuration, and deployment technologies remain open adapter-level decisions where applicable; persistence (ADR-0014), realtime transport (ADR-0012), curriculum (ADR-0015), Mathematics validation (ADR-0016), and generative AI (ADR-0017) are resolved.
+- Penatika uses OpenRouter as its generative-model gateway behind a Penatika-owned `GenerativeModelPort`, using the OpenRouter OpenAI-compatible Chat Completions API; OpenRouter is a replaceable infrastructure adapter, never curriculum, Mathematics, authorization, or publication authority.
+- Server-owned semantic model profiles (`ROUTER`, `FAST`, `QUALITY`; initial bindings `openai/gpt-5.6-luna` for `ROUTER`/`FAST` and `openai/gpt-5.6-terra` for `QUALITY`) resolve generation, never the browser client; OpenRouter's automatic Auto Router and Free Router are not used for pilot/production behavior.
+- Every generation request passes a pre-provider pipeline — authorization, hard resource guard, deterministic capability/scope guard, optional bounded `ROUTER` classification, per-teacher AI allowance check, atomic usage reservation, and concurrency/idempotency check — before any `FAST`/`QUALITY` call, so unsupported or over-scale requests never reach expensive generation.
+- Penatika owns per-teacher AI usage through an application-level daily allowance window, atomic usage reservation/reconciliation, and privacy-minimized aggregate/per-teacher usage-and-cost visibility for authorized internal operations; an OpenRouter API key is never the per-teacher quota mechanism.
+- Every approved OpenRouter generation route requires `zdr=true`, `data_collection=deny`, and `require_parameters=true` where structured output matters; unapproved automatic provider fallback is disabled, and a route price ceiling and the OpenRouter key spend limit apply as defense-in-depth, not as the product quota source of truth.
+- AI structured output passes gateway-level structured-output support and mandatory canonical Penatika schema revalidation; gateway/provider tools (web/file search, browsing, code execution, computer use, MCP) are not enabled for MVP generative paths.
+- Model, profile, and provider-route changes require Penatika's versioned AI evaluation corpus before pilot/production activation; AI-provider failure follows the existing graceful-degradation fallback (ADR-0007), not automatic cross-model or cross-provider fallback.
 - Curriculum uses a controlled, versioned, human-verified corpus with deterministic metadata-first retrieval; runtime authority never depends on live web retrieval, AI model memory, or vector/embedding similarity ranking.
 - A registered controlled source produces an immutable `CurriculumSourceVersion`; Penatika's own normalization is a separately versioned, immutable `CurriculumCorpusVersion` that requires human review and explicit activation before runtime use.
 - Runtime curriculum retrieval reads only activated corpus data from PostgreSQL through the Curriculum module's persistence adapter; it does not depend on official-website availability, PDF parsing, web scraping, or AI-provider availability.
@@ -201,6 +208,7 @@ field-level authentication contracts remain open implementation decisions.
 - isolates provider/model-specific behavior;
 - enforces context, timeout, cost, resource, privacy, and output-schema controls;
 - produces structured proposals and assurance inputs;
+- per [ADR-0017](./adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md), routes generation through OpenRouter using server-owned `ROUTER`/`FAST`/`QUALITY` model profiles behind the `GenerativeModelPort`, enforcing scope/capability, hard resource, and per-teacher allowance guards before any provider call;
 - returns proposals, never authoritative session mutations, and does not own publication authorization.
 
 #### Mathematics Assurance Module
@@ -499,12 +507,12 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 - [ADR-0014 — Use PostgreSQL with Flyway and SQL-First Hexagonal Persistence](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
 - [ADR-0015 — Use a Versioned Controlled Curriculum Corpus with Deterministic Retrieval](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
 - [ADR-0016 — Use Scoped Deterministic Mathematics Validators with Exact Arithmetic](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
+- [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](./adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
 
 ## 16. Open Architecture Decisions
 
 | ID | Decision | Needed Before |
 |---|---|---|
-| OAD-006 | AI provider/model strategy and fallback | AI integration implementation |
 | OAD-007 | Speech recognition strategy | Push-to-talk implementation |
 | OAD-010 | Deployment platform, environments, secret management, and regional requirements | Deployment planning |
 | OAD-011 | Background execution and queue needs | When measured request duration or reliability requires it |
@@ -530,6 +538,7 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.15` | `2026-09-07` | Resolve OAD-006 with OpenRouter, bounded model profiles, pre-provider scope/resource controls, per-teacher AI allowances, privacy-constrained provider routing, and graceful degradation | Claude |
 | `0.14` | `2026-09-07` | Resolve OAD-008 with scoped deterministic exact-rational and restricted affine/linear-equation validation | Claude |
 | `0.13` | `2026-09-07` | Resolve OAD-009 with controlled versioned curriculum corpus, deterministic metadata-first retrieval, explicit activation, and local-context overlays | Claude |
 | `0.12` | `2026-09-07` | Resolve OAD-003 with PostgreSQL 18.x, Flyway 13.x, and SQL-first Hexagonal persistence adapters | Claude |

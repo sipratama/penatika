@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.5` |
+| Version | `0.6` |
 | Last Updated | `2026-09-07` |
 | Review Trigger | Identity, provider, contract, deployment, retention, or student-data decisions |
 
@@ -130,6 +130,9 @@ Out of scope for this baseline: payment, student accounts, school administration
 - An activated curriculum corpus version is immutable; corrections and official-source supersession both require a new version and explicit re-activation, never in-place mutation.
 - Deterministic Mathematics validation uses exact rational arithmetic and a data-only, resource-bounded parser; it never uses floating-point equality as correctness authority and never executes arbitrary code.
 - AI cannot convert a deterministic `INVALID`, `UNSUPPORTED`, or `INCONCLUSIVE` Mathematics result into `VALID`; a correction proposed after `INVALID` must be revalidated as a new proposal.
+- OpenRouter and any generative-model provider cannot become authorization, quota, curriculum, Mathematics, or publication authority.
+- A generation request must pass the deterministic capability/scope guard and hard resource guard before any expensive `FAST`/`QUALITY` provider call.
+- Generative traffic uses only an explicitly approved, privacy-compliant (`zdr=true`, `data_collection=deny`) provider route; unapproved automatic fallback is disabled.
 
 ## 7. Privacy Baseline
 
@@ -253,11 +256,13 @@ Review this threat model before:
 - [ADR-0011 — OIDC with Backend-Managed Browser Sessions and Scoped Pairing](../02_architecture/adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
 - [ADR-0015 — Versioned Controlled Curriculum Corpus with Deterministic Retrieval](../02_architecture/adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
 - [ADR-0016 — Scoped Deterministic Mathematics Validators with Exact Arithmetic](../02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
+- [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](../02_architecture/adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
 
 ## 14. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.6` | `2026-09-07` | Add AI-gateway threats/mitigations (privacy routing, provider fallback, server-controlled routing, scope abuse, validation shopping, credential exposure) for ADR-0017 | Claude |
 | `0.5` | `2026-09-07` | Add Mathematics-validator threats/mitigations (parser safety, floating-point, staleness, AI self-evaluation) for ADR-0016 | Claude |
 | `0.4` | `2026-09-07` | Add curriculum-specific threats/mitigations (ADR-0015); correct stale OAD-005/persistence wording; remove resolved curriculum-architecture item from Open Security Decisions | Claude |
 | `0.3` | `2026-09-07` | Resolve identity/session threats with OIDC, backend-managed sessions, CSRF controls, local account linkage, and scoped pairing | Codex |

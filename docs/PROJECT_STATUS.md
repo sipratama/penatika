@@ -23,7 +23,7 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.11 |
+| Version | 0.12 |
 | Last Updated | 2026-09-07 |
 | Current Phase | Architecture & Technology Decisioning |
 | Implementation State | Pre-source / Pre-scaffolding |
@@ -58,7 +58,7 @@ created.
 | First-pilot definition | COMPLETE | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) |
 | Pendago legacy review | COMPLETE | [PENDAGO_MIGRATION_REVIEW.md](./06_delivery/PENDAGO_MIGRATION_REVIEW.md) |
 | Initial architecture principles | ESTABLISHED | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) + ADR-0001–ADR-0012 |
-| Architecture / technology decisions | ACTIVE | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) OAD-006, OAD-007, OAD-010–OAD-011 |
+| Architecture / technology decisions | ACTIVE | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) OAD-007, OAD-010–OAD-011 |
 | Contract strategy | COMPLETE | [ADR-0010](./02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md) / [contracts](../contracts/README.md) |
 | Field-level contracts | PENDING | identity and realtime transport semantics are now selected (ADR-0011, ADR-0012); field-level OpenAPI/JSON Schema work has not started |
 | Source scaffolding | PENDING | after blocking OADs/contracts |
@@ -103,8 +103,8 @@ tracks status only and does not redefine the OAD descriptions.
 | OAD-003 | Database and migration technology | COMPLETE |
 | OAD-004 | Identity, authentication, and account model | COMPLETE |
 | OAD-005 | Realtime transport and reconnect protocol | COMPLETE |
-| OAD-006 | AI provider/model strategy and fallback | NEXT |
-| OAD-007 | Speech recognition strategy | PENDING |
+| OAD-006 | AI provider/model strategy and fallback | COMPLETE |
+| OAD-007 | Speech recognition strategy | NEXT |
 | OAD-008 | Mathematics validator approach per content type | COMPLETE |
 | OAD-009 | Curriculum ingestion, normalization, integrity/versioning, local-context modeling, and retrieval | COMPLETE |
 | OAD-010 | Deployment platform, environments, secret management, and regional requirements | PENDING |
@@ -147,28 +147,37 @@ Fractions / Grade 7 Basic Algebra / Linear Equations pilot scope. No
 general-purpose CAS, external mathematical service, or LLM-as-validator is
 selected; deterministic validation requires no network dependency.
 
+OAD-006 is resolved by
+[ADR-0017](./02_architecture/adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md):
+OpenRouter as the initial controlled generative-model gateway behind a
+Penatika-owned `GenerativeModelPort`, server-owned `ROUTER`/`FAST`/`QUALITY`
+model profiles, a pre-provider scope/capability/resource pipeline that
+rejects unsupported and over-scale requests before expensive generation, an
+application-owned per-teacher daily AI allowance with atomic usage
+reservation, privacy-constrained provider routing (`zdr=true`,
+`data_collection=deny`, no unapproved automatic fallback), and graceful
+degradation as the MVP fallback policy. This also resolves the pre-provider
+request-scope/budget-control and per-teacher usage-accounting concern
+previously flagged against OAD-006.
+
 ## Immediate Next Step
 
 Immediate next decision work:
 
-1. OAD-006 — AI Provider / Model Strategy and Fallback
+1. OAD-007 — Speech Recognition Strategy
 
-Both provider-independent trust inputs are now established: controlled/
-versioned curriculum grounding via ADR-0015, and deterministic Mathematics
-validation via ADR-0016. AI provider selection can now be evaluated as a
-replaceable proposal-generation capability subordinate to these
-authorities. The AI provider/model decision must also define a
-pre-provider request-scope and budget-control boundary so unsupported/
-general-purpose requests can be rejected before expensive generation; that
-policy is not resolved by OAD-008 or this document and remains part of
-OAD-006. Teacher identity, browser authentication, pairing, participant
-roles, and authorization are defined by ADR-0011. Realtime transport,
-credential carriage, and reconnect mechanics are defined by ADR-0012 (SSE
-push with existing HTTP commands; AsyncAPI stays inactive). Field-level
-contracts remain PENDING: the blocking architecture semantics now exist,
-but the OpenAPI/JSON Schema field-level work itself has not started.
-Source scaffolding also remains PENDING. `SYSTEM_ARCHITECTURE.md` remains
-authoritative for `Needed Before` rules.
+The generative AI gateway, model routing, scope/quota controls, and
+provider privacy boundary are now defined by ADR-0017. Push-to-talk can now
+select the speech path while keeping raw audio separate from generative AI
+and passing the resulting bounded request through the same OAD-006
+scope/resource pipeline. Teacher identity, browser authentication, pairing,
+participant roles, and authorization are defined by ADR-0011. Realtime
+transport, credential carriage, and reconnect mechanics are defined by
+ADR-0012 (SSE push with existing HTTP commands; AsyncAPI stays inactive).
+Field-level contracts remain PENDING: the blocking architecture semantics
+now exist, but the OpenAPI/JSON Schema field-level work itself has not
+started. Source scaffolding also remains PENDING. `SYSTEM_ARCHITECTURE.md`
+remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
 
@@ -176,7 +185,7 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 ### Architecture / Implementation
 
-- OAD-006, OAD-007, and OAD-010–OAD-011 as applicable;
+- OAD-007 and OAD-010–OAD-011 as applicable;
 - field-level structured contracts;
 - physical persistence model/migrations;
 - identity implementation;

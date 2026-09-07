@@ -60,6 +60,7 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | Classroom state | Backend-authoritative, revision-aware |
 | Classroom content | Versioned structured model; bukan arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; bukan authority |
+| AI generation gateway | OpenRouter sebagai controlled generative-model gateway; server-owned ROUTER/FAST/QUALITY model profile; bounded capability/resource guard dan per-teacher daily AI allowance sebelum expensive generation |
 | Mathematics trust | Deterministic validation untuk supported scope |
 | Curriculum trust | BSKAP 046/H/KR/2025 as Mathematics normative authority; official guidance is interpretive and local context is an overlay |
 | Product Owner | `sipratama` |
@@ -153,7 +154,6 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 - Physical persistence schema dan migrations (teknologi sudah dipilih: PostgreSQL + Flyway).
 - Concrete OIDC provider, session store, dan deployment/security configuration.
 - Realtime transport/reconnect protocol.
-- AI provider/model strategy.
 - Speech recognition strategy.
 - Field-level contract definitions.
 - Deployment/environment/secret management.

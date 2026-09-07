@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft conceptual baseline |
-| Version | `0.6` |
+| Version | `0.7` |
 | Last Updated | `2026-09-07` |
 | Database Technology | PostgreSQL 18.x |
 
@@ -267,6 +267,105 @@ Known conceptual attributes:
 
 Rejected, regenerated, abandoned, failed, and blocked proposal bodies are transient by default and may use at most the `24-hour` diagnostic window where necessary. Privacy-minimized lifecycle and teacher-decision metadata may follow an associated saved session for up to `90 days`. Accepted structured content follows the lifecycle of the lesson/session artifact it becomes part of; a redundant raw-provider copy is not retained.
 
+### AI Generation
+
+Represents one provider-facing generation attempt submitted to the OpenRouter
+gateway on behalf of a lesson-generation flow or an `Adaptation Request`. Per
+[ADR-0017](./adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md).
+
+Known conceptual attributes:
+
+- generation identity;
+- owning teacher reference;
+- supported capability;
+- model profile (`ROUTER`, `FAST`, or `QUALITY`);
+- `GenerationPolicyVersion`;
+- `PromptPolicyVersion`;
+- output schema version;
+- gateway/model slug and selected upstream provider route where known;
+- lifecycle/result state (for example, requested, reserved, in-flight, completed, failed, rejected);
+- provider correlation identity excluding secrets;
+- relevant curriculum corpus version and Mathematics validator version references where applicable;
+- created and completed timestamps.
+
+**Owner:** AI Orchestration module
+
+Full prompt and full provider response bodies are not retained as part of an
+`AI Generation` record; only the bounded metadata above is retained for
+traceability. An `AI Generation` never becomes authoritative by existing — it
+produces at most an `AI Proposal` that still requires schema, policy,
+curriculum, and Mathematics checks before any publication decision.
+
+### AI Allowance Window
+
+Represents one teacher's application-owned AI usage allowance for a bounded
+period (the MVP baseline is daily). Per ADR-0017.
+
+Known conceptual attributes:
+
+- owning `TeacherAccount`;
+- window identity and period (for example, the current daily window);
+- allowance granted for the window;
+- allowance consumed/reserved so far;
+- window start and reset timestamps;
+- exhausted state.
+
+**Owner:** AI Orchestration module, coordinating with Identity and Access
+
+An `AI Allowance Window` is the teacher-facing quota source of truth. It is
+independent of any OpenRouter API-key limit or provider credit balance, which
+remain infrastructure-level circuit breakers rather than the product quota.
+
+### AI Usage Reservation
+
+Represents an atomic bounded-allowance hold created before an expensive
+generation call and reconciled after actual provider usage/cost is known. Per
+ADR-0017.
+
+Known conceptual attributes:
+
+- reservation identity;
+- owning `AI Allowance Window` and associated `AI Generation`;
+- reserved allowance amount;
+- reservation state (for example, held, released, reconciled, expired);
+- creation and reconciliation timestamps.
+
+**Owner:** AI Orchestration module
+
+A reservation prevents concurrent requests from observing the same remaining
+allowance. If a request is rejected before provider invocation, no
+reservation is created. If a reserved request fails before provider usage,
+the reservation may be released; if the outcome is uncertain, the reservation
+remains in a conservative pending state until reconciled.
+
+### AI Usage Event
+
+Represents one privacy-minimized usage/cost record for a completed or failed
+generation attempt. Per ADR-0017.
+
+Known conceptual attributes:
+
+- event identity;
+- teacher/account internal reference;
+- associated `AI Generation` identity;
+- supported capability;
+- model profile and model slug;
+- actual upstream provider route where available;
+- status;
+- input token count;
+- output token count;
+- gateway-reported cost;
+- reservation/reconciliation result;
+- retry state;
+- rejection category where applicable;
+- timestamp.
+
+**Owner:** AI Orchestration module
+
+Full prompt, full provider response, and raw audio are not required to be
+stored in an `AI Usage Event`. Applicable metadata follows
+[DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md).
+
 ### Mathematics Validation Result
 
 Reproducible assurance record for supported content. Per
@@ -409,6 +508,12 @@ TeacherAccount 1 ── 0..* SessionParticipant (TEACHER_CONTROLLER only)
 Classroom Session 1 ── * Classroom Scene revision/state
 Classroom Scene 1 ── * Annotation Operation
 Classroom Session 1 ── * Adaptation Request
+Adaptation Request / Lesson Generation Request 1 ── 1 AI Generation
+AI Generation 1 ── 0..* AI Proposal
+AI Generation 1 ── 0..1 AI Usage Reservation
+AI Generation 1 ── 0..1 AI Usage Event
+TeacherAccount 1 ── * AI Allowance Window
+AI Allowance Window 1 ── * AI Usage Reservation
 Adaptation Request 1 ── 0..* AI Proposal
 Lesson Version / AI Proposal / Scene Element 1 ── 0..* Mathematics Validation Result
 Lesson Version / Scene Element * ── * Curriculum Reference
@@ -450,6 +555,9 @@ Classroom Session 1 ── 0..* Session Snapshot or Save Record
 - A `Local Curriculum Context Version` can never become or override a `NORMATIVE` `Curriculum Entry`.
 - Curriculum retrieval that finds no adequate grounding produces an explicit `NO_MATCH`/`UNGROUNDED` state rather than falling back to unverified AI knowledge.
 - A `Mathematics Validation Result` applies only to the exact content/claim version it evaluated; if that content changes, the prior result becomes stale and must be recalculated against the new version.
+- An `AI Generation` never becomes authoritative merely by completing; it produces at most a non-authoritative `AI Proposal` subject to existing schema/policy/curriculum/Mathematics checks.
+- An expensive generation call requires a prior successful `AI Usage Reservation` against a non-exhausted `AI Allowance Window`; a request rejected before provider invocation consumes no reservation.
+- An `AI Usage Event` does not retain full prompt, full provider response, or raw audio.
 
 ## 5. Data Classification
 
@@ -537,6 +645,7 @@ Table and column names are not defined here.
 - [ADR-0014 — PostgreSQL with Flyway and SQL-First Hexagonal Persistence](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
 - [ADR-0015 — Versioned Controlled Curriculum Corpus with Deterministic Retrieval](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
 - [ADR-0016 — Scoped Deterministic Mathematics Validators with Exact Arithmetic](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
+- [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](./adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
 - [PRD](../00_product/PRD.md)
 - [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
@@ -546,6 +655,7 @@ Table and column names are not defined here.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.7` | `2026-09-07` | Resolve OAD-006: add AI Generation, AI Allowance Window, AI Usage Reservation, and AI Usage Event concepts (ADR-0017) | Claude |
 | `0.6` | `2026-09-07` | Resolve OAD-008: refine Mathematics Validation Result with validator family/ruleset version and content-version-scoped invalidation | Claude |
 | `0.5` | `2026-09-07` | Resolve OAD-009: refine curriculum concepts into Curriculum Source, Curriculum Source Version, Curriculum Corpus Version, Curriculum Entry, and Local Curriculum Context Version | Claude |
 | `0.4` | `2026-09-07` | Resolve OAD-003: record PostgreSQL/Flyway/Spring JDBC physical persistence baseline and likely integrity expectations while remaining conceptual | Claude |

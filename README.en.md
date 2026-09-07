@@ -60,6 +60,7 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 | Classroom state | Backend-authoritative and revision-aware |
 | Classroom content | Versioned structured model; no arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; not an authority |
+| AI generation gateway | OpenRouter as the controlled generative-model gateway; server-owned ROUTER/FAST/QUALITY model profile; bounded capability/resource guard and per-teacher daily AI allowance before expensive generation |
 | Mathematics trust | Deterministic validation for supported scope |
 | Curriculum trust | BSKAP 046/H/KR/2025 as the Mathematics normative authority; official guidance is interpretive and local context is an overlay |
 | Product Owner | `sipratama` |
@@ -153,7 +154,6 @@ This validator checks local Markdown links and unresolved core metadata placehol
 - Physical persistence schema and migrations (technology is selected: PostgreSQL + Flyway).
 - Concrete OIDC provider, session store, and deployment/security configuration.
 - Realtime transport and reconnect protocol.
-- AI provider/model strategy.
 - Speech recognition strategy.
 - Field-level contract definitions.
 - Deployment environment and secret management.

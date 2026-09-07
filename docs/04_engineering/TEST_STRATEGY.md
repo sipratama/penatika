@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.2` |
+| Version | `0.3` |
 | Last Updated | `2026-09-06` |
 | Test Tooling | Open Architecture Decision |
 
@@ -129,6 +129,8 @@ Evaluate:
 
 Evaluation datasets must use sanitized or synthetic content unless an approved policy permits otherwise. Provider output snapshots alone are not sufficient acceptance evidence.
 
+Per ADR-0017, a model/profile/provider route is activated for pilot/production only after passing Penatika's versioned evaluation corpus; `ROUTER` additionally requires classification-accuracy evaluation for `SUPPORTED`/`OUT_OF_SCOPE`/`UNSUPPORTED_CAPABILITY`/`NEEDS_CLARIFICATION` outcomes.
+
 ## 6. Security Testing
 
 - authorization matrix and object-level access;
@@ -209,10 +211,12 @@ Before pilot, evidence must cover all release blockers, high threats, architectu
 - [Non-Functional Requirements](../02_architecture/NON_FUNCTIONAL_REQUIREMENTS.md)
 - [Threat Model](./THREAT_MODEL.md)
 - [ADR-0016 — Scoped Deterministic Mathematics Validators with Exact Arithmetic](../02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
+- [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](../02_architecture/adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
 
 ## 14. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.3` | `2026-09-07` | Add AI Generation Gateway Suite and model/route evaluation-gate requirements for the OpenRouter bounded-generation baseline (ADR-0017) | Claude |
 | `0.2` | `2026-09-07` | Expand Mathematics Assurance Suite with exact-arithmetic properties, Grade 5/7 corpora, resource-bound adversarial cases, and validator-version reproducibility (ADR-0016) | Claude |
 | `0.1` | `2026-09-06` | Initial risk-based test strategy | Codex |

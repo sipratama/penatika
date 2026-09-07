@@ -24,6 +24,7 @@
 
 - Curriculum architecture is selected (ADR-0015: controlled versioned corpus with deterministic metadata-first retrieval), but no normalized curriculum corpus/import artifact, physical curriculum schema, ingestion tooling, or runtime retrieval implementation exists yet. Official Guidance substantial-content usage remains pending explicit licensing/usage review; no legal approval is claimed.
 - Mathematics validator architecture is selected (ADR-0016: scoped deterministic `EXACT_RATIONAL`/`AFFINE_EXPRESSION`/`LINEAR_EQUATION` validators using exact rational arithmetic), but no validator source, parser implementation, Apache Commons Numbers dependency, Mathematics contract/schema, or test corpus implementation exists yet.
+- AI generation gateway architecture is selected (ADR-0017: OpenRouter, server-owned `ROUTER`/`FAST`/`QUALITY` model profiles, pre-provider scope/resource/allowance pipeline, privacy-constrained provider routing), but no AI SDK, API key, dependency, approved provider-route evidence, contract, or implementation exists yet.
 - Supported structured content blocks.
 - Target device/browser/display matrix.
 - Formal accessibility target.
