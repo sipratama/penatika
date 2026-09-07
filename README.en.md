@@ -53,7 +53,7 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 |---|---|
 | Base profile | `fullstack` |
 | Modifier | `ai-enabled` |
-| Backend | Java 25 LTS + Spring Boot 4.x modular monolith |
+| Backend | Java 21 LTS + Spring Boot 4.x module-first Hexagonal modular monolith |
 | Classroom state | Backend-authoritative and revision-aware |
 | Classroom content | Versioned structured model; no arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; not an authority |

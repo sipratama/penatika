@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.10` |
+| Version | `0.11` |
 | Last Updated | `2026-09-07` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
@@ -27,8 +27,11 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - Teacher Web contains Preparation and private Controller modes; Classroom Display is a separate browser application entry/build boundary.
 - No native mobile client is used in the MVP.
 - Frontend clients are browser application layers and do not become a BFF or application authority.
-- The authoritative backend uses Java 25 LTS and Spring Boot 4.x.
+- The authoritative backend uses Java 21 LTS and Spring Boot 4.x.
 - The backend remains one deployable modular monolith with explicit domain/application modules and no microservice split.
+- Backend internal organization is module-first Hexagonal Architecture: business-capability modules are the primary boundary, and Hexagonal (ports/adapters) structure applies locally inside each module that is complex enough to benefit from it.
+- Domain/application core remains framework-light; inbound and outbound adapters contain delivery and infrastructure detail.
+- Ports protect meaningful boundaries and are not created mechanically for every dependency.
 - Teacher authentication uses OpenID Connect Authorization Code flow with PKCE `S256`; the Penatika Backend is the confidential OIDC client and relying party.
 - OAuth/OIDC access, refresh, and ID tokens remain server-side; Teacher Web receives only an opaque protected backend-session cookie.
 - Penatika owns a stable internal `TeacherAccount` linked to external identity by validated `(issuer, subject)`; email is not an identity key.
@@ -69,7 +72,7 @@ Teacher
              │ authorized application + realtime interactions
              ▼
       Penatika Backend
-      Java 25 / Spring Boot 4.x
+      Java 21 / Spring Boot 4.x
       one deployable modular monolith
        ├─ Identity & Access
        ├─ Lesson
@@ -138,7 +141,7 @@ It has no authority to issue teacher commands.
 
 ### 3.4 Penatika Backend
 
-The backend is one deployable Java 25 LTS / Spring Boot 4.x application with explicit internal modules and infrastructure adapters. It remains a modular monolith; no microservice split is selected.
+The backend is one deployable Java 21 LTS / Spring Boot 4.x application with explicit internal modules and infrastructure adapters. It remains a modular monolith; no microservice split is selected. Internal organization is module-first Hexagonal Architecture, per [ADR-0013](./adr/ADR-0013-java21-module-first-hexagonal-backend.md).
 
 Core domain and application behavior should remain framework-light Java where practical. Spring-specific composition, delivery, persistence, and provider integration concerns belong primarily at adapter boundaries. Domain models must not depend on transport models, database entities, provider SDKs, or AI SDK types.
 
@@ -474,10 +477,11 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 - [ADR-0006 — Teacher Approval and AI Publication Policy](./adr/ADR-0006-teacher-approval-ai-publication-policy.md)
 - [ADR-0007 — Graceful Degradation Without Offline Authority](./adr/ADR-0007-graceful-degradation-without-offline-authority.md)
 - [ADR-0008 — Use Browser-First React Clients with Separate Teacher and Classroom Display Boundaries](./adr/ADR-0008-browser-first-react-client-strategy.md)
-- [ADR-0009 — Use Java 25 LTS and Spring Boot for the Authoritative Backend](./adr/ADR-0009-java-spring-boot-backend.md)
+- [ADR-0009 — Use Java 25 LTS and Spring Boot for the Authoritative Backend](./adr/ADR-0009-java-spring-boot-backend.md) (Superseded by ADR-0013)
 - [ADR-0010 — Use Contract-First OpenAPI and JSON Schema Boundaries](./adr/ADR-0010-contract-first-openapi-json-schema.md)
 - [ADR-0011 — Use OIDC with Backend-Managed Browser Sessions and Scoped Pairing](./adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
 - [ADR-0012 — Use Server-Sent Events for Realtime Push with Existing HTTP Commands](./adr/ADR-0012-sse-realtime-push-with-existing-http-commands.md)
+- [ADR-0013 — Use Java 21 LTS with Module-First Hexagonal Backend Architecture](./adr/ADR-0013-java21-module-first-hexagonal-backend.md)
 
 ## 16. Open Architecture Decisions
 
@@ -512,6 +516,7 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.11` | `2026-09-07` | Refine backend baseline to Java 21 LTS and explicit module-first Hexagonal Architecture; ADR-0013 supersedes ADR-0009 | Claude |
 | `0.10` | `2026-09-07` | Resolve OAD-005 with SSE realtime push, existing HTTP commands, and inactive AsyncAPI | Claude |
 | `0.9` | `2026-09-07` | Resolve OAD-004 with OIDC, backend-managed browser sessions, local teacher accounts, and scoped pairing | Codex |
 | `0.8` | `2026-09-06` | Resolve OAD-012 with contract-first OpenAPI 3.1.x and JSON Schema Draft 2020-12 boundaries | Codex |

@@ -53,7 +53,7 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 |---|---|
 | Base profile | `fullstack` |
 | Modifier | `ai-enabled` |
-| Backend | Java 25 LTS + Spring Boot 4.x modular monolith |
+| Backend | Java 21 LTS + Spring Boot 4.x module-first Hexagonal modular monolith |
 | Classroom state | Backend-authoritative, revision-aware |
 | Classroom content | Versioned structured model; bukan arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; bukan authority |

@@ -733,3 +733,133 @@ Projects MAY strengthen AI rules for:
 - public OSS contribution.
 
 Do not weaken evidence/security requirements simply because the agent is operating autonomously.
+
+---
+
+## Penatika ECC Skill Profile
+
+ECC is optional AI execution assistance.
+
+ECC skills are ADVISORY, not authoritative.
+
+They must never override:
+
+1. product/feature requirements;
+2. Accepted ADRs;
+3. System Architecture;
+4. contracts;
+5. Penatika engineering standards.
+
+Do NOT copy complete ECC skill files into this repository. Use the
+installed/current ECC skill version.
+
+### Backend ECC Profile
+
+For Java/Spring backend implementation and review, preferred ECC skills are:
+
+- `java-coding-standards`
+- `springboot-patterns`
+- `springboot-security`
+- `springboot-tdd`
+- `springboot-verification`
+- `tdd-workflow`
+- `verification-loop`
+
+Use them selectively based on the task.
+
+Penatika overrides generic ECC examples with these rules:
+
+- Java baseline is Java 21 LTS ([ADR-0013](../02_architecture/adr/ADR-0013-java21-module-first-hexagonal-backend.md));
+- Spring Boot 4.x;
+- modular monolith ([ADR-0001](../02_architecture/adr/ADR-0001-modular-monolith-backend.md));
+- module-first Hexagonal Architecture (ADR-0013);
+- no global controller/service/repository/entity architecture;
+- domain remains framework-light;
+- use ports only for meaningful boundaries;
+- no persistence technology may be inferred before OAD-003;
+- JPA examples in ECC are examples only and are NOT Penatika defaults;
+- no microservices unless an Accepted ADR changes the architecture;
+- contract-first OpenAPI/JSON Schema rules remain authoritative ([ADR-0010](../02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md));
+- OIDC/backend-session rules come from [ADR-0011](../02_architecture/adr/ADR-0011-oidc-backend-managed-browser-sessions.md);
+- SSE + HTTP command rules come from [ADR-0012](../02_architecture/adr/ADR-0012-sse-realtime-push-with-existing-http-commands.md).
+
+ECC `springboot-patterns` may contain layered/JPA examples. Those examples
+must not override Penatika architecture.
+
+Do NOT activate `jpa-patterns` by default.
+
+### Frontend ECC Profile
+
+For React implementation and review, preferred ECC skills are:
+
+- `coding-standards`
+- `frontend-patterns`
+- `react-patterns`
+- `react-performance`
+- `react-testing`
+- `accessibility`
+- `tdd-workflow`
+- `verification-loop`
+
+Penatika overrides generic examples with:
+
+- React + TypeScript + Vite ([ADR-0008](../02_architecture/adr/ADR-0008-browser-first-react-client-strategy.md));
+- browser-first architecture;
+- Teacher Web and Classroom Display remain separate application boundaries;
+- do not introduce Next.js/RSC/server actions into the core app;
+- teacher-private state must never enter Classroom Display projection;
+- OAuth access/refresh tokens never go into browser storage;
+- commands use HTTP;
+- authoritative projection push uses SSE;
+- no offline authoritative mutation or automatic offline replay;
+- backend remains application authority.
+
+React skill sections discussing Next.js, React Server Components, or
+framework server actions are not applicable unless a later Accepted ADR
+changes OAD-001.
+
+ECC suggestions for Redux, Zustand, TanStack Query, SWR, component
+libraries, or CSS frameworks are NOT automatic dependency decisions. Any new
+dependency must follow the dependency standard and actual project need.
+
+### Task-Specific Skill Activation
+
+Do not load every ECC skill for every task. Examples:
+
+Backend domain/use-case work:
+- `java-coding-standards`
+- `tdd-workflow`
+- `verification-loop`
+
+Spring HTTP/security work:
+- `java-coding-standards`
+- `springboot-patterns`
+- `springboot-security`
+- relevant testing/verification skill
+
+React component work:
+- `react-patterns`
+- `accessibility`
+- `react-testing`
+
+Frontend performance investigation:
+- `react-performance` only when performance is actually relevant.
+
+Do not let skill volume replace repository context.
+
+### Future Project-Local Wrapper Skills
+
+Do NOT create Claude-specific local wrapper skills yet.
+
+When source scaffolding begins:
+
+- inspect the installed ECC / Claude Code version;
+- verify supported project-local skill mechanism;
+- then decide whether thin Penatika wrapper skills provide real value.
+
+If created later, wrapper skills must:
+
+- reference this AI standard and canonical Penatika docs;
+- remain thin;
+- not duplicate ECC content;
+- not duplicate `AGENTS.md`.

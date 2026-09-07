@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | ADR | `ADR-0009` |
-| Status | Accepted |
+| Status | Superseded |
 | Date | `2026-09-06` |
 | Decision Owners | Penatika project team; named owner pending |
 | Related Requirements | `CAP-LESSON-001`, `CAP-SESSION-001`, `CAP-SESSION-002`, `CAP-CANVAS-001`, `CAP-INK-001`, `CAP-ADAPT-001`, `CAP-MATH-001` |
 | Supersedes | N/A |
-| Superseded By | N/A |
+| Superseded By | [ADR-0013](./ADR-0013-java21-module-first-hexagonal-backend.md) |
 
 ## Context
 
@@ -298,3 +298,4 @@ microservice is created preemptively.
 | Date | Status | Change |
 |---|---|---|
 | `2026-09-06` | Accepted | Adopt Java 25 LTS and Spring Boot 4.x for the authoritative modular-monolith backend |
+| `2026-09-07` | Superseded | Superseded by [ADR-0013](./ADR-0013-java21-module-first-hexagonal-backend.md), which revises the Java baseline to Java 21 LTS and makes module-first Hexagonal Architecture explicit; this decision body remains unchanged as historical evidence |

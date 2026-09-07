@@ -23,7 +23,7 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.7 |
+| Version | 0.8 |
 | Last Updated | 2026-09-07 |
 | Current Phase | Architecture & Technology Decisioning |
 | Implementation State | Pre-source / Pre-scaffolding |
@@ -119,6 +119,12 @@ The exact OAD definitions and `Needed Before` rules remain authoritative in
 
 Architecture reasoning is not duplicated here.
 
+OAD-002's current implementation baseline is
+[ADR-0013](./02_architecture/adr/ADR-0013-java21-module-first-hexagonal-backend.md):
+Java 21 LTS + Spring Boot 4.x + module-first Hexagonal Architecture.
+[ADR-0009](./02_architecture/adr/ADR-0009-java-spring-boot-backend.md) is
+historical/superseded.
+
 ## Immediate Next Step
 
 Immediate next decision work:
@@ -181,6 +187,11 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 was created as a historical cross-device / AI handoff snapshot before OAD-005.
 It is not authoritative and does not replace the canonical project, product,
 architecture, ADR, contract, or policy documents.
+
+That checkpoint is historical and predates ADR-0013. Any Java 25 reference in
+that checkpoint reflects the state at checkpoint creation and is superseded
+by the current canonical architecture (ADR-0013: Java 21 LTS). The checkpoint
+document itself is not modified.
 
 ## AI / Contributor Reading Route
 

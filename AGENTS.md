@@ -135,6 +135,10 @@ Load only standards relevant to the task.
 | CI/CD / release | `docs/standards/13_CI_CD_RELEASE.md` |
 | AI-assisted development | `docs/standards/14_AI_ASSISTED_DEVELOPMENT.md` |
 
+When ECC is available, use the Penatika ECC Skill Profile in
+`docs/standards/14_AI_ASSISTED_DEVELOPMENT.md`. ECC skills are advisory and
+must not override Accepted project decisions.
+
 ## 5. Before Coding
 
 For non-trivial work, identify:

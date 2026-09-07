@@ -16,7 +16,7 @@ Penatika currently contains canonical product, feature, architecture, design, en
 
 Client architecture is selected: React, TypeScript, Vite, and browser-first Teacher Web + Classroom Display. No frontend source exists and no dependency installation command exists yet. Package manager and exact runtime version are not selected merely by this ADR.
 
-Backend architecture is selected: Java 25 LTS, Spring Boot 4.x, and one deployable modular monolith. No backend source exists. The exact Spring Boot patch, supported OpenJDK-compatible JDK distribution, and build tool will be selected during source scaffolding.
+Backend architecture is selected: Java 21 LTS, Spring Boot 4.x, one deployable modular monolith, and module-first Hexagonal Architecture (ADR-0013). No backend source exists. The exact Spring Boot patch, supported OpenJDK-compatible JDK distribution, and build tool will be selected during source scaffolding.
 
 Contract strategy is selected: contract-first OpenAPI 3.1.x for synchronous HTTP and JSON Schema Draft 2020-12 for justified reusable wire schemas. Redocly CLI is the baseline OpenAPI lint/bundle tool. AsyncAPI 3.1.x remains conditional on OAD-005. No field-level contracts exist, and contract tooling is not installed or configured yet.
 
@@ -37,7 +37,7 @@ Do not invent setup commands before the remaining stack is selected.
 - A Markdown-capable editor.
 - Access to the repository.
 
-No Node.js or Java installation is currently required to validate this documentation-only repository. Java 25 will become the backend runtime prerequisite when source scaffolding begins, but the JDK distribution and installation procedure are not yet selected. No database, container, or cloud prerequisite is currently authoritative.
+No Node.js or Java installation is currently required to validate this documentation-only repository. Java 21 will become the backend runtime prerequisite when source scaffolding begins, but the JDK distribution and installation procedure are not yet selected. No database, container, or cloud prerequisite is currently authoritative.
 
 ## 3. Validate the Initialized Repository
 
@@ -67,7 +67,7 @@ Read selectively:
 Resolve and record at minimum:
 
 - client strategy and frontend framework — resolved by ADR-0008;
-- backend language/framework — resolved by ADR-0009;
+- backend language/framework and module-first Hexagonal Architecture — resolved by ADR-0013 (supersedes ADR-0009);
 - database and migration tooling;
 - identity/authentication architecture — resolved by ADR-0011; provider, session store, and implementation remain pending;
 - realtime protocol;
@@ -111,6 +111,7 @@ remain open.
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-07` | Revise backend baseline to Java 21 LTS and record module-first Hexagonal Architecture (ADR-0013) without adding setup commands | Claude |
 | `2026-09-07` | Record selected OIDC and backend-managed session architecture without inventing provider or setup commands | Codex |
 | `2026-09-06` | Record contract-first OpenAPI/JSON Schema strategy without installing tooling or defining fields | Codex |
 | `2026-09-06` | Record Java 25 LTS / Spring Boot 4.x modular-monolith backend without adding setup commands | Codex |
