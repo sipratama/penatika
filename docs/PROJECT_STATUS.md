@@ -23,7 +23,7 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.6 |
+| Version | 0.7 |
 | Last Updated | 2026-09-07 |
 | Current Phase | Architecture & Technology Decisioning |
 | Implementation State | Pre-source / Pre-scaffolding |
@@ -57,10 +57,10 @@ created.
 | Data-lifecycle policy | COMPLETE | [DATA_RETENTION_POLICY.md](./06_delivery/DATA_RETENTION_POLICY.md) |
 | First-pilot definition | COMPLETE | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) |
 | Pendago legacy review | COMPLETE | [PENDAGO_MIGRATION_REVIEW.md](./06_delivery/PENDAGO_MIGRATION_REVIEW.md) |
-| Initial architecture principles | ESTABLISHED | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) + ADR-0001–ADR-0011 |
-| Architecture / technology decisions | ACTIVE | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) OAD-003 and OAD-005–OAD-011 |
+| Initial architecture principles | ESTABLISHED | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) + ADR-0001–ADR-0012 |
+| Architecture / technology decisions | ACTIVE | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) OAD-003 and OAD-006–OAD-011 |
 | Contract strategy | COMPLETE | [ADR-0010](./02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md) / [contracts](../contracts/README.md) |
-| Field-level contracts | PENDING | realtime and other dependent semantics remain unresolved; protected identity semantics are selected but fields remain undefined |
+| Field-level contracts | PENDING | identity and realtime transport semantics are now selected (ADR-0011, ADR-0012); field-level OpenAPI/JSON Schema work has not started |
 | Source scaffolding | PENDING | after blocking OADs/contracts |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
@@ -102,7 +102,7 @@ tracks status only and does not redefine the OAD descriptions.
 | OAD-002 | Backend language and framework | COMPLETE |
 | OAD-003 | Database and migration technology | PENDING |
 | OAD-004 | Identity, authentication, and account model | COMPLETE |
-| OAD-005 | Realtime transport and reconnect protocol | NEXT |
+| OAD-005 | Realtime transport and reconnect protocol | COMPLETE |
 | OAD-006 | AI provider/model strategy and fallback | PENDING |
 | OAD-007 | Speech recognition strategy | PENDING |
 | OAD-008 | Mathematics validator approach per content type | PENDING |
@@ -123,14 +123,17 @@ Architecture reasoning is not duplicated here.
 
 Immediate next decision work:
 
-1. OAD-005 — Realtime Transport and Reconnect Protocol
+1. OAD-003 — Database and Migration Technology
 
 Teacher identity, browser authentication, pairing, participant roles, and
-authorization are now defined by ADR-0011. Realtime transport must reuse that
-security model rather than inventing a separate participant identity. Field-
-level contracts remain PENDING until OAD-005 supplies realtime semantics and
-the necessary protected operations can be specified coherently. Source
-scaffolding also remains PENDING.
+authorization are defined by ADR-0011. Realtime transport, credential
+carriage, and reconnect mechanics are defined by ADR-0012 (SSE push with
+existing HTTP commands; AsyncAPI stays inactive). Field-level contracts
+remain PENDING: the blocking architecture semantics now exist, but the
+OpenAPI/JSON Schema field-level work itself has not started. Source
+scaffolding also remains PENDING. This OAD-003 sequencing follows the
+checkpoint's planning guidance; `SYSTEM_ARCHITECTURE.md` remains authoritative
+for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
 
@@ -138,11 +141,11 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 ### Architecture / Implementation
 
-- OAD-003 and OAD-005–OAD-011 as applicable;
+- OAD-003 and OAD-006–OAD-011 as applicable;
 - field-level structured contracts;
 - physical persistence model/migrations;
 - identity implementation;
-- reconnect/transport protocol;
+- realtime/reconnect transport implementation;
 - provider integrations.
 
 ### UX / Compatibility

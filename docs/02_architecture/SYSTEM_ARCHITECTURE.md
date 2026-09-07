@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.9` |
+| Version | `0.10` |
 | Last Updated | `2026-09-07` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
@@ -42,7 +42,9 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - Cross-component wire interfaces follow contract-first design: contract, compatibility review, implementation, then conformance evidence.
 - Synchronous HTTPS/JSON APIs use OpenAPI 3.1.x; justified reusable wire structures use JSON Schema Draft 2020-12.
 - RFC 9457 Problem Details is the HTTP error baseline.
-- AsyncAPI 3.1.x remains conditional on OAD-005 selecting a realtime/message interface where it provides useful semantics.
+- Teacher-initiated state-changing commands remain on the synchronous HTTPS/JSON OpenAPI boundary; the backend pushes authoritative revision/projection updates to the Controller and Classroom Display over per-participant Server-Sent Events (SSE), authorized by the existing backend-managed session/participant credential.
+- SSE reconnect uses the browser-native `Last-Event-ID` mechanism, carrying the authoritative revision, as the resync entry point into the existing ADR-0007 reconciliation policy.
+- AsyncAPI 3.1.x remains inactive; the SSE push channel is documented as an OpenAPI `text/event-stream` operation referencing standalone JSON Schema event payloads rather than a separate contract family.
 - Contract files are authoritative for wire interfaces; generated and implementation types are derived consumers.
 - Classroom session state is authoritative on the backend and projected differently to teacher and display surfaces.
 - Classroom content uses a versioned structured model; arbitrary generated HTML or executable AI output is not supported.
@@ -295,7 +297,15 @@ This path does not enter AI Orchestration and does not create or imitate an AI p
 
 Transcription, generation progress, proposal preview, assurance results, warnings, alternatives, and other `PRIVATE_ONLY` work remain teacher-private and do not mutate student-facing authoritative state.
 
-### 6.4 Reconnect and Save
+### 6.4 Realtime Push (SSE)
+
+1. Controller and Classroom Display each hold one authorized `text/event-stream` connection, established with their existing backend-managed session/participant credential, carrying only their own role-specific projection.
+2. The backend never multiplexes both projections onto one stream.
+3. State-changing commands never travel over the push channel; they remain on the synchronous HTTP command boundary (section 6.3).
+4. Each pushed event's `id` carries the authoritative revision/sequence. On browser-native SSE reconnect, `Last-Event-ID` lets the backend emit a bounded catch-up delta or direct the client to fetch a full authoritative snapshot before push resumes.
+5. A pushed event's revision/sequence identifier is advisory for reconnect resync only; mutation resumes only after backend-authoritative reconciliation (section 6.5, ADR-0007).
+
+### 6.5 Reconnect and Save
 
 1. The application identifies which dependency or participant is degraded and exposes an appropriate teacher-private status.
 2. AI or speech failure disables only the affected capability while backend-authoritative classroom behavior continues where healthy.
@@ -391,8 +401,8 @@ Contract ownership is divided by responsibility:
   using OpenAPI 3.1.x when field-level contracts are created;
 - `contracts/schemas/` owns justified reusable structured wire schemas using
   JSON Schema Draft 2020-12;
-- `contracts/asyncapi/` activates only if OAD-005 selects a realtime/message
-  interface where AsyncAPI 3.1.x provides useful semantics.
+- `contracts/asyncapi/` stays inactive; ADR-0012 documents the SSE push
+  channel within `contracts/openapi/` and `contracts/schemas/` instead.
 
 RFC 9457 Problem Details with `application/problem+json` is the HTTP error
 baseline. Each wire shape has one canonical schema owner; other contracts and
@@ -409,9 +419,9 @@ implementation, including:
 
 The contract repository boundary is active, but no field-level OpenAPI or JSON
 Schema contract is created merely because the strategy is resolved. Identity
-semantics are selected by ADR-0011; realtime credential transport and other
-dependent semantics remain unresolved. AsyncAPI remains inactive until OAD-005
-justifies it.
+semantics are selected by ADR-0011; realtime transport and credential carriage
+are selected by ADR-0012. AsyncAPI remains inactive; the SSE push channel is a
+future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 
 ## 13. Observability Baseline
 
@@ -451,6 +461,8 @@ justifies it.
 - `INV-026`: A `CLASSROOM_DISPLAY` participant cannot obtain teacher-private projection or teacher mutation authority.
 - `INV-027`: MVP permits at most one active mutation-authorized `TEACHER_CONTROLLER` and one active `CLASSROOM_DISPLAY` participant per classroom session.
 - `INV-028`: Pairing grants are role/session-bound, single-use, revocable, and expire after five minutes.
+- `INV-029`: Realtime push connections (for example, SSE) transmit projections only; state-changing commands must use the authorized synchronous HTTP command boundary, never the push channel.
+- `INV-030`: A pushed event's revision/sequence identifier is advisory for reconnect resync only; only backend-authoritative revision retrieval and reconciliation determines whether mutation may resume.
 
 ## 15. Selected Architecture Decisions
 
@@ -465,13 +477,13 @@ justifies it.
 - [ADR-0009 — Use Java 25 LTS and Spring Boot for the Authoritative Backend](./adr/ADR-0009-java-spring-boot-backend.md)
 - [ADR-0010 — Use Contract-First OpenAPI and JSON Schema Boundaries](./adr/ADR-0010-contract-first-openapi-json-schema.md)
 - [ADR-0011 — Use OIDC with Backend-Managed Browser Sessions and Scoped Pairing](./adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
+- [ADR-0012 — Use Server-Sent Events for Realtime Push with Existing HTTP Commands](./adr/ADR-0012-sse-realtime-push-with-existing-http-commands.md)
 
 ## 16. Open Architecture Decisions
 
 | ID | Decision | Needed Before |
 |---|---|---|
 | OAD-003 | Database and migration technology | Persistent implementation |
-| OAD-005 | Realtime transport and reconnect protocol | Session contract implementation |
 | OAD-006 | AI provider/model strategy and fallback | AI integration implementation |
 | OAD-007 | Speech recognition strategy | Push-to-talk implementation |
 | OAD-008 | Mathematics validator approach per content type | Assurance implementation |
@@ -500,6 +512,7 @@ justifies it.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.10` | `2026-09-07` | Resolve OAD-005 with SSE realtime push, existing HTTP commands, and inactive AsyncAPI | Claude |
 | `0.9` | `2026-09-07` | Resolve OAD-004 with OIDC, backend-managed browser sessions, local teacher accounts, and scoped pairing | Codex |
 | `0.8` | `2026-09-06` | Resolve OAD-012 with contract-first OpenAPI 3.1.x and JSON Schema Draft 2020-12 boundaries | Codex |
 | `0.7` | `2026-09-06` | Resolve OAD-002 with Java 25 LTS / Spring Boot modular-monolith backend | Codex |
