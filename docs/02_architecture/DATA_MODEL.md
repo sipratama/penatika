@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft conceptual baseline |
-| Version | `0.5` |
+| Version | `0.6` |
 | Last Updated | `2026-09-07` |
 | Database Technology | PostgreSQL 18.x |
 
@@ -269,16 +269,19 @@ Rejected, regenerated, abandoned, failed, and blocked proposal bodies are transi
 
 ### Mathematics Validation Result
 
-Reproducible assurance record for supported content.
+Reproducible assurance record for supported content. Per
+[ADR-0016](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md).
 
 Known conceptual attributes:
 
 - result identity;
-- content identity and version;
-- normalized validation input;
-- validator and rule version;
-- status: valid, invalid, unsupported, inconclusive, or error;
-- bounded diagnostic and timestamp.
+- content/claim identity and content version;
+- validator family (for example, `EXACT_RATIONAL`, `AFFINE_EXPRESSION`, `LINEAR_EQUATION`);
+- validator/ruleset version;
+- normalized mathematical representation where safe/useful;
+- validation status: valid, invalid, unsupported, inconclusive, or error;
+- bounded diagnostic;
+- validation timestamp.
 
 **Owner:** Mathematics Assurance module
 
@@ -446,6 +449,7 @@ Classroom Session 1 ── 0..* Session Snapshot or Save Record
 - A newer official `Curriculum Source Version` does not automatically become active, and source supersession does not rewrite the provenance of previously saved lesson/session `Curriculum Reference` records.
 - A `Local Curriculum Context Version` can never become or override a `NORMATIVE` `Curriculum Entry`.
 - Curriculum retrieval that finds no adequate grounding produces an explicit `NO_MATCH`/`UNGROUNDED` state rather than falling back to unverified AI knowledge.
+- A `Mathematics Validation Result` applies only to the exact content/claim version it evaluated; if that content changes, the prior result becomes stale and must be recalculated against the new version.
 
 ## 5. Data Classification
 
@@ -532,6 +536,7 @@ Table and column names are not defined here.
 - [ADR-0011 — OIDC with Backend-Managed Browser Sessions and Scoped Pairing](./adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
 - [ADR-0014 — PostgreSQL with Flyway and SQL-First Hexagonal Persistence](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
 - [ADR-0015 — Versioned Controlled Curriculum Corpus with Deterministic Retrieval](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
+- [ADR-0016 — Scoped Deterministic Mathematics Validators with Exact Arithmetic](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
 - [PRD](../00_product/PRD.md)
 - [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
@@ -541,6 +546,7 @@ Table and column names are not defined here.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.6` | `2026-09-07` | Resolve OAD-008: refine Mathematics Validation Result with validator family/ruleset version and content-version-scoped invalidation | Claude |
 | `0.5` | `2026-09-07` | Resolve OAD-009: refine curriculum concepts into Curriculum Source, Curriculum Source Version, Curriculum Corpus Version, Curriculum Entry, and Local Curriculum Context Version | Claude |
 | `0.4` | `2026-09-07` | Resolve OAD-003: record PostgreSQL/Flyway/Spring JDBC physical persistence baseline and likely integrity expectations while remaining conceptual | Claude |
 | `0.3` | `2026-09-07` | Define local teacher accounts, OIDC identity links, revocable browser sessions, scoped pairing grants, and participant authority | Codex |

@@ -23,6 +23,7 @@
 ## Unresolved Behavior
 
 - Curriculum architecture is selected (ADR-0015: controlled versioned corpus with deterministic metadata-first retrieval), but no normalized curriculum corpus/import artifact, physical curriculum schema, ingestion tooling, or runtime retrieval implementation exists yet. Official Guidance substantial-content usage remains pending explicit licensing/usage review; no legal approval is claimed.
+- Mathematics validator architecture is selected (ADR-0016: scoped deterministic `EXACT_RATIONAL`/`AFFINE_EXPRESSION`/`LINEAR_EQUATION` validators using exact rational arithmetic), but no validator source, parser implementation, Apache Commons Numbers dependency, Mathematics contract/schema, or test corpus implementation exists yet.
 - Supported structured content blocks.
 - Target device/browser/display matrix.
 - Formal accessibility target.
@@ -33,7 +34,7 @@
 
 ## Trust and Quality Limitations
 
-- Deterministic validation cannot be assumed to cover all Mathematics content.
+- Deterministic validation cannot be assumed to cover all Mathematics content; MVP scope is limited to exact-rational fraction arithmetic and restricted one-variable affine/linear-equation algebra (ADR-0016).
 - Unsupported or inconclusive content must remain explicitly labeled.
 - AI quality, latency, privacy, and cost have not been evaluated against candidate providers.
 - Normative curriculum authority and its ingestion/versioning/retrieval architecture are selected, but operational curriculum grounding cannot be claimed until the corpus, physical schema, retrieval implementation, and applicable guidance-usage review are complete and tested.

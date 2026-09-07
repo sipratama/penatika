@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.4` |
+| Version | `0.5` |
 | Last Updated | `2026-09-07` |
 | Review Trigger | Identity, provider, contract, deployment, retention, or student-data decisions |
 
@@ -104,6 +104,12 @@ Out of scope for this baseline: payment, student accounts, school administration
 | T-036 | Local context presented as normative | Teacher/classroom misled about national curriculum truth | Explicit `LOCAL_CONTEXT` classification; conflict/warning state instead of silent merge with normative claims |
 | T-037 | Provenance stripping from grounded curriculum claims | Ungrounded claim presented as grounded | Retrieval provenance required to reconstruct source/corpus/entry/match method; explicit `NO_MATCH`/`UNGROUNDED` state when absent |
 | T-038 | AI/provider substitutes model knowledge for controlled curriculum source | Fabricated curriculum grounding | Curriculum retrieval reads only activated PostgreSQL corpus data; AI provider adapters do not read curriculum tables directly; AI never self-authorizes curriculum truth |
+| T-039 | Crafted mathematical expression causes parser/CPU/memory exhaustion | Denial of service via adversarial deterministic input | Allow-listed restricted grammar; explicit resource limits on expression length, nesting depth, literal size, and operation count; safe failure |
+| T-040 | Parser accepts executable/general scripting syntax | Remote code execution or arbitrary computation via a "Mathematics expression" | Data-only parser; no Java evaluation, script engine, reflection, filesystem, or network access; strict allow-listed grammar |
+| T-041 | AI-generated unsupported/nonlinear expression bypasses the validator | Fabricated or unchecked Mathematics correctness claim | Validator routing restricted to `EXACT_RATIONAL`/`AFFINE_EXPRESSION`/`LINEAR_EQUATION`; anything outside scope returns `UNSUPPORTED`, never `VALID` |
+| T-042 | Floating-point rounding produces false correctness/incorrectness | Incorrect Mathematics assurance result | Exact rational arithmetic (`BigFraction`); floating-point equality is never the correctness authority |
+| T-043 | Stale Mathematics validation result reused after content edit | Outdated result presented as current assurance | `FR-MATH-007` content-edit invalidation; result is bound to exact content/claim version |
+| T-044 | AI self-evaluation substitutes for deterministic Mathematics validation | Unverified content presented as validated | ADR-0004/ADR-0006 binding: AI cannot convert `INVALID`/`UNSUPPORTED` to `VALID`; a post-`INVALID` AI correction is a new proposal requiring revalidation |
 
 ## 6. Security Invariants
 
@@ -122,6 +128,8 @@ Out of scope for this baseline: payment, student accounts, school administration
 - Official guidance or local context cannot be promoted to national normative authority by AI, retrieval ranking, or implementation convenience.
 - Curriculum content is not active runtime authority merely because it was downloaded or normalized; activation requires explicit accountable human review.
 - An activated curriculum corpus version is immutable; corrections and official-source supersession both require a new version and explicit re-activation, never in-place mutation.
+- Deterministic Mathematics validation uses exact rational arithmetic and a data-only, resource-bounded parser; it never uses floating-point equality as correctness authority and never executes arbitrary code.
+- AI cannot convert a deterministic `INVALID`, `UNSUPPORTED`, or `INCONCLUSIVE` Mathematics result into `VALID`; a correction proposed after `INVALID` must be revalidated as a new proposal.
 
 ## 7. Privacy Baseline
 
@@ -244,11 +252,13 @@ Review this threat model before:
 - [Security Standard](../standards/08_SECURITY_STANDARD.md)
 - [ADR-0011 — OIDC with Backend-Managed Browser Sessions and Scoped Pairing](../02_architecture/adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
 - [ADR-0015 — Versioned Controlled Curriculum Corpus with Deterministic Retrieval](../02_architecture/adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
+- [ADR-0016 — Scoped Deterministic Mathematics Validators with Exact Arithmetic](../02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
 
 ## 14. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.5` | `2026-09-07` | Add Mathematics-validator threats/mitigations (parser safety, floating-point, staleness, AI self-evaluation) for ADR-0016 | Claude |
 | `0.4` | `2026-09-07` | Add curriculum-specific threats/mitigations (ADR-0015); correct stale OAD-005/persistence wording; remove resolved curriculum-architecture item from Open Security Decisions | Claude |
 | `0.3` | `2026-09-07` | Resolve identity/session threats with OIDC, backend-managed sessions, CSRF controls, local account linkage, and scoped pairing | Codex |
 | `0.2` | `2026-09-06` | Align privacy and open-decision wording with the approved data-lifecycle baseline | Codex |

@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.13` |
+| Version | `0.14` |
 | Last Updated | `2026-09-07` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
@@ -207,7 +207,9 @@ field-level authentication contracts remain open implementation decisions.
 
 - classifies content requiring deterministic validation;
 - owns normalized inputs, validation result semantics, and validator version references;
-- remains independent of AI provider confidence.
+- remains independent of AI provider confidence;
+- per [ADR-0016](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md), routes supported claims to a scoped deterministic validator family (`EXACT_RATIONAL`, `AFFINE_EXPRESSION`, `LINEAR_EQUATION`) using exact rational arithmetic, never floating-point equality or AI self-evaluation;
+- returns `UNSUPPORTED`/`INCONCLUSIVE` for content outside the currently implemented validator scope rather than approximating certainty.
 
 #### Curriculum Module
 
@@ -496,6 +498,7 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 - [ADR-0013 — Use Java 21 LTS with Module-First Hexagonal Backend Architecture](./adr/ADR-0013-java21-module-first-hexagonal-backend.md)
 - [ADR-0014 — Use PostgreSQL with Flyway and SQL-First Hexagonal Persistence](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
 - [ADR-0015 — Use a Versioned Controlled Curriculum Corpus with Deterministic Retrieval](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
+- [ADR-0016 — Use Scoped Deterministic Mathematics Validators with Exact Arithmetic](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
 
 ## 16. Open Architecture Decisions
 
@@ -503,7 +506,6 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 |---|---|---|
 | OAD-006 | AI provider/model strategy and fallback | AI integration implementation |
 | OAD-007 | Speech recognition strategy | Push-to-talk implementation |
-| OAD-008 | Mathematics validator approach per content type | Assurance implementation |
 | OAD-010 | Deployment platform, environments, secret management, and regional requirements | Deployment planning |
 | OAD-011 | Background execution and queue needs | When measured request duration or reliability requires it |
 
@@ -528,6 +530,7 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.14` | `2026-09-07` | Resolve OAD-008 with scoped deterministic exact-rational and restricted affine/linear-equation validation | Claude |
 | `0.13` | `2026-09-07` | Resolve OAD-009 with controlled versioned curriculum corpus, deterministic metadata-first retrieval, explicit activation, and local-context overlays | Claude |
 | `0.12` | `2026-09-07` | Resolve OAD-003 with PostgreSQL 18.x, Flyway 13.x, and SQL-first Hexagonal persistence adapters | Claude |
 | `0.11` | `2026-09-07` | Refine backend baseline to Java 21 LTS and explicit module-first Hexagonal Architecture; ADR-0013 supersedes ADR-0009 | Claude |

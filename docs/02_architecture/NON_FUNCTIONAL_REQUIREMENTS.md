@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.6` |
+| Version | `0.7` |
 | Last Updated | `2026-09-07` |
 
 ## 1. Quality Priorities
@@ -184,6 +184,17 @@ No database SLO, RPO, or RTO is set by this section; see [Open Decisions](#15-op
 
 No numerical curriculum-retrieval SLO is required by this section.
 
+### Mathematics Validator Requirements
+
+- Supported rational claims use exact arithmetic ([ADR-0016](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md)); floating-point equality is not used as correctness authority.
+- Deterministic Mathematics validation requires no AI provider or network dependency.
+- The mathematical parser/normalizer enforces explicit resource limits (expression length, nesting depth, literal size, operation count).
+- Validator/ruleset versions are reproducible and bound to each validation result.
+- Unsupported Mathematics scope is explicit (`UNSUPPORTED`/`INCONCLUSIVE`), not silently approximated.
+- No validator failure silently produces `VALID`.
+
+No numerical validator-latency SLO is set by this section.
+
 ## 13. AI Quality and Cost
 
 - AI behavior requires versioned evaluation scenarios for initial lesson and adaptation tasks.
@@ -240,6 +251,7 @@ Before a classroom pilot:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.7` | `2026-09-07` | Add Mathematics validator requirements for the scoped deterministic exact-arithmetic baseline (ADR-0016) | Claude |
 | `0.6` | `2026-09-07` | Add curriculum integrity/reliability requirements for the versioned controlled corpus baseline (ADR-0015) | Claude |
 | `0.5` | `2026-09-07` | Add persistence quality requirements for the PostgreSQL/Flyway/Spring JDBC baseline (ADR-0014) | Claude |
 | `0.4` | `2026-09-07` | Add OIDC, backend-session, CSRF, object-authorization, and scoped-pairing security evidence requirements | Codex |

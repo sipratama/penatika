@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.3` |
+| Version | `0.4` |
 | Last Updated | `2026-09-07` |
 | PRD Capability | `CAP-MATH-001` |
 
@@ -200,18 +200,51 @@ changing the authority rules already established above or in ADR-0005.
   explicit licensing/usage/legal review approves compliant use (the source
   repository currently marks it CC BY-NC 4.0).
 
-## 9b. Open Questions
+## 9c. Architecture Resolution (OAD-008)
+
+[ADR-0016](../02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
+resolves the Mathematics validator approach for this feature's MVP scope
+without changing the result-state semantics or business rules already
+established above.
+
+- **Scoped deterministic validators, not general AI self-evaluation**: the
+  MVP supports exactly three validator families — `EXACT_RATIONAL` (Grade 5
+  fractions), `AFFINE_EXPRESSION` and `LINEAR_EQUATION` (Grade 7 basic
+  algebra / linear equations). Other Mathematics content remains
+  `UNSUPPORTED` until a future validator family is added with evidence.
+- **Exact rational arithmetic**: fraction correctness uses exact rational
+  arithmetic (Apache Commons Numbers `BigFraction` as the initial
+  primitive); binary floating-point equality is never the correctness
+  authority.
+- **Restricted affine/linear-equation grammar**: Grade 7 content is
+  normalized into a canonical affine form (`a*x + b`) and classified into
+  `UNIQUE_SOLUTION`, `IDENTITY`, or `CONTRADICTION`/`NO_SOLUTION`; this is a
+  restricted grammar, not a general Computer Algebra System, and nonlinear,
+  multi-variable, or higher-power expressions remain `UNSUPPORTED`.
+- **AI independence**: deterministic validation runs inside the backend
+  with no AI provider, network CAS, or external mathematical service
+  dependency; AI cannot convert `INVALID`/`UNSUPPORTED` to `VALID`, and a
+  post-`INVALID` AI correction is a new proposal that must be revalidated.
+- **Curriculum independence unchanged**: mathematical correctness and
+  curriculum grounding (ADR-0015) remain separate assurance dimensions.
+- **No general CAS baseline**: SymPy, Symja, and the Wolfram API are not
+  selected for MVP; a CAS may be reconsidered only if supported scope
+  expands beyond the bounded validator families with evidence.
+
+## 9d. Open Questions
 
 - Exact teacher UX for entering/selecting local curriculum context.
 - Exact field-level OpenAPI/JSON Schema contracts for the curriculum
-  context bundle, curriculum references, and local-context records.
+  context bundle, curriculum references, local-context records, and
+  Mathematics claims/results.
 - Outcome of the applicable legal/licensing review for Official Guidance
   substantial-content usage.
 - Exact curriculum corpus normalization data schema and topic taxonomy.
-- Which validator approach covers each MVP content type? (OAD-008)
+- Exact parser grammar, resource-limit values, and Apache Commons Numbers
+  version pin (deferred to source scaffolding).
 - What teacher override behavior is allowed for invalid, unsupported, or inconclusive states?
 - Which explanation-quality checks are deterministic versus AI-evaluated?
-- What evidence threshold is required before adding another topic or grade?
+- What evidence threshold is required before adding another topic, grade, or validator family?
 
 ## 10. Definition of Done
 
@@ -225,11 +258,13 @@ changing the authority rules already established above or in ADR-0005.
 - [ADR-0004 — Separate AI Generation from Mathematical and Curriculum Authority](../02_architecture/adr/ADR-0004-ai-assurance-boundary.md)
 - [ADR-0005 — Use Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
 - [ADR-0015 — Use a Versioned Controlled Curriculum Corpus with Deterministic Retrieval](../02_architecture/adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
+- [ADR-0016 — Use Scoped Deterministic Mathematics Validators with Exact Arithmetic](../02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
 
 ## 12. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.4` | `2026-09-07` | Record OAD-008 architecture resolution (ADR-0016); remove resolved validator-approach question from Open Questions | Claude |
 | `0.3` | `2026-09-07` | Record OAD-009 architecture resolution (ADR-0015); remove resolved ingestion/retrieval/local-context questions from Open Questions | Claude |
 | `0.2` | `2026-09-06` | (see prior repository history) |
 | `0.1` | `2026-09-06` | Initial Mathematics assurance and curriculum grounding feature specification |

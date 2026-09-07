@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.1` |
+| Version | `0.2` |
 | Last Updated | `2026-09-06` |
 | Test Tooling | Open Architecture Decision |
 
@@ -101,7 +101,15 @@ Use real or representative smartphones, laptops/PCs, classroom displays, mouse, 
 - official guidance cannot be surfaced as a national normative requirement;
 - local sequencing remains `LOCAL_CONTEXT`;
 - authority level, source version, phase/scope, and matching provenance are retained;
-- saved lesson provenance remains stable after a newer source version is introduced.
+- saved lesson provenance remains stable after a newer source version is introduced;
+- exact rational arithmetic properties (per [ADR-0016](../02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md)): `(a + b) - b = a`, `(a / b) * b = a` for supported nonzero values;
+- Grade 5 fraction corpus: equivalent/non-equivalent fractions (`2/3 = 4/5` must be `INVALID`), reduction, addition, subtraction, multiplication, division, negative values, zero numerator, zero-denominator rejection, mixed numbers, large exact values within limits;
+- Grade 7 affine/linear-equation corpus: affine equivalence, distributive simplification, exact rational coefficients, valid/invalid solutions, equivalent transformations, identity, contradiction/no-solution, malformed expressions, nonlinear expressions, multiple variables, variable denominators, unsupported functions, extreme/nested resource-bound input;
+- unsupported nonlinear and multi-variable cases return `UNSUPPORTED`, never `VALID`;
+- resource-bound adversarial expressions fail safely without unbounded CPU/memory use;
+- validator/ruleset-version reproducibility;
+- AI cannot override a deterministic `INVALID` result;
+- content edit invalidates prior validation (`FR-MATH-007`).
 
 ## 5. AI Evaluation Strategy
 
@@ -200,9 +208,11 @@ Before pilot, evidence must cover all release blockers, high threats, architectu
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
 - [Non-Functional Requirements](../02_architecture/NON_FUNCTIONAL_REQUIREMENTS.md)
 - [Threat Model](./THREAT_MODEL.md)
+- [ADR-0016 — Scoped Deterministic Mathematics Validators with Exact Arithmetic](../02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
 
 ## 14. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.2` | `2026-09-07` | Expand Mathematics Assurance Suite with exact-arithmetic properties, Grade 5/7 corpora, resource-bound adversarial cases, and validator-version reproducibility (ADR-0016) | Claude |
 | `0.1` | `2026-09-06` | Initial risk-based test strategy | Codex |

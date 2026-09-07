@@ -56,6 +56,7 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 | Backend | Java 21 LTS + Spring Boot 4.x module-first Hexagonal modular monolith |
 | Persistence | PostgreSQL 18.x + Flyway 13.x + Spring JDBC/JdbcClient SQL-first adapters |
 | Curriculum | Controlled versioned curriculum corpus with deterministic metadata-first retrieval; no live-web/vector authority |
+| Mathematics validator | Scoped deterministic exact-rational and one-variable affine/linear validation; unsupported Mathematics remains explicit; AI is not correctness authority |
 | Classroom state | Backend-authoritative and revision-aware |
 | Classroom content | Versioned structured model; no arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; not an authority |
@@ -154,7 +155,6 @@ This validator checks local Markdown links and unresolved core metadata placehol
 - Realtime transport and reconnect protocol.
 - AI provider/model strategy.
 - Speech recognition strategy.
-- Mathematics validator approach.
 - Field-level contract definitions.
 - Deployment environment and secret management.
 - Evidence-driven device/accessibility/performance targets where relevant.

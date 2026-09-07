@@ -22,6 +22,8 @@ Persistence architecture is selected: PostgreSQL 18.x, Flyway 13.x, and Spring J
 
 Curriculum architecture is selected: a controlled, versioned, human-verified curriculum corpus with deterministic metadata-first retrieval (ADR-0015). No curriculum corpus data, import artifact, ingestion tooling, or local setup command exists yet.
 
+Mathematics validator architecture is selected: scoped deterministic `EXACT_RATIONAL`, `AFFINE_EXPRESSION`, and `LINEAR_EQUATION` validators using exact rational arithmetic, with Apache Commons Numbers `BigFraction` as the initial primitive (ADR-0016). No validator source, parser implementation, Apache Commons Numbers dependency installation, Mathematics contract/schema, or test corpus implementation exists yet.
+
 Contract strategy is selected: contract-first OpenAPI 3.1.x for synchronous HTTP and JSON Schema Draft 2020-12 for justified reusable wire schemas. Redocly CLI is the baseline OpenAPI lint/bundle tool. AsyncAPI 3.1.x remains conditional on OAD-005. No field-level contracts exist, and contract tooling is not installed or configured yet.
 
 Identity architecture is selected: OpenID Connect Authorization Code flow with
@@ -74,6 +76,7 @@ Resolve and record at minimum:
 - backend language/framework and module-first Hexagonal Architecture — resolved by ADR-0013 (supersedes ADR-0009);
 - database and migration tooling — resolved by ADR-0014 (PostgreSQL 18.x, Flyway 13.x, Spring JDBC/JdbcClient); physical schema and migrations remain pending;
 - curriculum ingestion/normalization/retrieval — resolved by ADR-0015 (controlled versioned corpus, deterministic metadata-first retrieval); the actual corpus/import artifact remains pending;
+- Mathematics validator approach — resolved by ADR-0016 (scoped deterministic exact-rational and restricted affine/linear-equation validators); the validator source/parser/dependency pin remains pending;
 - identity/authentication architecture — resolved by ADR-0011; provider, session store, and implementation remain pending;
 - realtime protocol;
 - contract formats and tooling — resolved by ADR-0010; field-level contracts remain pending;
@@ -116,6 +119,7 @@ open.
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-07` | Record scoped deterministic Mathematics validator baseline (ADR-0016) without adding validator source, parser, or dependency-install commands | Claude |
 | `2026-09-07` | Record controlled versioned curriculum corpus baseline (ADR-0015) without adding corpus/import/local setup commands | Claude |
 | `2026-09-07` | Record PostgreSQL 18.x, Flyway 13.x, and Spring JDBC/JdbcClient persistence baseline (ADR-0014) without adding installation, Docker, or migration commands | Claude |
 | `2026-09-07` | Revise backend baseline to Java 21 LTS and record module-first Hexagonal Architecture (ADR-0013) without adding setup commands | Claude |

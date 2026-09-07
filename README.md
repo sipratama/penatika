@@ -56,6 +56,7 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | Backend | Java 21 LTS + Spring Boot 4.x module-first Hexagonal modular monolith |
 | Persistence | PostgreSQL 18.x + Flyway 13.x + Spring JDBC/JdbcClient SQL-first adapters |
 | Curriculum | Controlled versioned curriculum corpus dengan deterministic metadata-first retrieval; no live-web/vector authority |
+| Mathematics validator | Scoped deterministic exact-rational dan one-variable affine/linear validation; unsupported Mathematics tetap explicit; AI bukan correctness authority |
 | Classroom state | Backend-authoritative, revision-aware |
 | Classroom content | Versioned structured model; bukan arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; bukan authority |
@@ -154,7 +155,6 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 - Realtime transport/reconnect protocol.
 - AI provider/model strategy.
 - Speech recognition strategy.
-- Mathematics validator approach.
 - Field-level contract definitions.
 - Deployment/environment/secret management.
 - Evidence-driven device/accessibility/performance targets bila relevan.
