@@ -5,7 +5,7 @@
 ## Current Repository Limitations
 
 - No application source code or executable prototype exists; client and backend architecture are selected but not scaffolded.
-- The backend baseline is Java 25 LTS + Spring Boot 4.x, but the JDK distribution, exact framework patch, build tool, database, identity system, realtime transport, providers, field-level contracts, and deployment platform are not selected.
+- The backend baseline is Java 25 LTS + Spring Boot 4.x and identity architecture is OIDC with backend-managed browser sessions, but the JDK distribution, exact framework patch, build tool, database, concrete OIDC provider, physical session store, realtime transport, other providers, field-level contracts, and deployment platform are not selected.
 - Contract strategy is selected, but no field-level OpenAPI or JSON Schema contract exists yet; AsyncAPI remains inactive pending OAD-005.
 - Developer setup contains no application install/run commands.
 - Deployment, runbook, and release checklist remain conditional.
@@ -26,9 +26,9 @@
 - Supported structured content blocks.
 - Target device/browser/display matrix.
 - Formal accessibility target.
-- Exact identity/pairing implementation where relevant.
+- Identity architecture is selected, but the concrete OIDC provider, physical session store, deployment configuration, exact cookie/CSRF details, and field-level auth contracts are not implemented.
 - Field-level contracts.
-- Remaining persistence, identity, realtime, field-level contract, provider, build-tool, and deployment decisions.
+- Remaining persistence, identity implementation/provider, realtime, field-level contract, provider, build-tool, and deployment decisions.
 - Numerical latency/reliability targets where evidence is required.
 
 ## Trust and Quality Limitations
@@ -45,4 +45,4 @@ Penatika succeeds the Pendago / AI Teaching Canvas concept. Pendago material has
 
 ## Last Updated
 
-`2026-09-06`
+`2026-09-07`

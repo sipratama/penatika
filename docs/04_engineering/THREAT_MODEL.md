@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.2` |
-| Last Updated | `2026-09-06` |
+| Version | `0.3` |
+| Last Updated | `2026-09-07` |
 | Review Trigger | Identity, provider, contract, deployment, retention, or student-data decisions |
 
 ## 1. Scope
@@ -84,11 +84,25 @@ Out of scope for this baseline: payment, student accounts, school administration
 | T-016 | Destructive clear/end action | Loss of classroom work | Confirmation or recoverable undo, idempotent save, clear status |
 | T-017 | Dependency outage causes unsafe fallback | Stale or unvalidated content displayed as current | Explicit degraded states, safe last-known projection, no silent acceptance |
 | T-018 | Supply-chain compromise | Client/backend compromise | Locked dependencies, provenance, scanning, review, controlled builds after stack selection |
+| T-019 | OIDC login CSRF, state manipulation, or nonce confusion | Attacker binds or injects the wrong external authentication result | Authorization Code + PKCE `S256`; validated `state`, nonce, issuer, subject, audience/client, signature, redirect URI, and time constraints |
+| T-020 | OAuth redirect or authorization-code interception | External identity or token compromise | Exact redirect validation, PKCE `S256`, secure token endpoint, bounded transaction state, no implicit/password grants |
+| T-021 | OAuth token theft from browser storage or application responses | Reusable upstream bearer credential compromise | Backend is confidential OIDC client; OAuth/OIDC access, refresh, and ID tokens remain server-side and are never exposed to ordinary browser JavaScript |
+| T-022 | Browser session fixation or hijacking | Unauthorized teacher-account access | Rotate identifier after authentication; opaque `Secure`/`HttpOnly` narrowly scoped cookie; bounded lifetime; server revocation; transport protection |
+| T-023 | CSRF against cookie-authenticated operations | Unauthorized state mutation under a teacher session | Explicit anti-forgery defense, no state changes through `GET`, strict origin/CORS validation, SameSite as defense in depth |
+| T-024 | Automatic email-based account linking | Cross-provider account takeover | Resolve by validated `(issuer, subject)`; no automatic email merge; explicit authenticated verification required for future linking |
+| T-025 | Controller pairing credential used without teacher authentication | Unauthenticated attacker gains teacher mutation authority | Controller binding requires active authenticated `TeacherAccount`, session ownership/authorization, valid role-bound grant, and participant constraints |
+| T-026 | Pairing or participant credential replay | Re-entry after grant consumption, replacement, or revocation | Five-minute single-use pairing grants; revocable participant sessions; replay rejection; attempt/rate limits |
+| T-027 | Stale or replaced controller continues sending commands | Concurrent or unauthorized classroom mutation | At most one active mutation-authorized controller; explicit replacement revokes prior authority; authorization and revision checks on every command |
+| T-028 | Classroom display attempts teacher-role escalation | Private-data access or classroom control | Separate display participant session; classroom-safe projection only; backend role/object enforcement; no teacher-account privilege |
 
 ## 6. Security Invariants
 
 - Classroom display cannot receive or derive teacher authority.
 - Pairing is not equivalent to broad teacher-account authentication.
+- Controller authority requires both an active authenticated `TeacherAccount` and an active session-scoped controller participant binding.
+- External identity is resolved by validated `(issuer, subject)` and is not automatically linked by email.
+- OAuth/OIDC access, refresh, and ID tokens remain server-side and are not browser application credentials.
+- Browser and participant sessions are bounded and revocable.
 - AI and speech providers cannot authorize product actions.
 - AI output cannot bypass structured schema, policy, assurance, or teacher-control gates.
 - Raw audio is not persisted by default.
@@ -108,16 +122,41 @@ Out of scope for this baseline: payment, student accounts, school administration
 
 ## 8. Authentication and Session Security
 
-The exact identity solution is open. Any selected design must provide:
+Teacher authentication uses OpenID Connect 1.0 with OAuth 2.0 Authorization
+Code flow and PKCE `S256`. The Penatika Backend is the confidential OIDC client
+and relying party. It validates state, nonce, exact redirect URI, issuer,
+subject, audience/client, signature, expiry, and applicable time constraints
+before resolving a local `TeacherAccount` by `(issuer, subject)`.
 
-- protected teacher account/session behavior;
-- secure recovery and revocation;
-- object-level authorization;
-- bounded classroom pairing;
-- token expiration and rotation appropriate to client type;
-- CSRF, CORS, browser storage, and session fixation controls appropriate to the chosen transport.
+OAuth/OIDC access, refresh, and ID tokens remain server-side and are not
+exposed to ordinary application JavaScript or browser storage. Penatika stores
+no local teacher passwords for MVP and does not automatically link accounts by
+email.
 
-These details require threat-model revision after `OAD-004` and `OAD-005` are selected.
+Teacher Web uses an opaque revocable backend session cookie. The authenticated
+cookie is `Secure`, `HttpOnly`, narrowly scoped, and host-only where practical;
+`SameSite=Strict` is preferred when compatible with the selected deployment.
+The session identifier rotates after authentication and sessions have bounded
+idle and absolute lifetimes. Local logout and server revocation terminate local
+authority even when upstream logout is unavailable.
+
+Cookie-authenticated mutations require explicit CSRF protection. SameSite is
+defense in depth rather than the whole strategy. Credentialed cross-origin
+deployment requires explicit trusted-origin allowlists and never wildcard
+CORS.
+
+Controller authority requires an authenticated active `TeacherAccount`,
+object/session authorization, and an active `TEACHER_CONTROLLER` participant.
+Pairing alone cannot authenticate a teacher. Classroom Display uses a separate
+`CLASSROOM_DISPLAY` participant session with no teacher privilege. Pairing
+grants are session/role-bound, single-use, revocable, and expire after five
+minutes. MVP permits one active controller and one active display per classroom
+session; explicit replacement revokes prior participant authority.
+
+OAD-005 remains responsible for realtime credential carriage and reconnect
+protocol. The concrete OIDC provider, physical session store, exact session
+timeouts, cookie/path/header names, and CSRF mechanism remain implementation or
+deployment decisions.
 
 ## 9. External Provider Review
 
@@ -135,6 +174,11 @@ Before selecting AI or speech providers, evaluate:
 ## 10. Security Testing Priorities
 
 - Pairing brute-force, replay, expiry, and role-escalation tests.
+- OIDC state, nonce, redirect, PKCE, issuer, subject, client/audience, signature, and time-validation tests.
+- Browser OAuth-token non-exposure and session-fixation tests.
+- CSRF and credentialed-origin enforcement tests.
+- Logout, revocation, account-disablement, and account-deletion authority tests.
+- Controller/display replacement and stale-participant rejection tests.
 - Cross-teacher authorization tests.
 - Private/public projection leak tests.
 - Structured-rendering injection tests.
@@ -146,8 +190,12 @@ Before selecting AI or speech providers, evaluate:
 
 ## 11. Open Security and Privacy Decisions
 
-- Identity/account model and authentication mechanisms.
-- Pairing lifetime and participant revocation behavior.
+- Concrete OIDC provider and its privacy, operational, logout, and revocation capabilities.
+- Exact browser-session idle and absolute timeouts.
+- Physical browser/participant session store.
+- Exact cookie name/path, transient OIDC transaction mechanism, and CSRF implementation/header names.
+- OAD-005 realtime credential transport and reconnect authentication semantics.
+- Future account-linking or identity-recovery UX if introduced.
 - Technical retention enforcement and physical purge evidence.
 - Backup expiry evidence.
 - Export authorization mechanism.
@@ -178,10 +226,12 @@ Review this threat model before:
 - [Product Governance and Decision Authority](../00_product/PRODUCT_GOVERNANCE.md)
 - [Test Strategy](./TEST_STRATEGY.md)
 - [Security Standard](../standards/08_SECURITY_STANDARD.md)
+- [ADR-0011 — OIDC with Backend-Managed Browser Sessions and Scoped Pairing](../02_architecture/adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
 
 ## 14. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.3` | `2026-09-07` | Resolve identity/session threats with OIDC, backend-managed sessions, CSRF controls, local account linkage, and scoped pairing | Codex |
 | `0.2` | `2026-09-06` | Align privacy and open-decision wording with the approved data-lifecycle baseline | Codex |
 | `0.1` | `2026-09-06` | Initial multi-surface and AI threat model | Codex |

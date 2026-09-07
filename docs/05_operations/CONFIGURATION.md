@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Active conceptual baseline |
-| Last Updated | `2026-09-06` |
+| Last Updated | `2026-09-07` |
 
 ## 1. Configuration Principles
 
@@ -31,11 +31,21 @@
 
 ### Identity and Session
 
-- identity provider integration;
-- session lifetime;
-- pairing credential lifetime and limits;
-- participant and controller policies;
-- cookie/token controls appropriate to the selected clients.
+- OIDC issuer and discovery endpoint;
+- OIDC client identifier and confidential-client credential where required;
+- authorization redirect/callback URI;
+- authenticated session-cookie security and transient authorization-transaction controls;
+- browser-session idle and absolute lifetimes;
+- trusted browser origins and credentialed CORS policy where applicable;
+- CSRF protection configuration;
+- pairing-grant lifetime fixed at the approved five-minute baseline unless a reviewed security change is accepted;
+- pairing attempt, rate, and anti-enumeration limits;
+- controller/display participant revocation and replacement policy.
+
+The concrete OIDC provider, physical session store, secret manager, exact
+cookie/header names, and environment-variable names remain open. Configuration
+must not expose OAuth/OIDC tokens or confidential-client credentials to browser
+applications.
 
 ### Classroom Session
 
@@ -129,5 +139,6 @@ After implementation:
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-07` | Record OIDC, backend-session, CSRF, pairing, and participant configuration categories without inventing keys or providers | Codex |
 | `2026-09-06` | Align degraded-mode configuration wording with Q-03 / ADR-0007 | Codex |
 | `2026-09-06` | Initial conceptual configuration baseline | Codex |

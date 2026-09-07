@@ -63,6 +63,7 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | Business Model | Teacher-first freemium SaaS; Teacher Pro sebagai paid offer pertama; institutional path kemudian |
 | Client strategy | Browser-first React + TypeScript + Vite |
 | Client surfaces | Teacher Web (Preparation + Controller) dan Classroom Display Web terpisah |
+| Identity | OIDC Authorization Code + PKCE dengan backend-managed browser sessions; provider belum dipilih |
 | Contract strategy | Contract-first OpenAPI 3.1.x + JSON Schema 2020-12; AsyncAPI conditional setelah realtime decision |
 | Deployment target | Belum diputuskan |
 
@@ -143,7 +144,7 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 
 - Curriculum ingestion, provenance contracts, local-context modeling, serta usage/licensing untuk official guidance.
 - Persistence dan migration technology.
-- Identity/authentication.
+- Concrete OIDC provider, session store, dan deployment/security configuration.
 - Realtime transport/reconnect protocol.
 - AI provider/model strategy.
 - Speech recognition strategy.

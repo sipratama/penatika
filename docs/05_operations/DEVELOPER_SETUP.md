@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Active documentation baseline; application setup pending |
-| Last Updated | `2026-09-06` |
+| Last Updated | `2026-09-07` |
 
 ## 1. Current Repository State
 
@@ -19,6 +19,14 @@ Client architecture is selected: React, TypeScript, Vite, and browser-first Teac
 Backend architecture is selected: Java 25 LTS, Spring Boot 4.x, and one deployable modular monolith. No backend source exists. The exact Spring Boot patch, supported OpenJDK-compatible JDK distribution, and build tool will be selected during source scaffolding.
 
 Contract strategy is selected: contract-first OpenAPI 3.1.x for synchronous HTTP and JSON Schema Draft 2020-12 for justified reusable wire schemas. Redocly CLI is the baseline OpenAPI lint/bundle tool. AsyncAPI 3.1.x remains conditional on OAD-005. No field-level contracts exist, and contract tooling is not installed or configured yet.
+
+Identity architecture is selected: OpenID Connect Authorization Code flow with
+PKCE `S256`, the Penatika Backend as confidential OIDC client/relying party,
+and backend-managed browser sessions. Penatika has no local teacher password
+store, and OAuth/OIDC tokens are not stored by browser application JavaScript.
+The concrete OIDC provider, local provider/mock setup, physical session store,
+and exact security configuration are not selected. No identity setup commands
+exist or should be invented yet.
 
 Do not invent setup commands before the remaining stack is selected.
 
@@ -61,7 +69,7 @@ Resolve and record at minimum:
 - client strategy and frontend framework — resolved by ADR-0008;
 - backend language/framework — resolved by ADR-0009;
 - database and migration tooling;
-- authentication approach;
+- identity/authentication architecture — resolved by ADR-0011; provider, session store, and implementation remain pending;
 - realtime protocol;
 - contract formats and tooling — resolved by ADR-0010; field-level contracts remain pending;
 - initial provider strategy for AI, speech, curriculum, and Mathematics validation;
@@ -92,12 +100,18 @@ When source exists, this document must add exact, executed instructions for:
 
 ## 8. Open Decisions
 
-Frontend and backend source have not been scaffolded, and no dependency installation or application run commands exist. Database, identity, realtime transport, field-level contracts, providers, deployment, build tool, JDK distribution, exact framework patches, and exact contract-tool pins remain open.
+Frontend and backend source have not been scaffolded, and no dependency
+installation or application run commands exist. Database and migration
+technology, physical identity/session implementation, concrete OIDC provider,
+realtime transport, field-level contracts, other providers, deployment, build
+tool, JDK distribution, exact framework patches, and exact contract-tool pins
+remain open.
 
 ## 9. Change Log
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-07` | Record selected OIDC and backend-managed session architecture without inventing provider or setup commands | Codex |
 | `2026-09-06` | Record contract-first OpenAPI/JSON Schema strategy without installing tooling or defining fields | Codex |
 | `2026-09-06` | Record Java 25 LTS / Spring Boot 4.x modular-monolith backend without adding setup commands | Codex |
 | `2026-09-06` | Record resolved client architecture without adding application setup commands | Codex |

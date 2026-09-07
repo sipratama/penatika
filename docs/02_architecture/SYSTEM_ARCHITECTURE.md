@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.8` |
-| Last Updated | `2026-09-06` |
+| Version | `0.9` |
+| Last Updated | `2026-09-07` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
 | Deployment Maturity | Pre-implementation; target environment not decided |
@@ -29,8 +29,16 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - Frontend clients are browser application layers and do not become a BFF or application authority.
 - The authoritative backend uses Java 25 LTS and Spring Boot 4.x.
 - The backend remains one deployable modular monolith with explicit domain/application modules and no microservice split.
+- Teacher authentication uses OpenID Connect Authorization Code flow with PKCE `S256`; the Penatika Backend is the confidential OIDC client and relying party.
+- OAuth/OIDC access, refresh, and ID tokens remain server-side; Teacher Web receives only an opaque protected backend-session cookie.
+- Penatika owns a stable internal `TeacherAccount` linked to external identity by validated `(issuer, subject)`; email is not an identity key.
+- Penatika stores no teacher passwords for MVP and does not make provider claims the application authorization model.
+- Teacher controller authority requires an authenticated active `TeacherAccount` plus a session-scoped `TEACHER_CONTROLLER` participant binding.
+- Classroom Display uses a distinct session-scoped `CLASSROOM_DISPLAY` participant authorization and receives no teacher-account privilege.
+- MVP permits at most one active mutation-authorized controller and one active classroom display per classroom session.
+- Pairing grants are classroom-session-bound, role/purpose-bound, single-use, revocable, and expire after five minutes.
 - Core domain/application behavior remains framework-light Java where practical; Spring-specific, persistence, provider, and transport concerns belong at composition and adapter boundaries.
-- Persistence, identity, realtime, AI, speech, Mathematics, curriculum, and deployment technologies remain open adapter-level decisions where applicable.
+- Persistence, realtime, AI, speech, Mathematics, curriculum, concrete identity provider, and deployment technologies remain open adapter-level decisions where applicable.
 - Cross-component wire interfaces follow contract-first design: contract, compatibility review, implementation, then conformance evidence.
 - Synchronous HTTPS/JSON APIs use OpenAPI 3.1.x; justified reusable wire structures use JSON Schema Draft 2020-12.
 - RFC 9457 Problem Details is the HTTP error baseline.
@@ -134,11 +142,18 @@ Core domain and application behavior should remain framework-light Java where pr
 
 #### Identity and Access Module
 
-- resolves teacher identity and participant authorization;
-- creates bounded pairing credentials;
-- enforces session roles and access to projections.
+- acts as the backend OIDC relying party and confidential client;
+- validates external OIDC authentication and resolves `(issuer, subject)` to a local `TeacherAccount` through an `ExternalIdentityLink`;
+- applies explicit account-provisioning policy and rejects non-active accounts;
+- creates, rotates, expires, and revokes opaque backend-managed `BrowserSession` authority;
+- retains upstream OAuth/OIDC tokens server-side and never exposes them to ordinary browser JavaScript;
+- issues and redeems five-minute, role-bound, single-use `PairingGrant` records;
+- creates and revokes session-scoped `SessionParticipant` authority;
+- enforces object ownership, session roles, active participant constraints, and access to role-specific projections;
+- revokes controller authority when its teacher account or browser authorization becomes invalid.
 
-Identity technology and account lifecycle remain open.
+The concrete OIDC provider, physical session store, account-linking UX, and
+field-level authentication contracts remain open implementation decisions.
 
 #### Lesson Module
 
@@ -216,10 +231,11 @@ Rules:
 
 | Data / State | Authoritative Owner | Notes |
 |---|---|---|
-| Teacher identity and authorization grants | Identity and Access | Provider/schema open |
+| `TeacherAccount` and `ExternalIdentityLink` | Identity and Access | Stable local account; external key is validated `(issuer, subject)` |
+| Authenticated `BrowserSession` | Identity and Access | Opaque, revocable backend session; upstream OAuth/OIDC tokens remain server-side |
 | Lesson draft and lesson version | Lesson | Version identity must remain stable |
 | Classroom session lifecycle and revision | Classroom Session | Backend authoritative |
-| Participant role and pairing state | Identity and Access with Session coordination | Pairing secret is ephemeral and bounded |
+| `PairingGrant` and `SessionParticipant` authority | Identity and Access with Session coordination | Five-minute single-use grant; one active controller/display per session for MVP |
 | Structured scene and supported element schema | Classroom Scene | Versioned contract required before implementation |
 | Accepted scene state and annotations | Classroom Session through Scene commands | Client cache is not authoritative |
 | AI request/proposal lifecycle | AI Orchestration | Proposal remains untrusted and teacher-private until checks and publication authorization complete |
@@ -241,11 +257,15 @@ Rules:
 
 ### 6.2 Session Start and Pairing
 
-1. Teacher starts a session from a reviewed lesson version.
-2. Classroom Session creates the authoritative state and revision.
-3. Identity and Access authorizes display and controller participants.
-4. Pairing credentials are short-lived, single-purpose, and server-validated.
-5. Session module returns role-specific projections.
+1. Teacher authenticates through OIDC Authorization Code flow with PKCE `S256`; the backend validates the external identity and resolves an active local `TeacherAccount`.
+2. The backend creates or rotates the revocable authenticated browser session while retaining OAuth/OIDC tokens server-side.
+3. The authorized teacher starts a session from a reviewed lesson version.
+4. Classroom Session creates the authoritative state and revision.
+5. Identity and Access issues role/session-bound, single-use pairing grants that expire after five minutes.
+6. A controller grant may establish `TEACHER_CONTROLLER` authority only when redeemed from an authenticated, session-authorized teacher browser session.
+7. A display grant establishes only a distinct `CLASSROOM_DISPLAY` participant session and cannot grant teacher authority.
+8. Identity and Access enforces one active controller and one active display per session; explicit replacement revokes prior participant authority.
+9. Session module returns role-specific projections.
 
 ### 6.3 Live Adaptation
 
@@ -292,7 +312,10 @@ Transcription, generation progress, proposal preview, assurance results, warning
 | Boundary | Trust Position |
 |---|---|
 | Teacher and display clients → backend | Untrusted input; authenticate, authorize, validate, and bound |
-| Pairing credential → session access | Limited proof for a single purpose; not broad account authority |
+| OIDC provider → Identity and Access | External authentication source; validate issuer, subject, audience/client, signature, nonce, state, redirect, and time constraints before local use |
+| OIDC claims → Penatika account/authorization | Untrusted until validated and normalized; provider roles/groups and email do not become application authority |
+| Pairing credential → session access | Five-minute single-use proof for one session role/purpose; never teacher-account authentication |
+| Browser/participant session reference → backend | Opaque revocable credential; validate lifecycle, account, role, ownership, and session state on use |
 | AI/speech provider → application | Untrusted external dependency and output |
 | Curriculum source → curriculum module | Normative source is selected for MVP Mathematics; each ingested source still requires version, integrity, authority-level, provenance, and applicable usage policy |
 | Backend → persistence | Privileged boundary using least-privilege credentials |
@@ -300,8 +323,15 @@ Transcription, generation progress, proposal preview, assurance results, warning
 
 ## 8. Security and Privacy Baseline
 
-- Server-side authentication and authorization are required for protected actions.
-- Pairing tokens must be purpose-bound, expiring, non-guessable, and replay-resistant.
+- Teacher authentication uses OIDC Authorization Code flow with PKCE `S256`, `state`, `nonce`, exact redirect validation, and applicable issuer, subject, client/audience, signature, and time validation.
+- The backend is the confidential OIDC client; OAuth/OIDC access, refresh, and ID tokens remain server-side and are not stored by browser application JavaScript.
+- Teacher Web uses a revocable opaque backend session cookie that is `Secure`, `HttpOnly`, narrowly scoped, and host-only where practical; `SameSite=Strict` is preferred when compatible with the final OIDC deployment.
+- Cookie-authenticated state changes require explicit CSRF protection; SameSite alone is insufficient, state-changing behavior must not use `GET`, and credentialed CORS must use explicit trusted origins rather than wildcards.
+- Server-side object/session authorization is required for every protected action; authentication or a coarse teacher role alone is insufficient.
+- Pairing grants must be purpose/role-bound, session-bound, five-minute bounded, single-use, non-guessable, revocable, and replay-resistant.
+- Pairing alone cannot authenticate a teacher, and a display participant can never derive teacher authority.
+- Browser and participant session identifiers rotate or revoke as applicable, expire after bounded lifetimes, and terminate local authority independently of upstream logout.
+- Penatika stores no local teacher passwords for MVP and does not automatically link accounts by email.
 - Raw push-to-talk audio is ephemeral by default and excluded from logs and ordinary persistence.
 - Secrets, tokens, raw provider payloads, and private teacher state must not appear in classroom projections.
 - AI output, user input, lesson content, and curriculum content are untrusted for rendering and prompt control.
@@ -378,9 +408,10 @@ implementation, including:
 - assurance result and curriculum provenance.
 
 The contract repository boundary is active, but no field-level OpenAPI or JSON
-Schema contract is created merely because the strategy is resolved. Identity,
-realtime, and other dependent semantics must be decided first. AsyncAPI remains
-inactive until OAD-005 justifies it.
+Schema contract is created merely because the strategy is resolved. Identity
+semantics are selected by ADR-0011; realtime credential transport and other
+dependent semantics remain unresolved. AsyncAPI remains inactive until OAD-005
+justifies it.
 
 ## 13. Observability Baseline
 
@@ -414,6 +445,12 @@ inactive until OAD-005 justifies it.
 - `INV-020`: Mutation may resume only after reconciliation with backend-authoritative state.
 - `INV-021`: A durable save is successful only after authoritative persistence acknowledgement.
 - `INV-022`: Degraded mode cannot bypass approval, assurance, authorization, privacy, structured-content, curriculum provenance, or revision policy.
+- `INV-023`: OAuth/OIDC access, refresh, and ID tokens are not exposed to ordinary browser JavaScript; protected teacher requests use a revocable opaque backend session.
+- `INV-024`: External teacher identity is linked by validated `(issuer, subject)` and is never established or merged solely by email.
+- `INV-025`: Pairing alone cannot authenticate a teacher or grant teacher-account authority.
+- `INV-026`: A `CLASSROOM_DISPLAY` participant cannot obtain teacher-private projection or teacher mutation authority.
+- `INV-027`: MVP permits at most one active mutation-authorized `TEACHER_CONTROLLER` and one active `CLASSROOM_DISPLAY` participant per classroom session.
+- `INV-028`: Pairing grants are role/session-bound, single-use, revocable, and expire after five minutes.
 
 ## 15. Selected Architecture Decisions
 
@@ -427,13 +464,13 @@ inactive until OAD-005 justifies it.
 - [ADR-0008 — Use Browser-First React Clients with Separate Teacher and Classroom Display Boundaries](./adr/ADR-0008-browser-first-react-client-strategy.md)
 - [ADR-0009 — Use Java 25 LTS and Spring Boot for the Authoritative Backend](./adr/ADR-0009-java-spring-boot-backend.md)
 - [ADR-0010 — Use Contract-First OpenAPI and JSON Schema Boundaries](./adr/ADR-0010-contract-first-openapi-json-schema.md)
+- [ADR-0011 — Use OIDC with Backend-Managed Browser Sessions and Scoped Pairing](./adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
 
 ## 16. Open Architecture Decisions
 
 | ID | Decision | Needed Before |
 |---|---|---|
 | OAD-003 | Database and migration technology | Persistent implementation |
-| OAD-004 | Identity, authentication, and account model | Protected workflow implementation |
 | OAD-005 | Realtime transport and reconnect protocol | Session contract implementation |
 | OAD-006 | AI provider/model strategy and fallback | AI integration implementation |
 | OAD-007 | Speech recognition strategy | Push-to-talk implementation |
@@ -463,6 +500,7 @@ inactive until OAD-005 justifies it.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.9` | `2026-09-07` | Resolve OAD-004 with OIDC, backend-managed browser sessions, local teacher accounts, and scoped pairing | Codex |
 | `0.8` | `2026-09-06` | Resolve OAD-012 with contract-first OpenAPI 3.1.x and JSON Schema Draft 2020-12 boundaries | Codex |
 | `0.7` | `2026-09-06` | Resolve OAD-002 with Java 25 LTS / Spring Boot modular-monolith backend | Codex |
 | `0.6` | `2026-09-06` | Resolve OAD-001 with browser-first React client architecture | Codex |

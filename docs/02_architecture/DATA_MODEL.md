@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft conceptual baseline |
-| Version | `0.2` |
-| Last Updated | `2026-09-06` |
+| Version | `0.3` |
+| Last Updated | `2026-09-07` |
 | Database Technology | Open Architecture Decision |
 
 ## 1. Modeling Principles
@@ -39,12 +39,71 @@ This is a conceptual baseline. It does not require every entity to carry identic
 
 ## 2. Core Concepts
 
-### Teacher Identity
+### TeacherAccount
 
-Represents the teacher principal used for ownership and authorization. Teacher account/profile data remains active until teacher-requested deletion or legitimate account closure under future policy. Normal access is revoked immediately on account deletion, teacher-owned personal product data is deleted or anonymized from primary active storage within `30 days`, and protected backup copies expire within `30 additional days` unless a documented narrow preservation requirement applies. Exact account fields, identity provider linkage, and organization membership remain open.
+Represents the stable internal Penatika teacher identity used for ownership and
+authorization.
+
+Known conceptual attributes:
+
+- stable Penatika account identity;
+- lifecycle state equivalent to `ACTIVE`, `DISABLED`, `DELETION_REQUESTED`, or
+  `CLOSED`;
+- minimal profile/contact attributes legitimately required by the product;
+- ownership references for lessons, classroom sessions, and teacher data;
+- account, security, and deletion audit metadata required by policy.
+
+No local password, password hash, password-reset token, recovery question, or
+local credential-MFA field is required for MVP. Teacher account/profile data
+remains active until teacher-requested deletion or legitimate account closure.
+Normal access is revoked immediately on accepted account deletion,
+teacher-owned personal product data is deleted or anonymized from primary
+active storage within `30 days`, and protected backup copies expire within
+`30 additional days` unless a documented narrow preservation requirement
+applies.
 
 **Owner:** Identity and Access module
 **Classification:** Personal data
+
+### ExternalIdentityLink
+
+Associates a `TeacherAccount` with one validated upstream OIDC identity.
+
+Known conceptual attributes:
+
+- owning `TeacherAccount`;
+- validated OIDC issuer (`iss`);
+- validated OIDC subject (`sub`);
+- minimal required provider-link metadata;
+- lifecycle or unlinking state where later supported.
+
+The `(issuer, subject)` pair is unique and is the authoritative external
+identity key. Email address, display name, and provider username are not stable
+identity keys. Multiple links may be modeled for future explicit account
+linking, but email-based or automatic cross-provider merging is prohibited.
+
+**Owner:** Identity and Access module
+**Classification:** Personal data
+
+### Authenticated Browser Session
+
+Represents revocable server-managed authentication for Teacher Web.
+
+Known conceptual attributes:
+
+- opaque session identity/reference;
+- authenticated `TeacherAccount`;
+- created, last-active, idle-expiry, and absolute-expiry concepts;
+- revocation and logout state;
+- security context required to validate the browser session.
+
+The browser receives only an opaque protected session reference. Upstream
+OAuth/OIDC access, refresh, and ID tokens remain server-side and are not
+ordinary teacher profile or domain data. Their exact secure storage remains an
+implementation decision.
+
+**Owner:** Identity and Access module
+**Classification:** Secret security state
 
 ### Lesson
 
@@ -102,19 +161,46 @@ Known conceptual attributes:
 
 A successfully saved session is eligible for retained teacher history for `90 days` after session end/save and may be deleted earlier by the teacher.
 
-### Session Participant
+### PairingGrant
 
-Represents an authorized participant and role in a session, such as teacher controller or classroom display.
+Represents a short-lived single-use authorization grant for joining one
+classroom session in one intended participant role.
 
 Known conceptual attributes:
 
-- participant identity or session-scoped identity;
+- classroom session identity;
+- intended participant role/purpose;
+- issued and expiry timestamps;
+- single-use redemption state;
+- revocation state;
+- secret verification material that does not require reusable plaintext.
+
+The initial MVP lifetime is five minutes. Successful redemption, explicit
+revocation, expiry, or classroom-session end invalidates the grant.
+
+**Owner:** Identity and Access with Classroom Session coordination
+**Classification:** Secret
+
+### SessionParticipant
+
+Represents an authorized session-scoped participant, separate from product
+account identity.
+
+Known conceptual attributes:
+
+- session-scoped participant identity;
 - session identity;
-- role;
+- role: `TEACHER_CONTROLLER` or `CLASSROOM_DISPLAY`;
 - authorization state;
+- linked `TeacherAccount` and browser-session authorization where required for
+  a teacher controller;
+- replacement and revocation state;
 - joined, last-seen, disconnected, and revoked timestamps where needed.
 
-Pairing credentials are separate ephemeral secrets and are not stored as reusable plaintext.
+`CLASSROOM_DISPLAY` has no teacher-account authority. A
+`TEACHER_CONTROLLER` requires an active authenticated teacher and classroom-
+session authorization. MVP permits at most one active mutation-authorized
+controller and one active display participant per classroom session.
 
 **Owner:** Identity and Access with Classroom Session coordination
 
@@ -238,10 +324,14 @@ Saved history retains only the allowed stable lesson reference/snapshot, accepte
 ## 3. Relationships
 
 ```text
-Teacher Identity 1 ── * Lesson
+TeacherAccount 1 ── * ExternalIdentityLink
+TeacherAccount 1 ── * Authenticated Browser Session
+TeacherAccount 1 ── * Lesson
 Lesson 1 ── * Lesson Version
 Lesson Version 1 ── * Classroom Session
-Classroom Session 1 ── * Session Participant
+Classroom Session 1 ── * PairingGrant
+Classroom Session 1 ── * SessionParticipant
+TeacherAccount 1 ── 0..* SessionParticipant (TEACHER_CONTROLLER only)
 Classroom Session 1 ── * Classroom Scene revision/state
 Classroom Scene 1 ── * Annotation Operation
 Classroom Session 1 ── * Adaptation Request
@@ -261,7 +351,14 @@ Classroom Session 1 ── 0..* Session Snapshot or Save Record
 - Every grounded curriculum claim references an explicit authority level, controlled source, source version, relevant phase/scope, and provenance.
 - A newer curriculum source version does not silently rewrite provenance stored by an existing lesson version.
 - A classroom projection excludes teacher-private fields by construction.
-- An expired or consumed pairing credential cannot authorize a new participant.
+- An external identity resolves by unique validated `(issuer, subject)`; email does not identify or merge accounts.
+- An authenticated browser session and each participant session are revocable.
+- OAuth/OIDC access, refresh, and ID tokens are never browser-stored application credentials or ordinary profile data.
+- Pairing alone cannot authenticate a teacher or grant teacher-account authority.
+- A `CLASSROOM_DISPLAY` participant has no teacher authority.
+- A `TEACHER_CONTROLLER` participant requires an active authenticated teacher authorization.
+- MVP permits at most one active mutation-authorized controller and one active display participant per classroom session.
+- An expired, consumed, or revoked pairing grant cannot authorize a participant and every grant expires after five minutes.
 - A save operation is idempotent for the same session and intended final revision.
 - A retained lesson exists until teacher deletion; deletion processing does not mutate the historical content of stable versions while they remain retained.
 - A saved session expires after `90 days` by default, and retained annotations cannot outlive that owning session.
@@ -275,6 +372,8 @@ Classroom Session 1 ── 0..* Session Snapshot or Save Record
 | Data | Classification | Notes |
 |---|---|---|
 | Teacher identity and account metadata | Personal | Retain until account deletion/closure; minimize and protect |
+| External identity issuer/subject link | Personal | Stable external identity key; email is not the key |
+| Authenticated browser and participant sessions | Secret security state | Opaque, bounded, revocable; never log reusable values |
 | Lesson and lesson-version content | Potentially sensitive educational/work product | Retain until teacher deletion; access-controlled |
 | Saved session content and retained annotations | Potentially sensitive educational/work product | `90-day` default; teacher may delete earlier |
 | Raw push-to-talk audio | Sensitive transient input | Zero default persistence |
@@ -319,6 +418,7 @@ No physical tables, collections, indexes, or migrations are created during initi
 
 - [System Architecture](./SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority](./adr/ADR-0005-layered-curriculum-authority.md)
+- [ADR-0011 — OIDC with Backend-Managed Browser Sessions and Scoped Pairing](./adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
 - [PRD](../00_product/PRD.md)
 - [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
@@ -328,5 +428,6 @@ No physical tables, collections, indexes, or migrations are created during initi
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.3` | `2026-09-07` | Define local teacher accounts, OIDC identity links, revocable browser sessions, scoped pairing grants, and participant authority | Codex |
 | `0.2` | `2026-09-06` | Resolve the conceptual retention, history, export, deletion, and backup-expiry lifecycle baseline | Codex |
 | `0.1` | `2026-09-06` | Initial conceptual domain model | Codex |

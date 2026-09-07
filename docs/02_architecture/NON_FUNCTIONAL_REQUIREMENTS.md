@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.3` |
-| Last Updated | `2026-09-06` |
+| Version | `0.4` |
+| Last Updated | `2026-09-07` |
 
 ## 1. Quality Priorities
 
@@ -78,8 +78,16 @@ No production availability percentage or SLO is set before deployment and suppor
 
 ## 6. Security
 
-- All protected actions require backend-enforced authentication and authorization.
-- Pairing credentials must be short-lived, purpose-bound, non-guessable, and replay-resistant.
+- Teacher authentication must use OIDC Authorization Code flow with PKCE `S256` and required state, nonce, redirect, issuer, subject, audience/client, signature, and time validation.
+- OAuth/OIDC access, refresh, and ID tokens must remain server-side and must not be exposed to or stored by ordinary browser application JavaScript.
+- Protected teacher actions require a bounded, revocable backend-managed browser session represented by an opaque protected cookie.
+- Cookie-authenticated state-changing requests require explicit CSRF protection; SameSite alone is not sufficient.
+- All protected actions require backend-enforced object, ownership, classroom-session, participant, and revision authorization as applicable; authentication or a coarse role alone is insufficient.
+- External identity linkage uses validated `(issuer, subject)` and must not automatically merge accounts by email.
+- Penatika MVP must not store local teacher passwords or password-recovery credentials.
+- Pairing grants must be five-minute bounded, session-bound, role/purpose-bound, single-use, non-guessable, revocable, and replay-resistant.
+- Pairing alone must never authenticate a teacher, and a display participant must never obtain teacher authority.
+- MVP permits at most one active mutation-authorized teacher controller and one active classroom display participant per classroom session.
 - Structured rendering must prevent arbitrary script execution.
 - Secrets, access tokens, and provider credentials must not ship in untrusted clients.
 - Sensitive traffic requires transport protection in production.
@@ -160,6 +168,15 @@ Before production capacity planning, define:
 
 Before a classroom pilot:
 
+- OIDC login-flow integrity covers state/nonce handling, PKCE `S256`, exact redirect validation, and validated issuer/subject/client/signature/time semantics;
+- browser storage and application responses contain no OAuth/OIDC access or refresh tokens;
+- successful authentication rotates the backend session identifier and session fixation attempts fail;
+- logout, session revocation, account disablement, and accepted account deletion terminate teacher access and active controller authority;
+- cross-teacher lesson/session/controller authorization attempts fail;
+- cookie-authenticated mutations reject missing or invalid CSRF proof and disallowed origins;
+- expired, replayed, role-incompatible, and already-consumed pairing grants fail safely;
+- controller replacement revokes prior mutation authority and display replacement revokes the prior participant credential;
+- reconnect does not recreate revoked controller or display authority;
 - no critical teacher-private/classroom projection leakage;
 - no known session authorization bypass;
 - structured content and command contracts pass compatibility tests;
@@ -196,6 +213,7 @@ Before a classroom pilot:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.4` | `2026-09-07` | Add OIDC, backend-session, CSRF, object-authorization, and scoped-pairing security evidence requirements | Codex |
 | `0.3` | `2026-09-06` | Add enforceable privacy and release gates for the approved data-lifecycle policy | Codex |
 | `0.2` | `2026-09-06` | Define resilience-oriented degradation, reconciliation, and truthful save requirements | Codex |
 | `0.1` | `2026-09-06` | Initial quality baseline grounded in MVP constraints | Codex |

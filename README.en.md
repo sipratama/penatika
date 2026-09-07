@@ -63,6 +63,7 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 | Business Model | Teacher-first freemium SaaS; Teacher Pro as the first paid offer; institutional path later |
 | Client strategy | Browser-first React + TypeScript + Vite |
 | Client surfaces | Teacher Web (Preparation + Controller) and separate Classroom Display Web |
+| Identity | OIDC Authorization Code + PKCE with backend-managed browser sessions; provider not yet selected |
 | Contract strategy | Contract-first OpenAPI 3.1.x + JSON Schema 2020-12; AsyncAPI conditional after the realtime decision |
 | Deployment target | Not decided |
 
@@ -143,7 +144,7 @@ This validator checks local Markdown links and unresolved core metadata placehol
 
 - Curriculum ingestion, provenance contracts, local-context modeling, and official-guidance usage/licensing.
 - Persistence and migration technology.
-- Identity/authentication.
+- Concrete OIDC provider, session store, and deployment/security configuration.
 - Realtime transport and reconnect protocol.
 - AI provider/model strategy.
 - Speech recognition strategy.
