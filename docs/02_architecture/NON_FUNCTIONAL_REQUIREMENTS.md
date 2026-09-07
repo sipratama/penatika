@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.4` |
+| Version | `0.5` |
 | Last Updated | `2026-09-07` |
 
 ## 1. Quality Priorities
@@ -157,6 +157,20 @@ Before production capacity planning, define:
 - Database changes require migrations once persistence is selected.
 - Source structure must follow documented module ownership.
 
+### Persistence Quality Requirements
+
+- Authoritative persistence uses PostgreSQL ([ADR-0014](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)).
+- Physical schema is controlled by version-controlled Flyway migrations.
+- Runtime schema auto-generation (for example, ORM `ddl-auto=create`/`update`) is prohibited.
+- Critical revision updates require database-backed atomic conflict protection.
+- Durable save succeeds only after the authoritative database transaction commits.
+- Migration fresh-create and upgrade-path tests are required once migrations exist.
+- Application runtime uses least-privilege database credentials.
+- Migration and runtime database privileges are separated where the deployment supports it.
+- Retention/deletion behavior must be operationally testable against the persistence layer.
+
+No database SLO, RPO, or RTO is set by this section; see [Open Decisions](#15-open-decisions).
+
 ## 13. AI Quality and Cost
 
 - AI behavior requires versioned evaluation scenarios for initial lesson and adaptation tasks.
@@ -213,6 +227,7 @@ Before a classroom pilot:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.5` | `2026-09-07` | Add persistence quality requirements for the PostgreSQL/Flyway/Spring JDBC baseline (ADR-0014) | Claude |
 | `0.4` | `2026-09-07` | Add OIDC, backend-session, CSRF, object-authorization, and scoped-pairing security evidence requirements | Codex |
 | `0.3` | `2026-09-06` | Add enforceable privacy and release gates for the approved data-lifecycle policy | Codex |
 | `0.2` | `2026-09-06` | Define resilience-oriented degradation, reconciliation, and truthful save requirements | Codex |

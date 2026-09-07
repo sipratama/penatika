@@ -5,7 +5,7 @@
 ## Current Repository Limitations
 
 - No application source code or executable prototype exists; client and backend architecture are selected but not scaffolded.
-- The backend baseline is Java 21 LTS + Spring Boot 4.x with module-first Hexagonal Architecture, and identity architecture is OIDC with backend-managed browser sessions, but the JDK distribution, exact framework patch, build tool, database, concrete OIDC provider, physical session store, realtime transport, other providers, field-level contracts, and deployment platform are not selected.
+- The backend baseline is Java 21 LTS + Spring Boot 4.x with module-first Hexagonal Architecture; persistence technology is selected as PostgreSQL 18.x + Flyway 13.x + Spring JDBC/JdbcClient (ADR-0014), but physical schema, SQL migration files, indexes, query implementation, and runtime data access do not yet exist; identity architecture is OIDC with backend-managed browser sessions, but the JDK distribution, exact framework patch, build tool, concrete OIDC provider, physical session store, realtime transport, other providers, field-level contracts, backup/recovery, managed database deployment, and deployment platform are not selected.
 - Contract strategy is selected, but no field-level OpenAPI or JSON Schema contract exists yet; AsyncAPI remains inactive pending OAD-005.
 - Developer setup contains no application install/run commands.
 - Deployment, runbook, and release checklist remain conditional.

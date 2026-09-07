@@ -776,8 +776,8 @@ Penatika overrides generic ECC examples with these rules:
 - no global controller/service/repository/entity architecture;
 - domain remains framework-light;
 - use ports only for meaningful boundaries;
-- no persistence technology may be inferred before OAD-003;
-- JPA examples in ECC are examples only and are NOT Penatika defaults;
+- persistence is PostgreSQL + Flyway + Spring JDBC/JdbcClient ([ADR-0014](../02_architecture/adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)); `jpa-patterns` remains NOT selected;
+- ECC Spring/JPA examples do not override ADR-0014; persistence adapters must follow ADR-0013's Hexagonal boundaries;
 - no microservices unless an Accepted ADR changes the architecture;
 - contract-first OpenAPI/JSON Schema rules remain authoritative ([ADR-0010](../02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md));
 - OIDC/backend-session rules come from [ADR-0011](../02_architecture/adr/ADR-0011-oidc-backend-managed-browser-sessions.md);

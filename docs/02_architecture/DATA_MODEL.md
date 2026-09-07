@@ -8,9 +8,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft conceptual baseline |
-| Version | `0.3` |
+| Version | `0.4` |
 | Last Updated | `2026-09-07` |
-| Database Technology | Open Architecture Decision |
+| Database Technology | PostgreSQL 18.x |
 
 ## 1. Modeling Principles
 
@@ -23,6 +23,7 @@
 - Model retention by purpose and data class rather than applying one indefinite history policy to every entity.
 - Distinguish active data, deletion processing, primary-store purge, and backup expiry without claiming completed deletion prematurely.
 - Add physical schema and migrations only after persistence technology is selected.
+- This document remains CONCEPTUAL: no physical schema exists yet, even though the persistence technology (PostgreSQL, Flyway, Spring JDBC/JdbcClient) is now selected by [ADR-0014](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md).
 
 ### Conceptual Retention State
 
@@ -414,11 +415,43 @@ No physical tables, collections, indexes, or migrations are created during initi
 - define uniqueness, foreign-key, and revision constraints;
 - test migration safety and rollback/forward-fix strategy.
 
+### Physical Persistence Baseline
+
+[ADR-0014](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
+selects the persistence technology without yet creating a physical schema:
+
+- PostgreSQL as the primary authoritative database;
+- one database for the modular monolith;
+- Flyway-controlled schema evolution through version-controlled SQL
+  migrations;
+- Spring JDBC/JdbcClient persistence adapters as the initial data-access
+  baseline;
+- module-owned persistence boundaries (each business-capability module owns
+  its persistent structures behind its own output ports);
+- relational-first modeling with selective PostgreSQL JSONB for justified
+  structured content (see §2 and §1's modeling principles);
+- executable migrations under `migrations/schema` plus Flyway history
+  become the physical schema source of truth once they are created; this
+  document remains the conceptual model.
+
+Likely integrity expectations for physical schema design include:
+
+- unique `(issuer, subject)` for `ExternalIdentityLink`;
+- concurrency-safe single-use `PairingGrant` redemption;
+- atomic enforcement of at most one active `TEACHER_CONTROLLER` and one
+  active `CLASSROOM_DISPLAY` per classroom session;
+- revision-aware atomic session mutation (optimistic conflict detection);
+- queryable retention/expiry lifecycle fields to support
+  [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md).
+
+Table and column names are not defined here.
+
 ## 8. Related Documents
 
 - [System Architecture](./SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority](./adr/ADR-0005-layered-curriculum-authority.md)
 - [ADR-0011 — OIDC with Backend-Managed Browser Sessions and Scoped Pairing](./adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
+- [ADR-0014 — PostgreSQL with Flyway and SQL-First Hexagonal Persistence](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
 - [PRD](../00_product/PRD.md)
 - [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
@@ -428,6 +461,7 @@ No physical tables, collections, indexes, or migrations are created during initi
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.4` | `2026-09-07` | Resolve OAD-003: record PostgreSQL/Flyway/Spring JDBC physical persistence baseline and likely integrity expectations while remaining conceptual | Claude |
 | `0.3` | `2026-09-07` | Define local teacher accounts, OIDC identity links, revocable browser sessions, scoped pairing grants, and participant authority | Codex |
 | `0.2` | `2026-09-06` | Resolve the conceptual retention, history, export, deletion, and backup-expiry lifecycle baseline | Codex |
 | `0.1` | `2026-09-06` | Initial conceptual domain model | Codex |

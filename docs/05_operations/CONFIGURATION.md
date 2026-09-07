@@ -47,6 +47,22 @@ cookie/header names, and environment-variable names remain open. Configuration
 must not expose OAuth/OIDC tokens or confidential-client credentials to browser
 applications.
 
+### Persistence
+
+- PostgreSQL endpoint/database identifier;
+- runtime database credential;
+- migration credential where separated from the runtime credential;
+- connection-pool configuration;
+- query and transaction timeout categories;
+- Flyway configuration and migration location;
+- schema compatibility checks.
+
+Persistence technology is selected as PostgreSQL 18.x, Flyway 13.x, and
+Spring JDBC/JdbcClient
+([ADR-0014](../02_architecture/adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)).
+Exact environment-variable names, connection-pool values, and secret-manager
+integration remain open.
+
 ### Classroom Session
 
 - command and payload bounds;
@@ -139,6 +155,7 @@ After implementation:
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-07` | Record persistence (PostgreSQL/Flyway) configuration categories without inventing environment-variable names or pool values | Claude |
 | `2026-09-07` | Record OIDC, backend-session, CSRF, pairing, and participant configuration categories without inventing keys or providers | Codex |
 | `2026-09-06` | Align degraded-mode configuration wording with Q-03 / ADR-0007 | Codex |
 | `2026-09-06` | Initial conceptual configuration baseline | Codex |

@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.11` |
+| Version | `0.12` |
 | Last Updated | `2026-09-07` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
@@ -32,6 +32,11 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - Backend internal organization is module-first Hexagonal Architecture: business-capability modules are the primary boundary, and Hexagonal (ports/adapters) structure applies locally inside each module that is complex enough to benefit from it.
 - Domain/application core remains framework-light; inbound and outbound adapters contain delivery and infrastructure detail.
 - Ports protect meaningful boundaries and are not created mechanically for every dependency.
+- The primary authoritative database is PostgreSQL 18.x (current stable at decision time: PostgreSQL 18.6), used as one database for the modular monolith with module-owned logical ownership.
+- Physical schema evolution uses Flyway 13.x version-controlled SQL migrations.
+- The initial data-access baseline is Spring JDBC / JdbcClient-style explicit SQL; no JPA/Hibernate baseline is selected.
+- Persistence adapters live behind module-owned output ports per the Hexagonal persistence boundary; persistence is relational-first with selective PostgreSQL JSONB for justified structured content.
+- No Redis, cache, or vector database is selected; physical schema and migrations do not yet exist.
 - Teacher authentication uses OpenID Connect Authorization Code flow with PKCE `S256`; the Penatika Backend is the confidential OIDC client and relying party.
 - OAuth/OIDC access, refresh, and ID tokens remain server-side; Teacher Web receives only an opaque protected backend-session cookie.
 - Penatika owns a stable internal `TeacherAccount` linked to external identity by validated `(issuer, subject)`; email is not an identity key.
@@ -387,9 +392,9 @@ Penatika is resilience-oriented, not offline-first. The degradation policy prese
 
 ## 11. Persistence Baseline
 
-Persistent domain data is required for lesson versions, curriculum provenance, session saves, assurance results, and authorization-related records. The database technology and physical schema are not selected.
+Persistent domain data is required for lesson versions, curriculum provenance, session saves, assurance results, and authorization-related records. Per [ADR-0014](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md), the primary authoritative database is PostgreSQL 18.x (one database for the modular monolith, with module-owned logical ownership), physical schema evolution uses Flyway 13.x version-controlled SQL migrations, and the initial data-access baseline is Spring JDBC / JdbcClient-style explicit SQL. Persistence adapters implement module-owned output ports per the Hexagonal persistence boundary in ADR-0013/ADR-0014; no JPA/Hibernate, Redis, cache, or vector database is selected. Physical schema, migrations, and physical database credentials/deployment do not yet exist.
 
-The conceptual model is defined in [DATA_MODEL.md](./DATA_MODEL.md). Migrations will become mandatory when a physical persistence technology is selected. Persistent data follows the approved retention classes in [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md); persistence does not imply indefinite retention for AI or assurance records.
+The conceptual model is defined in [DATA_MODEL.md](./DATA_MODEL.md). Persistent data follows the approved retention classes in [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md); persistence does not imply indefinite retention for AI or assurance records.
 
 ## 12. Contracts
 
@@ -482,12 +487,12 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 - [ADR-0011 — Use OIDC with Backend-Managed Browser Sessions and Scoped Pairing](./adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
 - [ADR-0012 — Use Server-Sent Events for Realtime Push with Existing HTTP Commands](./adr/ADR-0012-sse-realtime-push-with-existing-http-commands.md)
 - [ADR-0013 — Use Java 21 LTS with Module-First Hexagonal Backend Architecture](./adr/ADR-0013-java21-module-first-hexagonal-backend.md)
+- [ADR-0014 — Use PostgreSQL with Flyway and SQL-First Hexagonal Persistence](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
 
 ## 16. Open Architecture Decisions
 
 | ID | Decision | Needed Before |
 |---|---|---|
-| OAD-003 | Database and migration technology | Persistent implementation |
 | OAD-006 | AI provider/model strategy and fallback | AI integration implementation |
 | OAD-007 | Speech recognition strategy | Push-to-talk implementation |
 | OAD-008 | Mathematics validator approach per content type | Assurance implementation |
@@ -516,6 +521,7 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.12` | `2026-09-07` | Resolve OAD-003 with PostgreSQL 18.x, Flyway 13.x, and SQL-first Hexagonal persistence adapters | Claude |
 | `0.11` | `2026-09-07` | Refine backend baseline to Java 21 LTS and explicit module-first Hexagonal Architecture; ADR-0013 supersedes ADR-0009 | Claude |
 | `0.10` | `2026-09-07` | Resolve OAD-005 with SSE realtime push, existing HTTP commands, and inactive AsyncAPI | Claude |
 | `0.9` | `2026-09-07` | Resolve OAD-004 with OIDC, backend-managed browser sessions, local teacher accounts, and scoped pairing | Codex |

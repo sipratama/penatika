@@ -54,6 +54,7 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | Base profile | `fullstack` |
 | Modifier | `ai-enabled` |
 | Backend | Java 21 LTS + Spring Boot 4.x module-first Hexagonal modular monolith |
+| Persistence | PostgreSQL 18.x + Flyway 13.x + Spring JDBC/JdbcClient SQL-first adapters |
 | Classroom state | Backend-authoritative, revision-aware |
 | Classroom content | Versioned structured model; bukan arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; bukan authority |
@@ -147,7 +148,7 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 ## Open Architecture and Implementation Decisions
 
 - Curriculum ingestion, provenance contracts, local-context modeling, serta usage/licensing untuk official guidance.
-- Persistence dan migration technology.
+- Physical persistence schema dan migrations (teknologi sudah dipilih: PostgreSQL + Flyway).
 - Concrete OIDC provider, session store, dan deployment/security configuration.
 - Realtime transport/reconnect protocol.
 - AI provider/model strategy.

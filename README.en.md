@@ -54,6 +54,7 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 | Base profile | `fullstack` |
 | Modifier | `ai-enabled` |
 | Backend | Java 21 LTS + Spring Boot 4.x module-first Hexagonal modular monolith |
+| Persistence | PostgreSQL 18.x + Flyway 13.x + Spring JDBC/JdbcClient SQL-first adapters |
 | Classroom state | Backend-authoritative and revision-aware |
 | Classroom content | Versioned structured model; no arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; not an authority |
@@ -147,7 +148,7 @@ This validator checks local Markdown links and unresolved core metadata placehol
 ## Open Architecture and Implementation Decisions
 
 - Curriculum ingestion, provenance contracts, local-context modeling, and official-guidance usage/licensing.
-- Persistence and migration technology.
+- Physical persistence schema and migrations (technology is selected: PostgreSQL + Flyway).
 - Concrete OIDC provider, session store, and deployment/security configuration.
 - Realtime transport and reconnect protocol.
 - AI provider/model strategy.
