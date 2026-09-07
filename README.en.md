@@ -81,6 +81,10 @@ The repository does not yet contain application source code, package manifests, 
 
 - [Project Status](./docs/PROJECT_STATUS.md) — current project phase, completed milestones, and pending architecture work.
 
+### Architecture Handoff Checkpoint
+
+- [Checkpoint after OAD-004](./docs/checkpoints/2026-09-07-architecture-foundation-after-oad004.md) — historical cross-device/AI handoff snapshot; canonical documents remain authoritative.
+
 ### Product
 
 - [Product Brief](./docs/00_product/PRODUCT_BRIEF.md)

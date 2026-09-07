@@ -81,6 +81,10 @@ Repository belum memiliki application source code, package manifest, database mi
 
 - [Project Status](./docs/PROJECT_STATUS.md) — fase proyek saat ini, milestone yang selesai, dan pekerjaan arsitektur yang tertunda.
 
+### Architecture Handoff Checkpoint
+
+- [Checkpoint setelah OAD-004](./docs/checkpoints/2026-09-07-architecture-foundation-after-oad004.md) — historical cross-device/AI handoff snapshot; canonical documents tetap authoritative.
+
 ### Product
 
 - [Product Brief](./docs/00_product/PRODUCT_BRIEF.md) — why, who, value, principles, constraints, assumptions.

@@ -23,7 +23,7 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.5 |
+| Version | 0.6 |
 | Last Updated | 2026-09-07 |
 | Current Phase | Architecture & Technology Decisioning |
 | Implementation State | Pre-source / Pre-scaffolding |
@@ -171,6 +171,13 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 - unit-economics evidence;
 - willingness-to-pay evidence;
 - commercial launch gates.
+
+## Latest Handoff Checkpoint
+
+[Architecture Foundation Checkpoint — After OAD-004](./checkpoints/2026-09-07-architecture-foundation-after-oad004.md)
+was created as a historical cross-device / AI handoff snapshot before OAD-005.
+It is not authoritative and does not replace the canonical project, product,
+architecture, ADR, contract, or policy documents.
 
 ## AI / Contributor Reading Route
 
