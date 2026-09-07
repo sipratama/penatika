@@ -63,6 +63,7 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | Business Model | Teacher-first freemium SaaS; Teacher Pro sebagai paid offer pertama; institutional path kemudian |
 | Client strategy | Browser-first React + TypeScript + Vite |
 | Client surfaces | Teacher Web (Preparation + Controller) dan Classroom Display Web terpisah |
+| Contract strategy | Contract-first OpenAPI 3.1.x + JSON Schema 2020-12; AsyncAPI conditional setelah realtime decision |
 | Deployment target | Belum diputuskan |
 
 Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architecture/adr/).
@@ -147,7 +148,7 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 - AI provider/model strategy.
 - Speech recognition strategy.
 - Mathematics validator approach.
-- Contract protocols/schema tooling dan field-level contracts.
+- Field-level contract definitions.
 - Deployment/environment/secret management.
 - Evidence-driven device/accessibility/performance targets bila relevan.
 

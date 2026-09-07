@@ -18,6 +18,8 @@ Client architecture is selected: React, TypeScript, Vite, and browser-first Teac
 
 Backend architecture is selected: Java 25 LTS, Spring Boot 4.x, and one deployable modular monolith. No backend source exists. The exact Spring Boot patch, supported OpenJDK-compatible JDK distribution, and build tool will be selected during source scaffolding.
 
+Contract strategy is selected: contract-first OpenAPI 3.1.x for synchronous HTTP and JSON Schema Draft 2020-12 for justified reusable wire schemas. Redocly CLI is the baseline OpenAPI lint/bundle tool. AsyncAPI 3.1.x remains conditional on OAD-005. No field-level contracts exist, and contract tooling is not installed or configured yet.
+
 Do not invent setup commands before the remaining stack is selected.
 
 ## 2. Current Prerequisites
@@ -61,7 +63,7 @@ Resolve and record at minimum:
 - database and migration tooling;
 - authentication approach;
 - realtime protocol;
-- contract formats and tooling;
+- contract formats and tooling — resolved by ADR-0010; field-level contracts remain pending;
 - initial provider strategy for AI, speech, curriculum, and Mathematics validation;
 - local secret/configuration approach.
 
@@ -90,12 +92,13 @@ When source exists, this document must add exact, executed instructions for:
 
 ## 8. Open Decisions
 
-Frontend and backend source have not been scaffolded, and no dependency installation or application run commands exist. Database, identity, realtime transport, contracts, providers, deployment, build tool, JDK distribution, and exact framework patches remain open.
+Frontend and backend source have not been scaffolded, and no dependency installation or application run commands exist. Database, identity, realtime transport, field-level contracts, providers, deployment, build tool, JDK distribution, exact framework patches, and exact contract-tool pins remain open.
 
 ## 9. Change Log
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-06` | Record contract-first OpenAPI/JSON Schema strategy without installing tooling or defining fields | Codex |
 | `2026-09-06` | Record Java 25 LTS / Spring Boot 4.x modular-monolith backend without adding setup commands | Codex |
 | `2026-09-06` | Record resolved client architecture without adding application setup commands | Codex |
 | `2026-09-06` | Initial pre-source developer setup baseline | Codex |

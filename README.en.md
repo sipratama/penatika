@@ -63,6 +63,7 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 | Business Model | Teacher-first freemium SaaS; Teacher Pro as the first paid offer; institutional path later |
 | Client strategy | Browser-first React + TypeScript + Vite |
 | Client surfaces | Teacher Web (Preparation + Controller) and separate Classroom Display Web |
+| Contract strategy | Contract-first OpenAPI 3.1.x + JSON Schema 2020-12; AsyncAPI conditional after the realtime decision |
 | Deployment target | Not decided |
 
 Material decisions are recorded in [`docs/02_architecture/adr/`](./docs/02_architecture/adr/).
@@ -147,7 +148,7 @@ This validator checks local Markdown links and unresolved core metadata placehol
 - AI provider/model strategy.
 - Speech recognition strategy.
 - Mathematics validator approach.
-- Contract protocols/schema tooling and field-level contracts.
+- Field-level contract definitions.
 - Deployment environment and secret management.
 - Evidence-driven device/accessibility/performance targets where relevant.
 

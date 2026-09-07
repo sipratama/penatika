@@ -58,8 +58,9 @@ Once the gate passes, follow the initialization sequence defined in `docs/PROJEC
 | System structure and boundaries | `docs/02_architecture/SYSTEM_ARCHITECTURE.md` |
 | Architecture rationale | `docs/02_architecture/adr/` |
 | Persistent domain model | migrations/schema + `docs/02_architecture/DATA_MODEL.md` |
-| REST interface | `contracts/openapi/` when used |
-| Async/event interface | `contracts/asyncapi/` or schemas when used |
+| HTTP wire interface | `contracts/openapi/` (authoritative when created) |
+| Async/realtime message interface | `contracts/asyncapi/` (authoritative only when activated) |
+| Shared reusable wire schemas | `contracts/schemas/` (authoritative standalone JSON Schema) |
 | UI system | `docs/03_design/DESIGN_SYSTEM.md` + relevant feature spec |
 | Engineering rules | `docs/standards/` |
 | Test approach | `docs/04_engineering/TEST_STRATEGY.md` + relevant feature spec |

@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.7` |
+| Version | `0.8` |
 | Last Updated | `2026-09-06` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
@@ -31,6 +31,11 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - The backend remains one deployable modular monolith with explicit domain/application modules and no microservice split.
 - Core domain/application behavior remains framework-light Java where practical; Spring-specific, persistence, provider, and transport concerns belong at composition and adapter boundaries.
 - Persistence, identity, realtime, AI, speech, Mathematics, curriculum, and deployment technologies remain open adapter-level decisions where applicable.
+- Cross-component wire interfaces follow contract-first design: contract, compatibility review, implementation, then conformance evidence.
+- Synchronous HTTPS/JSON APIs use OpenAPI 3.1.x; justified reusable wire structures use JSON Schema Draft 2020-12.
+- RFC 9457 Problem Details is the HTTP error baseline.
+- AsyncAPI 3.1.x remains conditional on OAD-005 selecting a realtime/message interface where it provides useful semantics.
+- Contract files are authoritative for wire interfaces; generated and implementation types are derived consumers.
 - Classroom session state is authoritative on the backend and projected differently to teacher and display surfaces.
 - Classroom content uses a versioned structured model; arbitrary generated HTML or executable AI output is not supported.
 - AI providers are proposal generators, not authorities for session state, mathematical correctness, curriculum truth, authorization, or policy.
@@ -345,7 +350,26 @@ The conceptual model is defined in [DATA_MODEL.md](./DATA_MODEL.md). Migrations 
 
 ## 12. Contracts
 
-Cross-component contracts are required before application source implementation, including:
+Penatika uses contract-first cross-boundary design. Machine-readable contract
+files are authoritative for wire interfaces; generated code, handwritten DTOs,
+documentation rendering, client types, and implementation classes are derived
+consumers.
+
+Contract ownership is divided by responsibility:
+
+- `contracts/openapi/` owns synchronous HTTPS/JSON application API definitions
+  using OpenAPI 3.1.x when field-level contracts are created;
+- `contracts/schemas/` owns justified reusable structured wire schemas using
+  JSON Schema Draft 2020-12;
+- `contracts/asyncapi/` activates only if OAD-005 selects a realtime/message
+  interface where AsyncAPI 3.1.x provides useful semantics.
+
+RFC 9457 Problem Details with `application/problem+json` is the HTTP error
+baseline. Each wire shape has one canonical schema owner; other contracts and
+derived code reference that owner rather than redefining the same structure.
+
+Cross-component field-level contracts are required before relevant application
+implementation, including:
 
 - structured lesson and scene schema;
 - role-specific session projections;
@@ -353,7 +377,10 @@ Cross-component contracts are required before application source implementation,
 - AI proposal envelope;
 - assurance result and curriculum provenance.
 
-No OpenAPI, AsyncAPI, or schema directory is created during initialization because transport, protocol, and initial field-level models are not yet sufficiently decided. Contract creation is the next architecture step after those decisions.
+The contract repository boundary is active, but no field-level OpenAPI or JSON
+Schema contract is created merely because the strategy is resolved. Identity,
+realtime, and other dependent semantics must be decided first. AsyncAPI remains
+inactive until OAD-005 justifies it.
 
 ## 13. Observability Baseline
 
@@ -399,6 +426,7 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 - [ADR-0007 — Graceful Degradation Without Offline Authority](./adr/ADR-0007-graceful-degradation-without-offline-authority.md)
 - [ADR-0008 — Use Browser-First React Clients with Separate Teacher and Classroom Display Boundaries](./adr/ADR-0008-browser-first-react-client-strategy.md)
 - [ADR-0009 — Use Java 25 LTS and Spring Boot for the Authoritative Backend](./adr/ADR-0009-java-spring-boot-backend.md)
+- [ADR-0010 — Use Contract-First OpenAPI and JSON Schema Boundaries](./adr/ADR-0010-contract-first-openapi-json-schema.md)
 
 ## 16. Open Architecture Decisions
 
@@ -413,7 +441,6 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 | OAD-009 | Curriculum ingestion, normalization, integrity/versioning, local-context modeling, and retrieval approach | Curriculum implementation |
 | OAD-010 | Deployment platform, environments, secret management, and regional requirements | Deployment planning |
 | OAD-011 | Background execution and queue needs | When measured request duration or reliability requires it |
-| OAD-012 | Contract protocols and schema tooling | Before application source implementation |
 
 ## 17. Architecture Evolution Rules
 
@@ -436,6 +463,7 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.8` | `2026-09-06` | Resolve OAD-012 with contract-first OpenAPI 3.1.x and JSON Schema Draft 2020-12 boundaries | Codex |
 | `0.7` | `2026-09-06` | Resolve OAD-002 with Java 25 LTS / Spring Boot modular-monolith backend | Codex |
 | `0.6` | `2026-09-06` | Resolve OAD-001 with browser-first React client architecture | Codex |
 | `0.5` | `2026-09-06` | Align security and persistence wording with the approved product data-lifecycle baseline | Codex |
