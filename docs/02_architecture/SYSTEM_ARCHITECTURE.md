@@ -180,8 +180,10 @@ Core domain and application behavior should remain framework-light Java where pr
 - enforces object ownership, session roles, active participant constraints, and access to role-specific projections;
 - revokes controller authority when its teacher account or browser authorization becomes invalid.
 
-The concrete OIDC provider, physical session store, account-linking UX, and
-field-level authentication contracts remain open implementation decisions.
+PostgreSQL (ADR-0014) is already the selected persistence baseline; the
+physical browser-session schema/representation, expiry/index design, concrete
+OIDC provider, account-linking UX, and field-level authentication contracts
+remain open implementation decisions.
 
 #### Lesson Module
 

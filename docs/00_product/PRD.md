@@ -33,7 +33,7 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 
 | Actor | Goal | MVP Scope |
 |---|---|---|
-| Teacher | Prepare, control, adapt, annotate, and save a lesson | Primary authenticated or authorized actor; identity mechanism belum dipilih |
+| Teacher | Prepare, control, adapt, annotate, and save a lesson | Primary authenticated or authorized actor; identity architecture selected (ADR-0011: OIDC Authorization Code with PKCE, backend-managed browser sessions), concrete OIDC provider pending |
 | Classroom Viewer | View appropriate teaching content on the classroom display | Display participant; tidak mendapat private controls atau AI working state |
 | Student | Receive the classroom experience | Beneficiary; tidak menggunakan student device pada MVP |
 | External AI Capability | Produce lesson or adaptation proposals | Untrusted integration, bukan decision-maker |
@@ -166,13 +166,14 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 ### J-03 — Teach and Adapt
 
 1. Guru menavigasi lesson dan memberi annotation.
-2. Guru meminta adaptation menggunakan push-to-talk atau direct control.
-3. Penatika mengubah request menjadi structured AI proposal.
-4. Policy, curriculum grounding, dan mathematics validation diterapkan sesuai content type.
-5. Guru menerima private preview berupa clean proposal, proposal with warning, atau blocked result.
-6. Guru memberikan approval atau explicit warned override bila diizinkan; blocked result tidak dapat dipublikasikan.
-7. Proposal yang memiliki publication authorization valid menjadi accepted revision-aware classroom command.
-8. Classroom display menerima role-specific projection yang sudah diperbarui.
+2. Guru meminta adaptation atau command menggunakan push-to-talk atau direct control.
+3. Jika request cocok dengan supported deterministic `DIRECT_ACTION`, Penatika mengeksekusi command tersebut langsung melalui existing command validation tanpa membuat AI proposal.
+4. Jika request adalah semantic adaptation request, Penatika mengubahnya menjadi structured AI proposal melalui ADR-0017 scope/resource/allowance pipeline.
+5. Untuk AI proposal path, policy, curriculum grounding, dan mathematics validation diterapkan sesuai content type.
+6. Guru menerima private preview berupa clean proposal, proposal with warning, atau blocked result.
+7. Guru memberikan approval atau explicit warned override bila diizinkan; blocked result tidak dapat dipublikasikan.
+8. Proposal yang memiliki publication authorization valid, atau command `DIRECT_ACTION` yang tervalidasi, menjadi accepted revision-aware classroom command.
+9. Classroom display menerima role-specific projection yang sudah diperbarui.
 
 **Outcome:** Classroom content berubah tanpa guru keluar dari teaching flow.
 
@@ -274,7 +275,7 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | Change authoritative classroom state | Yes, through supported commands | No | Not supported |
 | Save session | Yes | No | Not supported |
 
-Identity, authentication, and session authorization architecture is selected (ADR-0011: OIDC Authorization Code with PKCE, backend-managed browser sessions, scoped pairing); the concrete OIDC provider, physical session store, and field-level authentication contracts remain pending implementation decisions.
+Identity, authentication, and session authorization architecture is selected (ADR-0011: OIDC Authorization Code with PKCE, backend-managed browser sessions, scoped pairing); the concrete OIDC provider, physical session schema/representation, expiry/index design, and field-level authentication contracts remain pending implementation decisions.
 
 ---
 
@@ -375,7 +376,7 @@ The canonical detailed policy is [DATA_RETENTION_POLICY.md](../06_delivery/DATA_
 |---|---|---|
 | AI model/provider | Lesson and live adaptation proposals | Selected: OpenRouter gateway with server-owned model profiles (ADR-0017); provider-route approval evidence and field-level contracts remain pending |
 | Speech recognition | Push-to-talk command transcription | Selected: Deepgram Nova-3 Indonesian, backend-mediated (ADR-0018); provider privacy review and field-level contracts remain pending |
-| Curriculum source | Controlled and versioned curriculum grounding | Normative authority selected; ingestion, retrieval, integrity, local-context modeling, and guidance usage/licensing remain architecture follow-up |
+| Curriculum source | Controlled and versioned curriculum grounding | Selected: controlled versioned corpus with deterministic metadata-first retrieval (ADR-0015); corpus/import/schema/runtime implementation and Official Guidance usage/licensing review remain pending |
 | Mathematics validation engine | Deterministic validation for scoped content | Selected: scoped deterministic validators (ADR-0016); validator source/parser/dependency pin remain pending |
 
 Integrations must be isolated behind supported application boundaries and must not become authoritative owners of classroom state.

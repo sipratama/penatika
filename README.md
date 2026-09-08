@@ -61,6 +61,7 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | Classroom content | Versioned structured model; bukan arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; bukan authority |
 | AI generation gateway | OpenRouter sebagai controlled generative-model gateway; server-owned ROUTER/FAST/QUALITY model profile; bounded capability/resource guard dan per-teacher daily AI allowance sebelum expensive generation |
+| Speech recognition | Backend-mediated Deepgram Nova-3 (Indonesian) push-to-talk; completed utterance saja, bukan always-listening; DIRECT_ACTION-first transcript routing sebelum semantic AI |
 | Mathematics trust | Deterministic validation untuk supported scope |
 | Curriculum trust | BSKAP 046/H/KR/2025 as Mathematics normative authority; official guidance is interpretive and local context is an overlay |
 | Product Owner | `sipratama` |
@@ -68,7 +69,7 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | Client strategy | Browser-first React + TypeScript + Vite |
 | Client surfaces | Teacher Web (Preparation + Controller) dan Classroom Display Web terpisah |
 | Identity | OIDC Authorization Code + PKCE dengan backend-managed browser sessions; provider belum dipilih |
-| Contract strategy | Contract-first OpenAPI 3.1.x + JSON Schema 2020-12; AsyncAPI conditional setelah realtime decision |
+| Contract strategy | Contract-first OpenAPI 3.1.x + JSON Schema 2020-12; realtime transport sudah diselesaikan oleh ADR-0012, AsyncAPI tetap inactive |
 | Deployment target | Belum diputuskan |
 
 Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architecture/adr/).
@@ -152,11 +153,9 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 
 - Curriculum corpus data/import artifact belum dibuat (arsitektur sudah dipilih: controlled versioned corpus, lihat ADR-0015); licensing review untuk official guidance masih tertunda.
 - Physical persistence schema dan migrations (teknologi sudah dipilih: PostgreSQL + Flyway).
-- Concrete OIDC provider, session store, dan deployment/security configuration.
-- Realtime transport/reconnect protocol.
-- Speech recognition strategy.
+- Concrete OIDC provider, physical session schema/representation, dan expiry/index implementation.
 - Field-level contract definitions.
-- Deployment/environment/secret management.
+- Deployment/environment/secret management (OAD-010).
 - Evidence-driven device/accessibility/performance targets bila relevan.
 
 Lihat Product Brief, PRD, System Architecture, Risks, dan Known Limitations untuk daftar lengkap beserta decision timing.
