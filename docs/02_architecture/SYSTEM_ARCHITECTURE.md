@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.15` |
-| Last Updated | `2026-09-07` |
+| Version | `0.16` |
+| Last Updated | `2026-09-08` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
 | Deployment Maturity | Pre-implementation; target environment not decided |
@@ -46,7 +46,13 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - MVP permits at most one active mutation-authorized controller and one active classroom display per classroom session.
 - Pairing grants are classroom-session-bound, role/purpose-bound, single-use, revocable, and expire after five minutes.
 - Core domain/application behavior remains framework-light Java where practical; Spring-specific, persistence, provider, and transport concerns belong at composition and adapter boundaries.
-- Speech, concrete OIDC provider/deployment configuration, and deployment technologies remain open adapter-level decisions where applicable; persistence (ADR-0014), realtime transport (ADR-0012), curriculum (ADR-0015), Mathematics validation (ADR-0016), and generative AI (ADR-0017) are resolved.
+- Concrete OIDC provider/deployment configuration and deployment technologies remain open adapter-level decisions where applicable; persistence (ADR-0014), realtime transport (ADR-0012), curriculum (ADR-0015), Mathematics validation (ADR-0016), generative AI (ADR-0017), and speech recognition (ADR-0018) are resolved.
+- Push-to-talk speech recognition uses Deepgram Nova-3 (Indonesian, `language=id`) through a backend-mediated adapter — Browser → Penatika Backend → Deepgram, never Browser → Deepgram direct — using pre-recorded/completed-utterance transcription on the Deepgram Australia regional endpoint with model-improvement opt-out (`mip_opt_out=true`).
+- Browser audio capture uses `MediaDevices.getUserMedia()` + `MediaRecorder`, preferring `audio/webm;codecs=opus` with a browser-supported MP4/AAC fallback; no client-side transcoding, no always-listening capture, and no speaker diarization are used for MVP.
+- A speech transcript is untrusted input: deterministic `DIRECT_ACTION` matching is attempted before any semantic routing, and a supported semantic transcript still passes the full ADR-0017 scope/resource/allowance pipeline; speech success never implies AI generation permission.
+- Speech resource/cost usage (`SpeechRecognitionRequest`, `SpeechUsageEvent`) is tracked separately from the generative `AIAllowanceWindow`; a voice command resolved as `DIRECT_ACTION` consumes no generative AI allowance.
+- Raw push-to-talk audio remains transient and is never written to durable storage, logs, or analytics; low-confidence or ambiguous transcripts produce a `NEEDS_CLARIFICATION`/`RETRY_SPEECH` state rather than a silent action or generation call.
+- Speech-provider failure follows the existing ADR-0007/`PR-020` degradation policy: only push-to-talk transcription becomes unavailable while text, deterministic controls, and non-voice AI requests remain usable.
 - Penatika uses OpenRouter as its generative-model gateway behind a Penatika-owned `GenerativeModelPort`, using the OpenRouter OpenAI-compatible Chat Completions API; OpenRouter is a replaceable infrastructure adapter, never curriculum, Mathematics, authorization, or publication authority.
 - Server-owned semantic model profiles (`ROUTER`, `FAST`, `QUALITY`; initial bindings `openai/gpt-5.6-luna` for `ROUTER`/`FAST` and `openai/gpt-5.6-terra` for `QUALITY`) resolve generation, never the browser client; OpenRouter's automatic Auto Router and Free Router are not used for pilot/production behavior.
 - Every generation request passes a pre-provider pipeline — authorization, hard resource guard, deterministic capability/scope guard, optional bounded `ROUTER` classification, per-teacher AI allowance check, atomic usage reservation, and concurrency/idempotency check — before any `FAST`/`QUALITY` call, so unsupported or over-scale requests never reach expensive generation.
@@ -209,6 +215,7 @@ field-level authentication contracts remain open implementation decisions.
 - enforces context, timeout, cost, resource, privacy, and output-schema controls;
 - produces structured proposals and assurance inputs;
 - per [ADR-0017](./adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md), routes generation through OpenRouter using server-owned `ROUTER`/`FAST`/`QUALITY` model profiles behind the `GenerativeModelPort`, enforcing scope/capability, hard resource, and per-teacher allowance guards before any provider call;
+- per [ADR-0018](./adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md), receives an untrusted transcript from the Speech Recognition adapter and routes it to deterministic `DIRECT_ACTION` matching first, falling back to the ADR-0017 semantic pipeline only when no direct action matches;
 - returns proposals, never authoritative session mutations, and does not own publication authorization.
 
 #### Mathematics Assurance Module
@@ -231,6 +238,8 @@ field-level authentication contracts remain open implementation decisions.
 ### 3.5 Infrastructure Adapters
 
 Adapters implement persistence, realtime communication, AI generation, speech recognition, curriculum ingestion/retrieval, deterministic validation engines, telemetry, and clocks. Domain/application modules depend on ports rather than vendor SDKs.
+
+Per [ADR-0018](./adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md), the Speech Recognition adapter accepts a backend-uploaded bounded push-to-talk utterance, validates it, calls Deepgram Nova-3 (Indonesian, AU regional endpoint, `mip_opt_out=true`) for pre-recorded/completed-utterance transcription, and returns an untrusted `SpeechRecognitionResult` to AI Orchestration; it never receives a direct browser connection and never forwards raw audio to the OpenRouter generative gateway.
 
 ## 4. Architecture Style and Dependency Direction
 
@@ -508,12 +517,12 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 - [ADR-0015 — Use a Versioned Controlled Curriculum Corpus with Deterministic Retrieval](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
 - [ADR-0016 — Use Scoped Deterministic Mathematics Validators with Exact Arithmetic](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
 - [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](./adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
+- [ADR-0018 — Use Deepgram Nova-3 for Backend-Mediated Push-to-Talk Speech Recognition](./adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md)
 
 ## 16. Open Architecture Decisions
 
 | ID | Decision | Needed Before |
 |---|---|---|
-| OAD-007 | Speech recognition strategy | Push-to-talk implementation |
 | OAD-010 | Deployment platform, environments, secret management, and regional requirements | Deployment planning |
 | OAD-011 | Background execution and queue needs | When measured request duration or reliability requires it |
 
@@ -538,6 +547,7 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.16` | `2026-09-08` | Resolve OAD-007 with backend-mediated Deepgram Nova-3 Indonesian push-to-talk transcription, bounded browser audio capture, controlled Mathematics vocabulary, privacy-minimized speech usage accounting, and deterministic direct-action-first transcript routing | Claude |
 | `0.15` | `2026-09-07` | Resolve OAD-006 with OpenRouter, bounded model profiles, pre-provider scope/resource controls, per-teacher AI allowances, privacy-constrained provider routing, and graceful degradation | Claude |
 | `0.14` | `2026-09-07` | Resolve OAD-008 with scoped deterministic exact-rational and restricted affine/linear-equation validation | Claude |
 | `0.13` | `2026-09-07` | Resolve OAD-009 with controlled versioned curriculum corpus, deterministic metadata-first retrieval, explicit activation, and local-context overlays | Claude |

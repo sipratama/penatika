@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft conceptual baseline |
-| Version | `0.7` |
-| Last Updated | `2026-09-07` |
+| Version | `0.8` |
+| Last Updated | `2026-09-08` |
 | Database Technology | PostgreSQL 18.x |
 
 ## 1. Modeling Principles
@@ -366,6 +366,56 @@ Full prompt, full provider response, and raw audio are not required to be
 stored in an `AI Usage Event`. Applicable metadata follows
 [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md).
 
+### Speech Recognition Request
+
+Represents one backend-mediated push-to-talk transcription attempt submitted
+to the speech provider. Per
+[ADR-0018](./adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md).
+
+Known conceptual attributes:
+
+- speech request identity;
+- teacher/session binding;
+- provider and speech model;
+- language;
+- `SpeechPolicyVersion` and `SpeechLexiconVersion` references;
+- lifecycle status (for example, uploaded, transcribing, completed, failed, rejected);
+- provider correlation identity where safe.
+
+**Owner:** AI Orchestration module (Speech Recognition adapter boundary)
+
+Raw audio is never modeled as durable data for a `Speech Recognition
+Request`; the request's role ends once transcription completes or fails and
+downstream routing (direct action, semantic pipeline, or clarification)
+takes over.
+
+### Speech Usage Event
+
+Represents one privacy-minimized usage/cost record for a completed or failed
+speech recognition attempt. Per ADR-0018.
+
+Known conceptual attributes:
+
+- event identity;
+- teacher/account internal reference;
+- associated `Speech Recognition Request` identity;
+- audio duration;
+- audio container/codec category;
+- transcription outcome;
+- latency;
+- provider, speech model, and provider region;
+- billed/estimated speech cost;
+- routing outcome (`DIRECT_ACTION`, `SEMANTIC_AI`, `CLARIFICATION`, `REJECTED`);
+- failure/resource-rejection category where applicable;
+- timestamp.
+
+**Owner:** AI Orchestration module
+
+Raw audio and a durable full transcript are not required to be stored in a
+`Speech Usage Event`. Speech usage is tracked independently of `AI Usage
+Event`/`AI Allowance Window`; a `Speech Usage Event` routed to
+`DIRECT_ACTION` does not imply any generative AI allowance consumption.
+
 ### Mathematics Validation Result
 
 Reproducible assurance record for supported content. Per
@@ -515,6 +565,9 @@ AI Generation 1 ── 0..1 AI Usage Event
 TeacherAccount 1 ── * AI Allowance Window
 AI Allowance Window 1 ── * AI Usage Reservation
 Adaptation Request 1 ── 0..* AI Proposal
+TeacherAccount 1 ── * Speech Recognition Request
+Speech Recognition Request 1 ── 0..1 Speech Usage Event
+Speech Recognition Request 1 ── 0..1 Adaptation Request
 Lesson Version / AI Proposal / Scene Element 1 ── 0..* Mathematics Validation Result
 Lesson Version / Scene Element * ── * Curriculum Reference
 Curriculum Source 1 ── * Curriculum Source Version
@@ -558,6 +611,10 @@ Classroom Session 1 ── 0..* Session Snapshot or Save Record
 - An `AI Generation` never becomes authoritative merely by completing; it produces at most a non-authoritative `AI Proposal` subject to existing schema/policy/curriculum/Mathematics checks.
 - An expensive generation call requires a prior successful `AI Usage Reservation` against a non-exhausted `AI Allowance Window`; a request rejected before provider invocation consumes no reservation.
 - An `AI Usage Event` does not retain full prompt, full provider response, or raw audio.
+- Raw push-to-talk audio is transient and is never modeled as durable data for a `Speech Recognition Request` or `Speech Usage Event`.
+- A `Speech Recognition Request` result does not by itself authorize an application action; it must still pass deterministic direct-action validation or the ADR-0017 semantic pipeline.
+- A voice request resolved as `DIRECT_ACTION` does not consume `AI Allowance Window`/`AI Usage Reservation`.
+- An unclear or low-confidence transcript cannot create an authoritative action; it produces a clarification/retry state instead.
 
 ## 5. Data Classification
 
@@ -646,6 +703,7 @@ Table and column names are not defined here.
 - [ADR-0015 — Versioned Controlled Curriculum Corpus with Deterministic Retrieval](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
 - [ADR-0016 — Scoped Deterministic Mathematics Validators with Exact Arithmetic](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
 - [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](./adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
+- [ADR-0018 — Use Deepgram Nova-3 for Backend-Mediated Push-to-Talk Speech Recognition](./adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md)
 - [PRD](../00_product/PRD.md)
 - [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
@@ -655,6 +713,7 @@ Table and column names are not defined here.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.8` | `2026-09-08` | Resolve OAD-007: add Speech Recognition Request and Speech Usage Event concepts, separated from generative AI allowance (ADR-0018) | Claude |
 | `0.7` | `2026-09-07` | Resolve OAD-006: add AI Generation, AI Allowance Window, AI Usage Reservation, and AI Usage Event concepts (ADR-0017) | Claude |
 | `0.6` | `2026-09-07` | Resolve OAD-008: refine Mathematics Validation Result with validator family/ruleset version and content-version-scoped invalidation | Claude |
 | `0.5` | `2026-09-07` | Resolve OAD-009: refine curriculum concepts into Curriculum Source, Curriculum Source Version, Curriculum Corpus Version, Curriculum Entry, and Local Curriculum Context Version | Claude |

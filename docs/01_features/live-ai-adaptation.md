@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.5` |
-| Last Updated | `2026-09-07` |
+| Version | `0.6` |
+| Last Updated | `2026-09-08` |
 | PRD Capability | `CAP-ADAPT-001` |
 
 ## 1. Feature Intent
@@ -92,6 +92,38 @@ above or in ADR-0006.
 - Raw push-to-talk audio is never sent to the generative-model provider;
   only a bounded transcript or normalized request may reach generation,
   subject to the same guards.
+
+## 3b. Architecture Resolution (OAD-007)
+
+[ADR-0018](../02_architecture/adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md)
+resolves the speech recognition architecture for push-to-talk without
+changing the execution-class semantics already established above or in
+ADR-0006.
+
+- Push-to-talk capture uses the browser's native `MediaRecorder`; the
+  browser uploads one completed, bounded utterance to the Penatika Backend
+  after the teacher releases push-to-talk.
+- The backend calls Deepgram Nova-3 (Indonesian) to transcribe the
+  uploaded utterance; raw audio never enters OpenRouter or any generative
+  provider.
+- The resulting transcript is untrusted input, exactly like AI provider
+  output; recognition success alone authorizes nothing.
+- Deterministic `DIRECT_ACTION` matching is attempted before semantic
+  generation; only a transcript that does not match a supported direct
+  action proceeds to the semantic pipeline.
+- A semantic transcript still passes the full ADR-0017 scope/resource/
+  allowance pipeline; speech success does not imply AI generation
+  permission.
+- Low-confidence or ambiguous speech produces a private
+  `NEEDS_CLARIFICATION`/`RETRY_SPEECH` state and asks the teacher to
+  repeat, type, or use a deterministic control — it never silently
+  executes an action or guesses intent.
+- Speech-provider cost/usage is tracked separately from the generative
+  `AIAllowanceWindow`; a voice command resolved as `DIRECT_ACTION`
+  consumes no generative AI allowance.
+- Speech failure disables only push-to-talk transcription; text input,
+  deterministic controls, the current reviewed lesson, and non-voice AI
+  requests remain available (`PR-020`, ADR-0007).
 
 ## 4. Functional Requirements
 
@@ -342,18 +374,30 @@ Record correlation-safe operational events for request lifecycle, execution-clas
 - Parallel requests cannot bypass the allowance reservation and consume more than the available allowance.
 - A `ROUTER` classification of `OUT_OF_SCOPE` prevents any main-generation call.
 - An OpenRouter route with no compliant ZDR/approved provider causes AI generation to degrade/fail closed rather than silently using a non-compliant route.
+- "halaman berikutnya" transcribes and matches a valid `DIRECT_ACTION` with zero OpenRouter generation.
+- "buat contoh pecahan lain" transcribes and is routed to the transcript → ADR-0017 semantic path.
+- "buat website React untuk pecahan" transcribes successfully, but the ADR-0017 capability guard rejects it as `OUT_OF_SCOPE`.
+- An unclear transcription produces no command and no generation.
+- A speech-provider timeout leaves non-voice controls usable.
+- Cancelling push-to-talk before upload means the speech provider is never called.
+- Oversized or over-duration audio is rejected before the speech provider is called.
+- An unsupported audio container is rejected before the speech provider is called.
+- No-speech (silent) audio produces a safe retry state.
+- Keyterm-enhanced recognition improves pilot Mathematics terminology transcription.
+- A direct-action false positive is not accepted when confidence/match policy is insufficient.
 
 ## 10. Open Questions
 
-- Which speech provider or model is acceptable (OAD-007)?
 - What latency budget maintains teaching flow?
 - What de-identified evaluation fixtures, if any, require a separate approved purpose and retention decision?
 - What exact numeric AI allowance, resource limits, and capability resource weights apply (evidence-driven configuration per ADR-0017)?
+- What exact numeric speech duration/size/rate/concurrency limits and confidence thresholds apply (evidence-driven configuration per ADR-0018)?
 
 ## 11. Related Decisions
 
 - [ADR-0006 — Teacher Approval and AI Publication Policy](../02_architecture/adr/ADR-0006-teacher-approval-ai-publication-policy.md)
 - [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](../02_architecture/adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
+- [ADR-0018 — Use Deepgram Nova-3 for Backend-Mediated Push-to-Talk Speech Recognition](../02_architecture/adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md)
 
 ## 12. Definition of Done
 
@@ -366,5 +410,6 @@ Record correlation-safe operational events for request lifecycle, execution-clas
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.6` | `2026-09-08` | Record OAD-007 architecture resolution (ADR-0018): backend-mediated Deepgram Nova-3 transcription, direct-action-first routing, untrusted-transcript handling, and separated speech/AI resource accounting | Claude |
 | `0.5` | `2026-09-07` | Record OAD-006 architecture resolution (ADR-0017): capability guard, resource bounds, per-teacher allowance, backend-controlled model routing, degradation, and raw-audio exclusion | Claude |
 | `0.4` | `2026-09-06` | (see prior repository history) |
