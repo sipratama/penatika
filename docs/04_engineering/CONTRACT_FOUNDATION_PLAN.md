@@ -106,9 +106,10 @@ DTOs, status mappings, physical persistence, or implementation structure.
 
 Field-level details remain deferred until their owning contract slice,
 including later operation paths and methods, pairing credential
-representation, participant-session security names, command placement and
-deduplication duration, scene/projection fields, SSE event names and retry
-details, and later operation-level problem codes, types, and status mappings.
+representation beyond the current machine-level grant, participant replacement
+or handoff, command placement and deduplication duration, scene/projection
+fields, SSE event names and retry details, and later operation-level problem
+codes, types, and status mappings.
 
 ## Contract Foundation Sequence
 
@@ -117,8 +118,8 @@ details, and later operation-level problem codes, types, and status mappings.
 | First vertical slice scope | COMPLETE |
 | Shared wire / RFC 9457 problem foundation | COMPLETE |
 | Authenticated Teacher / minimum LessonVersion and session start | COMPLETE |
-| Pairing | NEXT |
-| `NEXT` command / revision | PENDING |
+| Pairing | COMPLETE |
+| `NEXT` command / revision | NEXT |
 | Display projection | PENDING |
 | SSE / reconnect | PENDING |
 | Final consistency and readiness audit | PENDING |

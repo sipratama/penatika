@@ -17,8 +17,10 @@ contract between Teacher Web, Classroom Display Web, and the Penatika Backend.
 It currently defines shared HTTP wire primitives and the RFC 9457 Problem
 Details foundation, an authenticated Teacher session bootstrap, and the
 minimum operation for starting a Classroom Session from an existing
-classroom-ready `LessonVersion`. Pairing, commands, projections, snapshots,
-and SSE remain for later contract slices.
+classroom-ready `LessonVersion`. It also defines role-bound PairingGrant
+issuance and revocation, separate Controller and Display redemption
+operations, and the resulting participant browser-session boundary. Commands,
+projections, snapshots, and SSE remain for later contract slices.
 
 ADR-0011 defines the conceptual identity, authentication, account,
 participant, and pairing model. ADR-0012 defines synchronous HTTP commands
@@ -39,9 +41,13 @@ Teacher-protected HTTP operations use:
   authorization as applicable.
 
 Classroom Display operations use a distinct session-scoped display participant
-session and receive no teacher-account privilege. Controller classroom
-mutation requires both an authenticated teacher browser session and the active
-`TEACHER_CONTROLLER` participant authorization for the classroom session.
+session and receive no teacher-account privilege. Establishing a Controller
+participant requires both the authenticated Teacher boundary and a valid
+role-bound PairingGrant; establishing a Display participant requires its valid
+role-bound PairingGrant without Teacher authentication. Controller classroom
+mutation will require both an authenticated teacher browser session and the
+active `TEACHER_CONTROLLER` participant authorization for the classroom
+session when the command contract is defined.
 
 The cookie and CSRF token are distinct opaque values; neither is a business
 identifier or client-supplied authorization decision. OAuth/OIDC access,

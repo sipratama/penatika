@@ -1,12 +1,12 @@
 openapi: 3.1.2
 info:
   title: Penatika HTTP API
-  version: 0.2.0
+  version: 0.3.0
   description: >-
     Authoritative HTTP contract root for Penatika. It defines shared HTTP wire
     primitives, the RFC 9457 Problem Details foundation, and the minimum
-    authenticated Teacher boundary for starting a Classroom Session from an
-    existing classroom-ready LessonVersion.
+    authenticated Teacher, Classroom Session start, and secure role-specific
+    Pairing boundaries required by the first classroom vertical slice.
 paths:
   /api/teacher-session:
     get:
@@ -92,6 +92,198 @@ paths:
           $ref: '#/components/responses/LessonVersionNotFoundResponse'
         '409':
           $ref: '#/components/responses/LessonVersionNotReadyResponse'
+  /api/classroom-sessions/{classroomSessionId}/pairing-grants:
+    post:
+      operationId: createPairingGrant
+      summary: Create a role-bound PairingGrant
+      description: >-
+        Creates an opaque, single-use, revocable PairingGrant bound to the
+        authorized Classroom Session and requested participant role. The grant
+        expires exactly five minutes after backend issuance. The backend owns
+        expiry, consumption, revocation, session-state, and role-slot checks.
+        Controller and Display grants may be issued and redeemed in either
+        order; neither role depends on the other already existing.
+      security:
+        - TeacherBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+        - $ref: '#/components/parameters/TeacherCsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePairingGrantRequest'
+            examples:
+              controllerGrant:
+                summary: Request a Teacher Controller grant
+                value:
+                  participantRole: TEACHER_CONTROLLER
+              displayGrant:
+                summary: Request a Classroom Display grant
+                value:
+                  participantRole: CLASSROOM_DISPLAY
+      responses:
+        '201':
+          description: >-
+            PairingGrant created. The pairingToken is the one-time secret and
+            expires at expiresAt, exactly five minutes after issuance.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStoreCacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePairingGrantResponse'
+              examples:
+                controllerGrant:
+                  summary: Teacher Controller PairingGrant
+                  value:
+                    pairingGrantId: pairing_grant_controller_example_01
+                    pairingToken: pairing_token_controller_example_not_a_secret
+                    participantRole: TEACHER_CONTROLLER
+                    expiresAt: '2026-09-08T10:05:00Z'
+                displayGrant:
+                  summary: Classroom Display PairingGrant
+                  value:
+                    pairingGrantId: pairing_grant_display_example_01
+                    pairingToken: pairing_token_display_example_not_a_secret
+                    participantRole: CLASSROOM_DISPLAY
+                    expiresAt: '2026-09-08T10:05:00Z'
+        '400':
+          $ref: '#/components/responses/PairingGrantRequestValidationResponse'
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/CsrfRejectedResponse'
+        '404':
+          $ref: '#/components/responses/ClassroomSessionNotFoundResponse'
+        '409':
+          $ref: '#/components/responses/PairingGrantIssuanceConflictResponse'
+  /api/classroom-sessions/{classroomSessionId}/pairing-grants/{pairingGrantId}:
+    delete:
+      operationId: revokePairingGrant
+      summary: Revoke a PairingGrant
+      description: >-
+        Makes the identified PairingGrant unusable. After authorization for the
+        parent Classroom Session succeeds, revocation is retry-safe and returns
+        the same result when the grant is already absent, expired, consumed, or
+        revoked. This prevents the non-secret PairingGrantId from becoming an
+        existence oracle. The pairingToken is never accepted in a URL.
+      security:
+        - TeacherBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+        - $ref: '#/components/parameters/PairingGrantIdPath'
+        - $ref: '#/components/parameters/TeacherCsrfToken'
+      responses:
+        '204':
+          description: PairingGrant is unusable; no response body is returned.
+        '400':
+          $ref: '#/components/responses/PairingGrantRevocationValidationResponse'
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/CsrfRejectedResponse'
+        '404':
+          $ref: '#/components/responses/ClassroomSessionNotFoundResponse'
+  /api/teacher-controller-participants:
+    post:
+      operationId: establishTeacherControllerParticipant
+      summary: Establish a Teacher Controller participant session
+      description: >-
+        Redeems a valid TEACHER_CONTROLLER PairingGrant and creates a distinct
+        role-bound participant browser session. The active authenticated Teacher
+        must also be authorized for the Classroom Session bound to the grant.
+        The PairingGrant alone never authenticates the Teacher. An existing
+        active Controller is not silently replaced.
+      security:
+        - TeacherBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/TeacherCsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedeemPairingGrantRequest'
+            examples:
+              controllerRedemption:
+                summary: Redeem a Teacher Controller grant
+                value:
+                  pairingToken: pairing_token_controller_example_not_a_secret
+      responses:
+        '201':
+          description: >-
+            Teacher Controller participant session established. No participant
+            resource read operation or Location header is defined.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/ParticipantSessionSetCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherControllerParticipantSession'
+              examples:
+                controllerEstablished:
+                  summary: Teacher Controller participant established
+                  value:
+                    classroomSessionId: classroom_session_example_01
+                    participantRole: TEACHER_CONTROLLER
+        '400':
+          $ref: '#/components/responses/PairingRedemptionValidationResponse'
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/ControllerPairingForbiddenResponse'
+        '409':
+          $ref: '#/components/responses/ParticipantRoleAlreadyActiveResponse'
+  /api/classroom-display-participants:
+    post:
+      operationId: establishClassroomDisplayParticipant
+      summary: Establish a Classroom Display participant session
+      description: >-
+        Redeems a valid CLASSROOM_DISPLAY PairingGrant and creates a distinct
+        role-bound participant browser session. Teacher authentication and CSRF
+        material are not required because the grant authorizes only the bounded
+        Display participant establishment; it never grants Teacher authority.
+        An existing active Display is not silently replaced.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedeemPairingGrantRequest'
+            examples:
+              displayRedemption:
+                summary: Redeem a Classroom Display grant
+                value:
+                  pairingToken: pairing_token_display_example_not_a_secret
+      responses:
+        '201':
+          description: >-
+            Classroom Display participant session established. No participant
+            resource read operation or Location header is defined.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/ParticipantSessionSetCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassroomDisplayParticipantSession'
+              examples:
+                displayEstablished:
+                  summary: Classroom Display participant established
+                  value:
+                    classroomSessionId: classroom_session_example_01
+                    participantRole: CLASSROOM_DISPLAY
+        '400':
+          $ref: '#/components/responses/PairingRedemptionValidationResponse'
+        '403':
+          $ref: '#/components/responses/PairingGrantRejectedResponse'
+        '409':
+          $ref: '#/components/responses/ParticipantRoleAlreadyActiveResponse'
 components:
   securitySchemes:
     TeacherBrowserSession:
@@ -107,7 +299,42 @@ components:
         lifetimes, rotation after authentication, and server-side revocation.
         Protected JSON API calls return Problem Details rather than redirecting
         to an OIDC login page.
+    ParticipantBrowserSession:
+      type: apiKey
+      in: cookie
+      name: __Host-penatika-participant
+      description: >-
+        Opaque revocable participant-session reference created after successful
+        PairingGrant redemption. The backend binds it to exactly one Classroom
+        Session and one participant role. It is not a PairingGrantToken,
+        TeacherBrowserSession, Teacher authentication, or OAuth/OIDC credential.
+        The runtime cookie must use Secure, HttpOnly, Path=/, no Domain
+        attribute, an appropriate SameSite policy with Strict preferred, and
+        server-side revocation. Participant authority becomes invalid when the
+        Classroom Session ends or another canonical revocation condition
+        applies even if a stale cookie remains in the browser. Exact participant
+        session lifetime remains an implementation decision.
   parameters:
+    ClassroomSessionIdPath:
+      name: classroomSessionId
+      in: path
+      required: true
+      description: >-
+        Opaque Classroom Session identifier. The backend still verifies current
+        Teacher authorization and authoritative session state.
+      schema:
+        $ref: '#/components/schemas/ClassroomSessionId'
+      example: classroom_session_example_01
+    PairingGrantIdPath:
+      name: pairingGrantId
+      in: path
+      required: true
+      description: >-
+        Non-secret PairingGrant resource identifier used only for authorized
+        revocation. It is not the one-time pairingToken.
+      schema:
+        $ref: '#/components/schemas/PairingGrantId'
+      example: pairing_grant_example_01
     TeacherCsrfToken:
       name: X-Penatika-CSRF
       in: header
@@ -140,6 +367,43 @@ components:
         Opaque identifier for one Classroom Session. It is not globally
         meaningful authority; the backend still validates authentication,
         ownership, participant authority, and session state.
+    PairingGrantId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^\S+$'
+      description: >-
+        Opaque non-secret identifier for one PairingGrant resource. It exposes
+        no database, ordering, authorization, token, or credential semantics.
+    PairingGrantToken:
+      type: string
+      minLength: 1
+      maxLength: 512
+      pattern: '^\S+$'
+      description: >-
+        Opaque high-entropy one-time PairingGrant secret generated by the
+        backend. Clients must not parse, log, place in URLs or query strings,
+        capture in analytics, retain in ordinary history, include in
+        projections or diagnostics, or reuse it after redemption. It is not
+        Teacher authentication or a permanent participant credential.
+    ParticipantRole:
+      type: string
+      enum:
+        - TEACHER_CONTROLLER
+        - CLASSROOM_DISPLAY
+      description: >-
+        Role and purpose to which a PairingGrant or established participant
+        session is bound. The two values have distinct trust boundaries and
+        cannot be interchanged during redemption.
+    UtcTimestamp:
+      type: string
+      format: date-time
+      minLength: 20
+      maxLength: 64
+      pattern: 'Z$'
+      description: >-
+        RFC 3339 backend machine timestamp normalized to UTC and encoded with a
+        trailing Z. It carries no local-timezone business semantics.
     CommandId:
       type: string
       minLength: 1
@@ -210,6 +474,65 @@ components:
           $ref: '#/components/schemas/LessonVersionId'
         revision:
           $ref: '#/components/schemas/Revision'
+    CreatePairingGrantRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - participantRole
+      properties:
+        participantRole:
+          $ref: '#/components/schemas/ParticipantRole'
+    CreatePairingGrantResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - pairingGrantId
+        - pairingToken
+        - participantRole
+        - expiresAt
+      properties:
+        pairingGrantId:
+          $ref: '#/components/schemas/PairingGrantId'
+        pairingToken:
+          $ref: '#/components/schemas/PairingGrantToken'
+        participantRole:
+          $ref: '#/components/schemas/ParticipantRole'
+        expiresAt:
+          $ref: '#/components/schemas/UtcTimestamp'
+    RedeemPairingGrantRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - pairingToken
+      properties:
+        pairingToken:
+          $ref: '#/components/schemas/PairingGrantToken'
+    TeacherControllerParticipantSession:
+      type: object
+      additionalProperties: false
+      required:
+        - classroomSessionId
+        - participantRole
+      properties:
+        classroomSessionId:
+          $ref: '#/components/schemas/ClassroomSessionId'
+        participantRole:
+          type: string
+          const: TEACHER_CONTROLLER
+          description: Confirms the server-bound Teacher Controller authority.
+    ClassroomDisplayParticipantSession:
+      type: object
+      additionalProperties: false
+      required:
+        - classroomSessionId
+        - participantRole
+      properties:
+        classroomSessionId:
+          $ref: '#/components/schemas/ClassroomSessionId'
+        participantRole:
+          type: string
+          const: CLASSROOM_DISPLAY
+          description: Confirms the server-bound Classroom Display authority.
     FieldError:
       type: object
       additionalProperties: false
@@ -309,6 +632,25 @@ components:
             rejected values or internal diagnostics.
           items:
             $ref: '#/components/schemas/FieldError'
+  headers:
+    NoStoreCacheControl:
+      description: Prevents storage of security-sensitive response material.
+      schema:
+        type: string
+        const: no-store
+    ParticipantSessionSetCookie:
+      description: >-
+        Sets the opaque __Host-penatika-participant cookie. The runtime value is
+        generated by the backend and must use Path=/, Secure, HttpOnly, no
+        Domain attribute, and an appropriate SameSite policy with Strict
+        preferred. Browser JavaScript must not read or parse this header.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 1024
+      example: >-
+        __Host-penatika-participant=participant_session_example_not_a_secret;
+        Path=/; Secure; HttpOnly; SameSite=Strict
   responses:
     ProblemResponse:
       description: RFC 9457 Problem Details response.
@@ -433,3 +775,270 @@ components:
             detail: The lesson version is not ready for classroom use.
             code: LESSON_VERSION_NOT_READY
             correlationId: corr_lesson_readiness_01
+    PairingGrantRequestValidationResponse:
+      description: >-
+        The PairingGrant creation path or request body fails structural
+        validation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidClassroomSessionId:
+              summary: Classroom Session identifier is structurally invalid
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_pairing_validation_01
+                fieldErrors:
+                  - field: classroomSessionId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+            missingParticipantRole:
+              summary: participantRole is missing
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_pairing_validation_02
+                fieldErrors:
+                  - field: participantRole
+                    code: REQUIRED
+                    message: The field is required.
+            invalidParticipantRole:
+              summary: participantRole is unsupported
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_pairing_validation_03
+                fieldErrors:
+                  - field: participantRole
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+    PairingGrantRevocationValidationResponse:
+      description: A PairingGrant revocation path identifier is malformed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidClassroomSessionId:
+              summary: Classroom Session identifier is structurally invalid
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_revoke_validation_01
+                fieldErrors:
+                  - field: classroomSessionId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+            invalidPairingGrantId:
+              summary: PairingGrant identifier is structurally invalid
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_revoke_validation_02
+                fieldErrors:
+                  - field: pairingGrantId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+    PairingRedemptionValidationResponse:
+      description: The PairingGrant redemption body fails structural validation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            missingPairingToken:
+              summary: pairingToken is missing
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_redemption_validation_01
+                fieldErrors:
+                  - field: pairingToken
+                    code: REQUIRED
+                    message: The field is required.
+            invalidPairingToken:
+              summary: pairingToken is structurally invalid
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_redemption_validation_02
+                fieldErrors:
+                  - field: pairingToken
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+    ClassroomSessionNotFoundResponse:
+      description: >-
+        The Classroom Session does not exist or the authenticated Teacher is
+        not authorized to know it exists. The response deliberately does not
+        distinguish those cases.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Not Found
+            status: 404
+            detail: The requested classroom session was not found.
+            code: CLASSROOM_SESSION_NOT_FOUND
+            correlationId: corr_classroom_lookup_01
+    PairingGrantIssuanceConflictResponse:
+      description: >-
+        Current authoritative Classroom Session state prevents grant issuance,
+        or an active participant already occupies the requested role. Existing
+        participants are never silently replaced.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            sessionNotPairable:
+              summary: Current Classroom Session state does not permit pairing
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: The classroom session does not currently permit pairing.
+                code: CLASSROOM_SESSION_NOT_PAIRABLE
+                correlationId: corr_pairing_state_01
+            controllerAlreadyActive:
+              summary: Teacher Controller role is already occupied
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: An active participant already occupies the requested role.
+                code: PARTICIPANT_ROLE_ALREADY_ACTIVE
+                correlationId: corr_pairing_role_01
+            displayAlreadyActive:
+              summary: Classroom Display role is already occupied
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: An active participant already occupies the requested role.
+                code: PARTICIPANT_ROLE_ALREADY_ACTIVE
+                correlationId: corr_pairing_role_02
+    PairingGrantRejectedResponse:
+      description: >-
+        The supplied PairingGrant cannot establish the requested participant.
+        Unknown, expired, consumed, revoked, replayed, wrong-role, ended-session,
+        and otherwise invalid grants share this non-disclosing outcome.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidGrant:
+              summary: Unknown or otherwise invalid grant
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The pairing grant cannot authorize this request.
+                code: PAIRING_GRANT_REJECTED
+                correlationId: corr_pairing_rejected_01
+            expiredGrant:
+              summary: Expired grant uses the same non-disclosing outcome
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The pairing grant cannot authorize this request.
+                code: PAIRING_GRANT_REJECTED
+                correlationId: corr_pairing_rejected_02
+            replayedGrant:
+              summary: Consumed or replayed grant uses the same outcome
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The pairing grant cannot authorize this request.
+                code: PAIRING_GRANT_REJECTED
+                correlationId: corr_pairing_rejected_03
+            wrongRoleGrant:
+              summary: Wrong-role grant uses the same non-disclosing outcome
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The pairing grant cannot authorize this request.
+                code: PAIRING_GRANT_REJECTED
+                correlationId: corr_pairing_rejected_04
+    ControllerPairingForbiddenResponse:
+      description: >-
+        The authenticated Controller redemption lacks valid CSRF material or
+        the PairingGrant cannot authorize this Teacher and requested role.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            csrfRejected:
+              summary: Missing or invalid CSRF material
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The request did not include valid CSRF protection.
+                code: CSRF_REJECTED
+                correlationId: corr_controller_csrf_01
+            pairingGrantRejected:
+              summary: Invalid, wrong-role, or cross-Teacher grant
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The pairing grant cannot authorize this request.
+                code: PAIRING_GRANT_REJECTED
+                correlationId: corr_controller_pairing_01
+    ParticipantRoleAlreadyActiveResponse:
+      description: >-
+        An active participant already occupies the requested role. The existing
+        participant remains authoritative and is not silently replaced.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            controllerAlreadyActive:
+              summary: Teacher Controller role is already occupied
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: An active participant already occupies the requested role.
+                code: PARTICIPANT_ROLE_ALREADY_ACTIVE
+                correlationId: corr_controller_role_01
+            displayAlreadyActive:
+              summary: Classroom Display role is already occupied
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: An active participant already occupies the requested role.
+                code: PARTICIPANT_ROLE_ALREADY_ACTIVE
+                correlationId: corr_display_role_01

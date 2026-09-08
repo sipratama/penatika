@@ -23,8 +23,8 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.19 |
-| Last Updated | 2026-09-08 |
+| Version | 0.20 |
+| Last Updated | 2026-09-09 |
 | Current Phase | Field-Level Contract Foundation — Active |
 | Implementation State | Pre-source / Pre-scaffolding |
 | Product Owner | sipratama |
@@ -65,8 +65,8 @@ Foundation handoff checkpoint was created.
 | First vertical slice contract scope | COMPLETE | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) |
 | Shared wire primitives / RFC 9457 HTTP problem foundation | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Authenticated Teacher / session-start API | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
-| Pairing contract | NEXT | Contract Foundation Batch 4 |
-| Command / revision contract | PENDING | deterministic `NEXT` command slice |
+| Pairing contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
+| Command / revision contract | NEXT | Contract Foundation Batch 5 |
 | Display projection contract | PENDING | classroom-safe projection slice |
 | SSE / reconnect contract | PENDING | authorized projection push and authoritative reconciliation slice |
 | Source scaffolding | PENDING | after required field-level contracts |
@@ -199,11 +199,11 @@ maintains the first classroom vertical slice scope and sequencing. The shared
 wire primitives and base RFC 9457 HTTP problem contract are established in
 [`contracts/openapi/openapi.yaml`](../contracts/openapi/openapi.yaml).
 
-The authenticated Teacher boundary and minimum `LessonVersion` reference /
-Classroom Session start contract are now defined in the OpenAPI root. The
-immediate next work is Contract Foundation Batch 4: define the Pairing
-contract. `NEXT`, Display projection, snapshot, and SSE operations remain later
-work.
+The authenticated Teacher boundary, minimum `LessonVersion` reference /
+Classroom Session start contract, and secure role-specific Pairing boundary are
+now defined in the OpenAPI root. The immediate next work is Contract Foundation
+Batch 5: define the `DIRECT_ACTION: NEXT` revision and idempotency contract.
+Display projection, snapshot, and SSE operations remain later work.
 Source scaffolding remains PENDING until the required field-level contracts
 exist. `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before`
 rules.
