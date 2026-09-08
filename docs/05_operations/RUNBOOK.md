@@ -25,12 +25,12 @@ Future runbooks should identify owner, severity, user impact, safe containment, 
 ## Open Decisions
 
 - Operational owner and on-call/support model.
-- Deployment platform and observability tooling.
+- Observability tooling (deployment platform is selected: ADR-0019, portable single-Linux-VPS baseline).
 - Severity levels and response objectives.
-- Backup and recovery architecture.
+- Backup and recovery implementation (backup boundary is selected: ADR-0019; exact tool/schedule/RPO/RTO remain open).
 - Provider escalation paths.
 - Classroom pilot support process.
 
 ## Last Reviewed
 
-`2026-09-06`
+`2026-09-08`

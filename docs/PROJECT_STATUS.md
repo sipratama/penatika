@@ -23,9 +23,9 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.14 |
+| Version | 0.15 |
 | Last Updated | 2026-09-08 |
-| Current Phase | Architecture Foundation Complete — Checkpoint and Merge Readiness Pending |
+| Current Phase | Architecture Foundation Complete — Merge Ready |
 | Implementation State | Pre-source / Pre-scaffolding |
 | Product Owner | sipratama |
 
@@ -185,16 +185,18 @@ implementation exists yet.
 ## Immediate Next Step
 
 All unconditional architecture decisions (OAD-001 through OAD-010, and
-OAD-012) are now COMPLETE; OAD-011 remains CONDITIONAL and is not activated
-merely because deployment orchestration exists. The immediate next work is:
+OAD-012) are COMPLETE; OAD-011 remains CONDITIONAL and is not activated
+merely because deployment orchestration exists. The Architecture Foundation
+Checkpoint + Merge Readiness Audit has passed — see
+[Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md).
+The immediate next work is:
 
-1. Architecture Foundation Checkpoint + Merge Readiness Audit
+1. Merge `feat/architecture-foundation` into `main`.
 
-This future checkpoint inspects the full architecture foundation, closes
-remaining validator debt, verifies branch consistency, and prepares the
-`feat/architecture-foundation` branch for merge to `main`. Field-level
-contracts and source scaffolding remain PENDING until after that checkpoint
-and merge; the phase after merge is Field-Level Contract Foundation.
+This is a deliberate, human-reviewed merge action; it is not performed
+automatically by the checkpoint/audit task itself. Field-level contracts and
+source scaffolding remain PENDING until after that merge. After the merge,
+the next phase is Field-Level Contract Foundation — NOT source scaffolding.
 `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
@@ -241,15 +243,21 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 ## Latest Handoff Checkpoint
 
-[Architecture Foundation Checkpoint — After OAD-004](./checkpoints/2026-09-07-architecture-foundation-after-oad004.md)
-was created as a historical cross-device / AI handoff snapshot before OAD-005.
-It is not authoritative and does not replace the canonical project, product,
-architecture, ADR, contract, or policy documents.
+[Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md)
+records the final state of the Architecture Foundation phase: every
+unconditional OAD resolved, the ADR register audited, the template validator
+closed out, and branch ancestry/merge-conflict-free status confirmed against
+`origin/main`. It is a non-authoritative handoff snapshot and does not
+replace the canonical project, product, architecture, ADR, contract, or
+policy documents.
 
-That checkpoint is historical and predates ADR-0013. Any Java 25 reference in
-that checkpoint reflects the state at checkpoint creation and is superseded
-by the current canonical architecture (ADR-0013: Java 21 LTS). The checkpoint
-document itself is not modified.
+The prior [Architecture Foundation Checkpoint — After OAD-004](./checkpoints/2026-09-07-architecture-foundation-after-oad004.md)
+remains historical and is retained unmodified. It predates ADR-0013 and
+ADR-0019; any Java 25 or "deployment not selected" reference in that
+checkpoint reflects the state at its own creation and is superseded by the
+current canonical architecture (ADR-0013: Java 21 LTS; ADR-0019: portable
+single-Linux-VPS deployment). Neither checkpoint document is modified after
+creation.
 
 ## AI / Contributor Reading Route
 
