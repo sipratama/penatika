@@ -36,11 +36,13 @@ commands remain synchronous HTTPS/JSON and authoritative role-specific
 projection push uses SSE with `Last-Event-ID` as the resynchronization entry
 point.
 
-Field-level definitions are active under Contract Foundation. Batch 1 froze
-the first vertical slice; Batch 2 activates
-[`openapi/openapi.yaml`](./openapi/openapi.yaml) with shared HTTP primitives
-and the RFC 9457 Problem Details foundation. Application operations and
-standalone production JSON Schemas remain for later batches.
+Field-level definitions are active under Contract Foundation. The first
+vertical slice scope is maintained in the
+[Contract Foundation working plan](../docs/04_engineering/CONTRACT_FOUNDATION_PLAN.md).
+The authoritative [`openapi/openapi.yaml`](./openapi/openapi.yaml) root contains
+shared HTTP primitives and the RFC 9457 Problem Details foundation.
+Application operation contracts are being added incrementally; no standalone
+production JSON Schema currently exists.
 
 ## Ownership
 

@@ -228,6 +228,15 @@ Update documentation only when the change makes its authoritative source inaccur
 
 Do not duplicate the same fact across documents. Link to the authoritative source instead.
 
+### Checkpoints
+
+Batches and routine work units do not automatically create checkpoint
+documents. Represent normal progress through commits and `PROJECT_STATUS.md`.
+Reserve checkpoints for meaningful phase/branch handoff or merge-readiness, or
+when the human explicitly requests one. Once established, historical
+checkpoints remain immutable unless an explicit correction task requires a
+change. See `docs/standards/01_ENGINEERING_WORKFLOW.md` for the detailed policy.
+
 ## 9. Incomplete Specifications
 
 If implementation details are missing but the behavior fits existing architecture and patterns, use the established approach.

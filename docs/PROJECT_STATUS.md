@@ -23,14 +23,14 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.17 |
+| Version | 0.18 |
 | Last Updated | 2026-09-08 |
 | Current Phase | Field-Level Contract Foundation — Active |
 | Implementation State | Pre-source / Pre-scaffolding |
 | Product Owner | sipratama |
 
-The final product-baseline consistency audit passed before this checkpoint was
-created.
+The final product-baseline consistency audit passed before the Architecture
+Foundation handoff checkpoint was created.
 
 ## Status Legend
 
@@ -61,11 +61,14 @@ created.
 | Architecture / technology decisions | COMPLETE (unconditional) | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md); OAD-011 remains CONDITIONAL |
 | Architecture Foundation merge to `main` | COMPLETE | merge commit `7cd6a2d` |
 | Contract strategy | COMPLETE | [ADR-0010](./02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md) / [contracts](../contracts/README.md) |
-| Field-Level Contract Foundation | ACTIVE | Batch 1 scope freeze and Batch 2 shared wire/problem foundation complete |
-| Contract Foundation Batch 1 scope freeze | COMPLETE | [Contract Foundation Scope Freeze](./checkpoints/2026-09-08-contract-foundation-scope-freeze.md) |
-| Contract Foundation Batch 2 shared wire/problem foundation | COMPLETE | [Shared Wire Foundation](./checkpoints/2026-09-08-contract-foundation-shared-wire-foundation.md) / [OpenAPI](../contracts/openapi/openapi.yaml) |
+| Field-Level Contract Foundation | ACTIVE | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) |
+| First vertical slice contract scope | COMPLETE | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) |
 | Shared wire primitives / RFC 9457 HTTP problem foundation | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
-| Application operation contracts | NEXT | Batch 3: authenticated Teacher boundary plus minimum LessonVersion/session-start HTTP contract |
+| Authenticated Teacher / session-start API | NEXT | Batch 3: authenticated Teacher boundary plus minimum `LessonVersion`/session-start HTTP contract |
+| Pairing contract | PENDING | after the authenticated Teacher/session-start slice |
+| Command / revision contract | PENDING | deterministic `NEXT` command slice |
+| Display projection contract | PENDING | classroom-safe projection slice |
+| SSE / reconnect contract | PENDING | authorized projection push and authoritative reconciliation slice |
 | Source scaffolding | PENDING | after required field-level contracts |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
@@ -191,11 +194,9 @@ implementation exists yet.
 
 Architecture Foundation is complete and merged to `main` in `7cd6a2d`.
 Contract strategy is complete, and Field-Level Contract Foundation is now
-active. Batch 1 froze the first classroom vertical slice in the
-[Contract Foundation Scope Freeze](./checkpoints/2026-09-08-contract-foundation-scope-freeze.md).
-
-Contract Foundation Batch 2 has established the shared wire primitives and
-base RFC 9457 HTTP problem contract in
+active. The [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md)
+maintains the first classroom vertical slice scope and sequencing. The shared
+wire primitives and base RFC 9457 HTTP problem contract are established in
 [`contracts/openapi/openapi.yaml`](../contracts/openapi/openapi.yaml).
 
 The immediate next work is Contract Foundation Batch 3: define the
@@ -249,21 +250,16 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 ## Latest Handoff Checkpoint
 
-[Contract Foundation Shared Wire Foundation](./checkpoints/2026-09-08-contract-foundation-shared-wire-foundation.md)
-records the Batch 2 schema-ownership audit, shared primitive and RFC 9457
-decisions, compatibility boundaries, validation evidence, and Batch 3 route.
-It is a non-authoritative handoff snapshot; the machine-readable OpenAPI file
-is authoritative for the wire definitions.
-
-The prior
-[Contract Foundation Scope Freeze](./checkpoints/2026-09-08-contract-foundation-scope-freeze.md)
-remains the non-authoritative scope handoff for the frozen first vertical
-slice.
-
-The prior
 [Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md)
-remains the historical handoff for the completed architecture phase and its
-merge-readiness evidence.
+is the latest handoff checkpoint. It records the completed Architecture
+Foundation phase and its merge-readiness evidence.
+
+Contract Foundation is currently active on `feat/contract-foundation`. No
+Contract Foundation handoff checkpoint exists yet. Its first-slice scope and
+ongoing sequence live in the
+[Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md); a
+checkpoint will be created only when the phase or branch is ready for handoff
+or merge, or when the human explicitly requests one.
 
 The prior [Architecture Foundation Checkpoint — After OAD-004](./checkpoints/2026-09-07-architecture-foundation-after-oad004.md)
 remains historical and is retained unmodified. It predates ADR-0013 and

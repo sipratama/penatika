@@ -14,9 +14,10 @@ contract between Teacher Web, Classroom Display Web, and the Penatika Backend.
   `application/problem+json`.
 
 [`openapi.yaml`](./openapi.yaml) is active as the authoritative contract root.
-Contract Foundation Batch 2 defines only shared HTTP wire primitives and the
-RFC 9457 Problem Details foundation. Application operations remain
-intentionally absent and `paths` is empty until later batches define them.
+It currently defines shared HTTP wire primitives and the RFC 9457 Problem
+Details foundation. Application operations are being added incrementally
+during Contract Foundation; `paths` may remain empty until the next contract
+slice is authored.
 
 ADR-0011 defines the conceptual identity, authentication, account,
 participant, and pairing model. ADR-0012 defines synchronous HTTP commands

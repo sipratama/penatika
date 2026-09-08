@@ -22,11 +22,11 @@ closed schemas that reject unknown element types or unsupported fields.
 Ordinary additive API evolution may use a different explicit unknown-field
 policy.
 
-No standalone production JSON Schemas exist yet. The Batch 2 ownership audit
-keeps shared HTTP primitives and Problem Details in OpenAPI because no current
-candidate requires independent non-HTTP consumption or its own compatibility
-lifecycle. Future Display projection and SSE payload work must reassess this
-boundary without duplicating schema ownership.
+No standalone production JSON Schemas currently exist. Shared HTTP primitives
+and Problem Details remain owned by OpenAPI because no current structure
+requires independent non-HTTP consumption or its own compatibility lifecycle.
+Future Display projection and SSE payload work must reassess this boundary
+without duplicating schema ownership.
 
 See [ADR-0010](../../docs/02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md)
 and the [contract index](../README.md).
