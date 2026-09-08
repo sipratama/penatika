@@ -19,8 +19,10 @@ Details foundation, an authenticated Teacher session bootstrap, and the
 minimum operation for starting a Classroom Session from an existing
 classroom-ready `LessonVersion`. It also defines role-bound PairingGrant
 issuance and revocation, separate Controller and Display redemption
-operations, and the resulting participant browser-session boundary. Commands,
-projections, snapshots, and SSE remain for later contract slices.
+operations, the resulting participant browser-session boundary, and the first
+deterministic revision-aware classroom command: `DIRECT_ACTION: NEXT`.
+Classroom-safe projections, authoritative snapshots, and SSE remain for later
+contract slices.
 
 ADR-0011 defines the conceptual identity, authentication, account,
 participant, and pairing model. ADR-0012 defines synchronous HTTP commands
@@ -45,9 +47,9 @@ session and receive no teacher-account privilege. Establishing a Controller
 participant requires both the authenticated Teacher boundary and a valid
 role-bound PairingGrant; establishing a Display participant requires its valid
 role-bound PairingGrant without Teacher authentication. Controller classroom
-mutation will require both an authenticated teacher browser session and the
-active `TEACHER_CONTROLLER` participant authorization for the classroom
-session when the command contract is defined.
+mutation requires both security schemes in one OpenAPI security-requirement
+object, the active `TEACHER_CONTROLLER` participant authorization for the path
+Classroom Session, and the existing CSRF header.
 
 The cookie and CSRF token are distinct opaque values; neither is a business
 identifier or client-supplied authorization decision. OAuth/OIDC access,

@@ -42,8 +42,9 @@ vertical slice scope is maintained in the
 The authoritative [`openapi/openapi.yaml`](./openapi/openapi.yaml) root contains
 shared HTTP primitives, the RFC 9457 Problem Details foundation, and the
 minimum authenticated Teacher/session-start and secure role-specific Pairing
-boundaries. Further application operation contracts are being added
-incrementally; no standalone production JSON Schema currently exists.
+boundaries plus the first deterministic revision-aware classroom command.
+Further application operation contracts are being added incrementally; no
+standalone production JSON Schema currently exists.
 
 ## Ownership
 

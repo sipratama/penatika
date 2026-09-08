@@ -1,12 +1,13 @@
 openapi: 3.1.2
 info:
   title: Penatika HTTP API
-  version: 0.3.0
+  version: 0.4.0
   description: >-
     Authoritative HTTP contract root for Penatika. It defines shared HTTP wire
     primitives, the RFC 9457 Problem Details foundation, and the minimum
     authenticated Teacher, Classroom Session start, and secure role-specific
-    Pairing boundaries required by the first classroom vertical slice.
+    Pairing boundaries plus the deterministic revision-aware DIRECT_ACTION:
+    NEXT command required by the first classroom vertical slice.
 paths:
   /api/teacher-session:
     get:
@@ -284,6 +285,110 @@ paths:
           $ref: '#/components/responses/PairingGrantRejectedResponse'
         '409':
           $ref: '#/components/responses/ParticipantRoleAlreadyActiveResponse'
+  /api/classroom-sessions/{classroomSessionId}/commands:
+    post:
+      operationId: submitClassroomSessionCommand
+      summary: Submit a deterministic Classroom Session command
+      description: >-
+        Submits the first supported deterministic, non-generative classroom
+        command: DIRECT_ACTION with action NEXT. The request requires current
+        authenticated Teacher authority, active TEACHER_CONTROLLER participant
+        authority bound to the path Classroom Session, current Teacher
+        authorization for that session, and valid CSRF material. A
+        CLASSROOM_DISPLAY participant cannot authorize this operation.
+
+        Command identity is scoped by (ClassroomSessionId, CommandId). For an
+        unseen CommandId, the backend validates current mutation eligibility
+        and requires expectedRevision to equal the current authoritative
+        revision before applying at most one authoritative mutation effect. A
+        new student-facing mutation is rejected while the session lifecycle,
+        backend authority, or active Display synchronization state does not
+        permit mutation. Logical request equivalence consists only of the path
+        ClassroomSessionId plus commandId, expectedRevision, commandType, and
+        action. Browser-session cookies, CSRF material, correlation identifiers,
+        and other transport metadata are evaluated separately and are not part
+        of command equivalence.
+
+        Current authentication, session authorization, Controller authority,
+        and CSRF are evaluated on every request before an accepted command
+        outcome is disclosed. An equivalent retry of an already accepted
+        command returns its original outcome without another mutation, even if
+        the Classroom Session revision has since advanced or the Display later
+        became unavailable. Reusing an accepted CommandId for a different
+        expectedRevision, commandType, or action is a conflict. Clients must not
+        create or queue new commands while backend authority is unreachable;
+        only a command already sent with uncertain acknowledgement may be
+        retried using its existing identity. Only a command that crosses the
+        authorized boundary and is accepted reserves its command identity;
+        unauthenticated, unauthorized, CSRF-rejected, or structurally invalid
+        attempts do not reserve arbitrary CommandIds. For an accepted CommandId,
+        conflicting-reuse evaluation takes precedence over treating changed
+        logical command fields as a new unsupported command.
+      security:
+        - TeacherBrowserSession: []
+          ParticipantBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+        - $ref: '#/components/parameters/TeacherCsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectActionCommandRequest'
+            examples:
+              firstAcceptedNext:
+                summary: First submission of one logical NEXT command
+                value:
+                  commandId: command_example_01
+                  expectedRevision: 4
+                  commandType: DIRECT_ACTION
+                  action: NEXT
+              equivalentReplay:
+                summary: >-
+                  Equivalent retry after an uncertain acknowledgement
+                value:
+                  commandId: command_example_01
+                  expectedRevision: 4
+                  commandType: DIRECT_ACTION
+                  action: NEXT
+      responses:
+        '200':
+          description: >-
+            Command accepted or an equivalent previously accepted command
+            replayed. Both cases return that command's original authoritative
+            outcome. resultingRevision is the revision immediately resulting
+            from the accepted command and might no longer be the Classroom
+            Session's latest revision when an older command is replayed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectActionCommandResponse'
+              examples:
+                firstAcceptedNext:
+                  summary: NEXT accepted with one authoritative mutation effect
+                  value:
+                    classroomSessionId: classroom_session_example_01
+                    commandId: command_example_01
+                    resultingRevision: 5
+                equivalentReplay:
+                  summary: >-
+                    Equivalent replay returns the original outcome without a
+                    second mutation
+                  value:
+                    classroomSessionId: classroom_session_example_01
+                    commandId: command_example_01
+                    resultingRevision: 5
+        '400':
+          $ref: '#/components/responses/ClassroomCommandValidationResponse'
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/ClassroomCommandForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/ClassroomSessionNotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ClassroomCommandConflictResponse'
 components:
   securitySchemes:
     TeacherBrowserSession:
@@ -410,11 +515,18 @@ components:
       maxLength: 128
       pattern: '^\S+$'
       description: >-
-        Identifies one logical state-changing command and remains stable when
-        that same command is retried or reconciled after an uncertain
-        acknowledgement. It is not a tracing identifier and does not by itself
-        authorize or guarantee idempotent execution. Placement and detailed
-        deduplication policy are defined by a later command contract.
+        Caller-supplied opaque identity created before the first attempt of one
+        logical state-changing command. Clients should generate
+        collision-resistant values without relying on a UUID or other
+        client-parseable format. Idempotency is scoped by (ClassroomSessionId,
+        CommandId), and the same textual value in a different Classroom Session
+        has no semantic relationship. The value remains stable only for an
+        equivalent retry or uncertain-acknowledgement reconciliation. It is not
+        globally unique authority, a correlation identifier, authentication,
+        authorization, or a credential. Accepted command identity and its
+        original outcome remain reconcilable for at least the
+        active/reconcilable lifetime of the owning Classroom Session; exact
+        post-session persistence and cleanup remain deferred.
     Revision:
       type: integer
       minimum: 0
@@ -533,6 +645,59 @@ components:
           type: string
           const: CLASSROOM_DISPLAY
           description: Confirms the server-bound Classroom Display authority.
+    DirectActionCommandRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - commandId
+        - expectedRevision
+        - commandType
+        - action
+      properties:
+        commandId:
+          $ref: '#/components/schemas/CommandId'
+        expectedRevision:
+          allOf:
+            - $ref: '#/components/schemas/Revision'
+          description: >-
+            Authoritative Classroom Session revision the Controller believes it
+            is acting against. For an unseen command it must equal the current
+            backend-authoritative revision. For an equivalent replay of an
+            accepted command it remains the original value used to establish
+            logical request equivalence.
+        commandType:
+          type: string
+          const: DIRECT_ACTION
+          description: >-
+            Explicitly selects the deterministic, non-generative direct-action
+            command class. It does not enter AI generation or publication.
+        action:
+          type: string
+          const: NEXT
+          description: >-
+            Advances the authoritative lesson or scene position using the only
+            direct action supported by this contract slice.
+    DirectActionCommandResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - classroomSessionId
+        - commandId
+        - resultingRevision
+      properties:
+        classroomSessionId:
+          $ref: '#/components/schemas/ClassroomSessionId'
+        commandId:
+          $ref: '#/components/schemas/CommandId'
+        resultingRevision:
+          allOf:
+            - $ref: '#/components/schemas/Revision'
+          description: >-
+            Authoritative Classroom Session revision immediately resulting from
+            this accepted command. It is greater than the command's
+            expectedRevision for a newly accepted command, but is not guaranteed
+            to equal expectedRevision plus one. Equivalent replay returns this
+            original value even if the session later advanced further.
     FieldError:
       type: object
       additionalProperties: false
@@ -1042,3 +1207,166 @@ components:
                 detail: An active participant already occupies the requested role.
                 code: PARTICIPANT_ROLE_ALREADY_ACTIVE
                 correlationId: corr_display_role_01
+    ClassroomCommandValidationResponse:
+      description: >-
+        The Classroom Session command path or request body fails structural
+        validation. Only DIRECT_ACTION with action NEXT is supported.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidClassroomSessionId:
+              summary: Classroom Session identifier is structurally invalid
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_command_validation_01
+                fieldErrors:
+                  - field: classroomSessionId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+            missingCommandId:
+              summary: commandId is missing
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_command_validation_02
+                fieldErrors:
+                  - field: commandId
+                    code: REQUIRED
+                    message: The field is required.
+            missingExpectedRevision:
+              summary: expectedRevision is missing
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_command_validation_03
+                fieldErrors:
+                  - field: expectedRevision
+                    code: REQUIRED
+                    message: The field is required.
+            invalidExpectedRevision:
+              summary: expectedRevision is structurally invalid
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_command_validation_04
+                fieldErrors:
+                  - field: expectedRevision
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+            unsupportedCommandType:
+              summary: Only the DIRECT_ACTION command class is supported
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_command_validation_05
+                fieldErrors:
+                  - field: commandType
+                    code: UNSUPPORTED_VALUE
+                    message: The field value is not supported by this contract.
+            unsupportedAction:
+              summary: Only the NEXT direct action is supported
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_command_validation_06
+                fieldErrors:
+                  - field: action
+                    code: UNSUPPORTED_VALUE
+                    message: The field value is not supported by this contract.
+    ClassroomCommandForbiddenResponse:
+      description: >-
+        The request lacks valid CSRF material or active TEACHER_CONTROLLER
+        participant authority for the path Classroom Session. The response does
+        not disclose participant identity, role-slot ownership, another
+        Classroom Session, or another Teacher.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            csrfRejected:
+              summary: Missing or invalid CSRF material
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The request did not include valid CSRF protection.
+                code: CSRF_REJECTED
+                correlationId: corr_command_csrf_01
+            controllerAuthorityRequired:
+              summary: Controller participant authority is missing or invalid
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Active Controller authority is required for this request.
+                code: CONTROLLER_AUTHORITY_REQUIRED
+                correlationId: corr_command_authority_01
+            displayParticipantRejected:
+              summary: A Display participant cannot issue Teacher commands
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Active Controller authority is required for this request.
+                code: CONTROLLER_AUTHORITY_REQUIRED
+                correlationId: corr_command_authority_02
+    ClassroomCommandConflictResponse:
+      description: >-
+        Current authoritative command identity, revision, or mutation state
+        conflicts with the request. No new mutation occurs. STALE_REVISION does
+        not include currentRevision because authoritative snapshot and
+        reconciliation state remain owned by the later snapshot contract.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            staleRevision:
+              summary: An unseen command was based on a stale revision
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: The command revision does not match authoritative state.
+                code: STALE_REVISION
+                correlationId: corr_command_stale_01
+            commandIdReuseConflict:
+              summary: An accepted CommandId was reused for a different request
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: The command identity was reused for a different command.
+                code: COMMAND_ID_REUSE_CONFLICT
+                correlationId: corr_command_reuse_01
+            classroomMutationNotAllowed:
+              summary: Current authoritative state does not permit a new NEXT
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: The classroom session does not currently permit mutation.
+                code: CLASSROOM_MUTATION_NOT_ALLOWED
+                correlationId: corr_command_state_01

@@ -23,7 +23,7 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.20 |
+| Version | 0.21 |
 | Last Updated | 2026-09-09 |
 | Current Phase | Field-Level Contract Foundation — Active |
 | Implementation State | Pre-source / Pre-scaffolding |
@@ -66,8 +66,8 @@ Foundation handoff checkpoint was created.
 | Shared wire primitives / RFC 9457 HTTP problem foundation | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Authenticated Teacher / session-start API | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Pairing contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
-| Command / revision contract | NEXT | Contract Foundation Batch 5 |
-| Display projection contract | PENDING | classroom-safe projection slice |
+| Command / revision contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
+| Display projection contract | NEXT | Contract Foundation Batch 6 |
 | SSE / reconnect contract | PENDING | authorized projection push and authoritative reconciliation slice |
 | Source scaffolding | PENDING | after required field-level contracts |
 | Application implementation | PENDING | after source scaffolding |
@@ -200,10 +200,11 @@ wire primitives and base RFC 9457 HTTP problem contract are established in
 [`contracts/openapi/openapi.yaml`](../contracts/openapi/openapi.yaml).
 
 The authenticated Teacher boundary, minimum `LessonVersion` reference /
-Classroom Session start contract, and secure role-specific Pairing boundary are
-now defined in the OpenAPI root. The immediate next work is Contract Foundation
-Batch 5: define the `DIRECT_ACTION: NEXT` revision and idempotency contract.
-Display projection, snapshot, and SSE operations remain later work.
+Classroom Session start contract, secure role-specific Pairing boundary, and
+deterministic revision-aware `DIRECT_ACTION: NEXT` command are now defined in
+the OpenAPI root. The immediate next work is Contract Foundation Batch 6:
+define the classroom-safe Display projection and authoritative snapshot
+contract. SSE operations remain later work.
 Source scaffolding remains PENDING until the required field-level contracts
 exist. `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before`
 rules.

@@ -107,9 +107,9 @@ DTOs, status mappings, physical persistence, or implementation structure.
 Field-level details remain deferred until their owning contract slice,
 including later operation paths and methods, pairing credential
 representation beyond the current machine-level grant, participant replacement
-or handoff, command placement and deduplication duration, scene/projection
-fields, SSE event names and retry details, and later operation-level problem
-codes, types, and status mappings.
+or handoff, post-session command-retention cleanup, scene/projection fields,
+SSE event names and retry details, and later operation-level problem codes,
+types, and status mappings.
 
 ## Contract Foundation Sequence
 
@@ -119,8 +119,8 @@ codes, types, and status mappings.
 | Shared wire / RFC 9457 problem foundation | COMPLETE |
 | Authenticated Teacher / minimum LessonVersion and session start | COMPLETE |
 | Pairing | COMPLETE |
-| `NEXT` command / revision | NEXT |
-| Display projection | PENDING |
+| `NEXT` command / revision | COMPLETE |
+| Display projection / authoritative snapshot | NEXT |
 | SSE / reconnect | PENDING |
 | Final consistency and readiness audit | PENDING |
 | Final branch checkpoint | PENDING |
