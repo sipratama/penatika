@@ -8,11 +8,11 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.16` |
+| Version | `0.17` |
 | Last Updated | `2026-09-08` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
-| Deployment Maturity | Pre-implementation; target environment not decided |
+| Deployment Maturity | Pre-implementation; deployment architecture selected (ADR-0019), no VPS provisioned |
 
 ## 1. Architecture Summary
 
@@ -79,6 +79,10 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - Deterministic non-generative direct actions use explicitly supported command classes rather than the AI proposal path.
 - Penatika is resilience-oriented, not offline-first; dependency failures degrade affected capabilities without creating competing state authority.
 - Loss of backend authority freezes new authoritative mutations instead of promoting a client to temporary authority.
+- Per [ADR-0019](./adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md), the MVP/pilot deployment class is a portable single ordinary Linux VPS (Ubuntu Server 24.04 LTS) running Docker Engine + Docker Compose, fronted by Caddy for HTTPS, with PostgreSQL colocated on the same host for `PILOT`; the initial replaceable provider/region is Tencent Cloud Lighthouse, Jakarta.
+- Normal Penatika runtime depends only on portable standards (Linux, OCI containers, Docker Compose, PostgreSQL, HTTPS, standard DNS, filesystem/container volumes, outbound HTTPS), never on a Tencent-proprietary API or SDK; a VPS provider change does not require rewriting application logic while the deployment class in ADR-0019 remains unchanged.
+- Durable pilot data requires an automated PostgreSQL backup with a provider-replaceable off-host copy; a Docker volume or same-provider snapshot is never treated as the sole backup.
+- A single VPS is one infrastructure failure domain for MVP/pilot; this is an intentional founder-led trade-off, and graceful degradation (ADR-0007) cannot make an unavailable single server available.
 
 ### Why This Shape
 
@@ -520,13 +524,15 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 - [ADR-0016 — Use Scoped Deterministic Mathematics Validators with Exact Arithmetic](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
 - [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](./adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
 - [ADR-0018 — Use Deepgram Nova-3 for Backend-Mediated Push-to-Talk Speech Recognition](./adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md)
+- [ADR-0019 — Use a Portable Single-Linux-VPS Deployment Baseline for MVP/Pilot, Initially on Tencent Cloud Lighthouse Jakarta](./adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md)
 
 ## 16. Open Architecture Decisions
 
 | ID | Decision | Needed Before |
 |---|---|---|
-| OAD-010 | Deployment platform, environments, secret management, and regional requirements | Deployment planning |
 | OAD-011 | Background execution and queue needs | When measured request duration or reliability requires it |
+
+OAD-010 is resolved by [ADR-0019](./adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md): a portable single-Linux-VPS MVP/pilot deployment baseline (Docker Compose, Caddy, colocated PostgreSQL, off-host backup boundary, `LOCAL`/`PILOT`/`PROD` environment model), initially on Tencent Cloud Lighthouse Jakarta as a replaceable provider. No VPS is provisioned, no Dockerfile/Compose/Caddy configuration exists, and no CI/CD pipeline exists yet.
 
 ## 17. Architecture Evolution Rules
 
@@ -549,6 +555,7 @@ future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.17` | `2026-09-08` | Resolve OAD-010 with a portable single-Linux-VPS MVP/pilot deployment baseline (Docker Compose, Caddy, colocated PostgreSQL, off-host backup boundary, LOCAL/PILOT/PROD environments), initially on Tencent Cloud Lighthouse Jakarta as a replaceable provider; document the single-failure-domain limitation | Claude |
 | `0.16` | `2026-09-08` | Resolve OAD-007 with backend-mediated Deepgram Nova-3 Indonesian push-to-talk transcription, bounded browser audio capture, controlled Mathematics vocabulary, privacy-minimized speech usage accounting, and deterministic direct-action-first transcript routing | Claude |
 | `0.15` | `2026-09-07` | Resolve OAD-006 with OpenRouter, bounded model profiles, pre-provider scope/resource controls, per-teacher AI allowances, privacy-constrained provider routing, and graceful degradation | Claude |
 | `0.14` | `2026-09-07` | Resolve OAD-008 with scoped deterministic exact-rational and restricted affine/linear-equation validation | Claude |

@@ -23,9 +23,9 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.13 |
+| Version | 0.14 |
 | Last Updated | 2026-09-08 |
-| Current Phase | Architecture & Technology Decisioning |
+| Current Phase | Architecture Foundation Complete — Checkpoint and Merge Readiness Pending |
 | Implementation State | Pre-source / Pre-scaffolding |
 | Product Owner | sipratama |
 
@@ -58,7 +58,7 @@ created.
 | First-pilot definition | COMPLETE | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) |
 | Pendago legacy review | COMPLETE | [PENDAGO_MIGRATION_REVIEW.md](./06_delivery/PENDAGO_MIGRATION_REVIEW.md) |
 | Initial architecture principles | ESTABLISHED | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) + Accepted ADR register |
-| Architecture / technology decisions | ACTIVE | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) OAD-010–OAD-011 |
+| Architecture / technology decisions | COMPLETE (unconditional) | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md); OAD-011 remains CONDITIONAL |
 | Contract strategy | COMPLETE | [ADR-0010](./02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md) / [contracts](../contracts/README.md) |
 | Field-level contracts | PENDING | identity and realtime transport semantics are now selected (ADR-0011, ADR-0012); field-level OpenAPI/JSON Schema work has not started |
 | Source scaffolding | PENDING | after blocking OADs/contracts |
@@ -107,7 +107,7 @@ tracks status only and does not redefine the OAD descriptions.
 | OAD-007 | Speech recognition strategy | COMPLETE |
 | OAD-008 | Mathematics validator approach per content type | COMPLETE |
 | OAD-009 | Curriculum ingestion, normalization, integrity/versioning, local-context modeling, and retrieval | COMPLETE |
-| OAD-010 | Deployment platform, environments, secret management, and regional requirements | NEXT |
+| OAD-010 | Deployment platform, environments, secret management, and regional requirements | COMPLETE |
 | OAD-011 | Background execution and queue needs | CONDITIONAL |
 | OAD-012 | Contract protocols and schema tooling | COMPLETE |
 
@@ -170,21 +170,32 @@ the ADR-0017 semantic pipeline only when no direct action matches, raw
 audio excluded from durable storage and from the generative gateway, and
 speech usage/cost tracked separately from the generative `AIAllowanceWindow`.
 
+OAD-010 is resolved by
+[ADR-0019](./02_architecture/adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md):
+a portable single-Linux-VPS MVP/pilot deployment baseline — Docker Engine +
+Docker Compose, Caddy for HTTPS, PostgreSQL colocated on the same host for
+`PILOT`, an off-host backup boundary, and a `LOCAL`/`PILOT`/`PROD`
+environment model — initially deployed on Tencent Cloud Lighthouse,
+Jakarta, as a replaceable provider. The architecture decision (deployment
+class) is locked; the provider and commercial plan remain explicitly
+replaceable and are not treated as architecture. No VPS is provisioned, and
+no Dockerfile, Compose file, Caddy configuration, CI/CD pipeline, or backup
+implementation exists yet.
+
 ## Immediate Next Step
 
-Immediate next decision work:
+All unconditional architecture decisions (OAD-001 through OAD-010, and
+OAD-012) are now COMPLETE; OAD-011 remains CONDITIONAL and is not activated
+merely because deployment orchestration exists. The immediate next work is:
 
-1. OAD-010 — Deployment Platform, Environments, Secret Management, and Regional Requirements
+1. Architecture Foundation Checkpoint + Merge Readiness Audit
 
-All core application/provider architecture choices required before
-deployment planning are now selected: clients (ADR-0008), backend
-(ADR-0013), persistence (ADR-0014), identity (ADR-0011), realtime
-(ADR-0012), generative AI (ADR-0017), curriculum (ADR-0015), Mathematics
-assurance (ADR-0016), speech (ADR-0018), and contracts strategy
-(ADR-0010). Field-level contracts remain PENDING and must be planned
-consistently with deployment/source-scaffolding gates. Source scaffolding
-also remains PENDING. `SYSTEM_ARCHITECTURE.md` remains authoritative for
-`Needed Before` rules.
+This future checkpoint inspects the full architecture foundation, closes
+remaining validator debt, verifies branch consistency, and prepares the
+`feat/architecture-foundation` branch for merge to `main`. Field-level
+contracts and source scaffolding remain PENDING until after that checkpoint
+and merge; the phase after merge is Field-Level Contract Foundation.
+`SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
 
@@ -192,12 +203,14 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 ### Architecture / Implementation
 
-- OAD-010–OAD-011 as applicable;
+- OAD-011 as applicable (CONDITIONAL only);
+- Architecture Foundation Checkpoint + Merge Readiness Audit;
 - field-level structured contracts;
 - physical persistence model/migrations;
 - identity implementation;
 - realtime/reconnect transport implementation;
-- provider integrations.
+- provider integrations;
+- deployment implementation evidence (VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, backup) per ADR-0019.
 
 ### UX / Compatibility
 

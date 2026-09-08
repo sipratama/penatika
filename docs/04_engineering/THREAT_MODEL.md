@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.6` |
-| Last Updated | `2026-09-07` |
+| Version | `0.7` |
+| Last Updated | `2026-09-08` |
 | Review Trigger | Identity, provider, contract, deployment, retention, or student-data decisions |
 
 ## 1. Scope
@@ -110,6 +110,20 @@ Out of scope for this baseline: payment, student accounts, school administration
 | T-042 | Floating-point rounding produces false correctness/incorrectness | Incorrect Mathematics assurance result | Exact rational arithmetic (`BigFraction`); floating-point equality is never the correctness authority |
 | T-043 | Stale Mathematics validation result reused after content edit | Outdated result presented as current assurance | `FR-MATH-007` content-edit invalidation; result is bound to exact content/claim version |
 | T-044 | AI self-evaluation substitutes for deterministic Mathematics validation | Unverified content presented as validated | ADR-0004/ADR-0006 binding: AI cannot convert `INVALID`/`UNSUPPORTED` to `VALID`; a post-`INVALID` AI correction is a new proposal requiring revalidation |
+| T-045 | PostgreSQL port exposed publicly on the pilot VPS | Direct database compromise bypassing application authorization | ADR-0019: PostgreSQL binds only to the private Docker/internal host boundary; port never published publicly |
+| T-046 | Leaked VPS SSH credential or root account misuse | Full host compromise, data exfiltration, service disruption | SSH key authentication only, no password login, root password login disabled, restricted administrative access, firewall, least privilege |
+| T-047 | Leaked CI/CD deployment credential | Unauthorized deployment or host access from a compromised pipeline | Dedicated restricted deployment identity (not personal/root SSH key), protected GitHub Environment secrets, no provider API credentials committed to the repository |
+| T-048 | Secrets committed to Git or baked into a container image/frontend bundle | Credential compromise, unauthorized provider/database access | Server-side-only secrets, restrictive filesystem permissions, Compose file-mounted/root-owned secret files, build-artifact scanning, no secrets in browser bundles |
+| T-049 | Backup credential leakage or backup stored only on the primary VPS | Loss of the only recoverable copy of pilot data on host compromise/failure | Off-host, provider-replaceable backup destination; backup-destination credential treated as a server-side secret; primary-server failure must not destroy the only usable data copy |
+| T-050 | Unencrypted off-host backup | Sensitive pilot data exposure if the backup destination is compromised | Backups encrypted before or during off-host storage per the ADR-0019 backup model |
+| T-051 | Cross-environment data leakage (LOCAL/PILOT/PROD) | Production-like or pilot data exposed in a lower-trust environment | No cross-environment sharing of database, secrets, or sessions; production-like data not copied into lower environments without an approved protected process |
+| T-052 | Outdated OS/container packages on the pilot VPS | Known-vulnerability exploitation | Automatic/security OS patch discipline, minimal installed services, timely security updates |
+| T-053 | Unrestricted Docker socket access | Container escape / host takeover | Least-privilege host access; direct SSH into application containers is not a normal operational workflow |
+| T-054 | Disk exhaustion on the pilot VPS (logs, backups, images) | Service outage, failed writes, masked failures | Log rotation, disk-space visibility, backup lifecycle management |
+| T-055 | Sensitive data in logs on the pilot host | Credential/PII exposure via log access | Structured logs excluding credentials, tokens, raw audio, confidential tokens, database passwords, and unrestricted prompts/transcripts by default |
+| T-056 | Real classroom pilot traffic served over plain HTTP | Credential/session interception, tampering | HTTPS required before real pilot activation; valid domain/hostname required; TCP 80 used only for redirect/certificate bootstrap |
+| T-057 | Compromised or tampered deployment artifact (image/registry) | Malicious code reaching the pilot host | Immutable/versioned release identity (commit SHA or image digest), OCI-compatible registry, no mutable `latest` as authoritative release identity |
+| T-058 | Provider outage or single-host loss | Full application unavailability; potential data loss without off-host backup | Explicit single-failure-domain acknowledgement (ADR-0019); off-host backup boundary; provider portability so the deployment can move to another compatible Linux VPS provider |
 
 ## 6. Security Invariants
 
@@ -133,6 +147,8 @@ Out of scope for this baseline: payment, student accounts, school administration
 - OpenRouter and any generative-model provider cannot become authorization, quota, curriculum, Mathematics, or publication authority.
 - A generation request must pass the deterministic capability/scope guard and hard resource guard before any expensive `FAST`/`QUALITY` provider call.
 - Generative traffic uses only an explicitly approved, privacy-compliant (`zdr=true`, `data_collection=deny`) provider route; unapproved automatic fallback is disabled.
+- PostgreSQL and the backend port are never exposed as the normal public application entry point; the reverse proxy is the sole public HTTPS boundary (ADR-0019).
+- Runtime secrets remain server-side only and are never committed to Git, baked into container images, or shipped in frontend artifacts.
 
 ## 7. Privacy Baseline
 
@@ -257,11 +273,13 @@ Review this threat model before:
 - [ADR-0015 — Versioned Controlled Curriculum Corpus with Deterministic Retrieval](../02_architecture/adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
 - [ADR-0016 — Scoped Deterministic Mathematics Validators with Exact Arithmetic](../02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
 - [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](../02_architecture/adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
+- [ADR-0019 — Use a Portable Single-Linux-VPS Deployment Baseline for MVP/Pilot, Initially on Tencent Cloud Lighthouse Jakarta](../02_architecture/adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md)
 
 ## 14. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.7` | `2026-09-08` | Add deployment threats/mitigations (public database/backend exposure, SSH/CI credential leakage, secret handling, backup boundary, cross-environment leakage, patch discipline, Docker socket, disk/log exposure, plain HTTP, artifact integrity, provider outage/single-host loss) for the portable single-Linux-VPS MVP/pilot baseline (ADR-0019) | Claude |
 | `0.6` | `2026-09-07` | Add AI-gateway threats/mitigations (privacy routing, provider fallback, server-controlled routing, scope abuse, validation shopping, credential exposure) for ADR-0017 | Claude |
 | `0.5` | `2026-09-07` | Add Mathematics-validator threats/mitigations (parser safety, floating-point, staleness, AI self-evaluation) for ADR-0016 | Claude |
 | `0.4` | `2026-09-07` | Add curriculum-specific threats/mitigations (ADR-0015); correct stale OAD-005/persistence wording; remove resolved curriculum-architecture item from Open Security Decisions | Claude |

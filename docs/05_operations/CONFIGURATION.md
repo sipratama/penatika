@@ -23,11 +23,22 @@
 
 ### Runtime and Environment
 
-- environment identity;
+- environment identity (`LOCAL` / `PILOT` / `PROD` per [ADR-0019](../02_architecture/adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md));
 - public client origin(s);
 - backend and realtime endpoints;
+- external hostname/domain (deferred until selected before real pilot activation);
+- application image version/tag (immutable release identity, not `latest`);
 - regional/timezone behavior where required;
 - feature maturity flags with explicit ownership.
+
+### Deployment
+
+- deployment environment (`LOCAL` / `PILOT` / `PROD`);
+- initial `PILOT` provider/region marker (Tencent Cloud Lighthouse, Jakarta), recorded as replaceable operational information, not architecture;
+- backup destination category;
+- environment-specific resource limits.
+
+Exact provider account identifiers, VPS hostnames/IPs, and commercial plan details are operational information, not committed configuration. See [ADR-0019](../02_architecture/adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md) for the deployment architecture baseline.
 
 ### Identity and Session
 
@@ -116,13 +127,17 @@ Secret examples expected after provider selection:
 - AI and speech provider credentials;
 - curriculum-source credentials if required;
 - telemetry ingestion secrets;
-- session-signing keys.
+- session-signing keys;
+- backup-destination credential;
+- deployment-related pull/deploy credential where needed.
+
+Per [ADR-0019](../02_architecture/adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md), the portable VPS baseline does not require a cloud-vendor secret manager; runtime secrets are server-side only, outside Git, outside container images, and outside frontend artifacts, preferring Docker Compose file-mounted secrets / root-owned host secret files over committed `.env` files. No real secret values or environment-variable names are defined by this document.
 
 Secrets must use an approved secret manager or local ignored mechanism and must never be committed, logged, embedded in client bundles, or copied into documentation.
 
 ## 4. Environment Model
 
-The environment topology is not selected. At minimum, implementation planning should distinguish local development, automated test, controlled evaluation, pilot/staging, and production when those environments become relevant.
+Per [ADR-0019](../02_architecture/adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md), the environment topology is `LOCAL` / `PILOT` / `PROD`. `LOCAL` is the developer workstation with development/test data only; `PILOT` is the remote founder-operated deployment, initially on Tencent Cloud Lighthouse, Jakarta; `PROD` is a future commercial environment not provisioned by that decision. There is no cross-environment sharing of database, secrets, or sessions.
 
 Production-like data must not be copied into lower environments without an approved protected process.
 
@@ -139,11 +154,11 @@ After implementation:
 ## 6. Open Decisions
 
 - Configuration library and schema format.
-- Environment topology and deployment platform.
-- Secret manager.
+- Secret manager (a managed secret service may later replace host-managed secrets; not required for the ADR-0019 baseline).
 - Exact configuration keys and ownership.
 - Runtime feature-flag approach and governance.
 - Provider-specific retention and regional settings.
+- Exact backup tool, off-host destination, and schedule (ADR-0019 defers these to implementation/evidence).
 
 ## 7. Related Documents
 
@@ -155,6 +170,7 @@ After implementation:
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-08` | Record deployment/environment configuration categories (LOCAL/PILOT/PROD, deployment secrets, backup-destination credential) for the portable single-Linux-VPS baseline (ADR-0019) without real values | Claude |
 | `2026-09-07` | Record persistence (PostgreSQL/Flyway) configuration categories without inventing environment-variable names or pool values | Claude |
 | `2026-09-07` | Record OIDC, backend-session, CSRF, pairing, and participant configuration categories without inventing keys or providers | Codex |
 | `2026-09-06` | Align degraded-mode configuration wording with Q-03 / ADR-0007 | Codex |

@@ -70,7 +70,7 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 | Client surfaces | Teacher Web (Preparation + Controller) dan Classroom Display Web terpisah |
 | Identity | OIDC Authorization Code + PKCE dengan backend-managed browser sessions; provider belum dipilih |
 | Contract strategy | Contract-first OpenAPI 3.1.x + JSON Schema 2020-12; realtime transport sudah diselesaikan oleh ADR-0012, AsyncAPI tetap inactive |
-| Deployment target | Belum diputuskan |
+| Deployment target | MVP/pilot: portable single Ubuntu Linux VPS + Docker Compose + Caddy, awalnya Tencent Cloud Lighthouse Jakarta sebagai provider yang dapat diganti (ADR-0019) |
 
 Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architecture/adr/).
 
@@ -155,7 +155,7 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 - Physical persistence schema dan migrations (teknologi sudah dipilih: PostgreSQL + Flyway).
 - Concrete OIDC provider, physical session schema/representation, dan expiry/index implementation.
 - Field-level contract definitions.
-- Deployment/environment/secret management (OAD-010).
+- Deployment implementation evidence: VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, backup (arsitektur sudah dipilih: lihat ADR-0019).
 - Evidence-driven device/accessibility/performance targets bila relevan.
 
 Lihat Product Brief, PRD, System Architecture, Risks, dan Known Limitations untuk daftar lengkap beserta decision timing.

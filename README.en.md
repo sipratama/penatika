@@ -70,7 +70,7 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 | Client surfaces | Teacher Web (Preparation + Controller) and separate Classroom Display Web |
 | Identity | OIDC Authorization Code + PKCE with backend-managed browser sessions; provider not yet selected |
 | Contract strategy | Contract-first OpenAPI 3.1.x + JSON Schema 2020-12; realtime transport is resolved by ADR-0012, AsyncAPI remains inactive |
-| Deployment target | Not decided |
+| Deployment target | MVP/pilot: portable single Ubuntu Linux VPS + Docker Compose + Caddy, initially Tencent Cloud Lighthouse Jakarta as a replaceable provider (ADR-0019) |
 
 Material decisions are recorded in [`docs/02_architecture/adr/`](./docs/02_architecture/adr/).
 
@@ -155,7 +155,7 @@ This validator checks local Markdown links and unresolved core metadata placehol
 - Physical persistence schema and migrations (technology is selected: PostgreSQL + Flyway).
 - Concrete OIDC provider, physical session schema/representation, and expiry/index implementation.
 - Field-level contract definitions.
-- Deployment environment and secret management (OAD-010).
+- Deployment implementation evidence: VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, backup (architecture is selected: see ADR-0019).
 - Evidence-driven device/accessibility/performance targets where relevant.
 
 See the Product Brief, PRD, System Architecture, Risks, and Known Limitations for the complete decision record and timing.

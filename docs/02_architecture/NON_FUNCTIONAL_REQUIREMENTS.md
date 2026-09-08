@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.8` |
-| Last Updated | `2026-09-07` |
+| Version | `0.9` |
+| Last Updated | `2026-09-08` |
 
 ## 1. Quality Priorities
 
@@ -75,6 +75,8 @@ Penatika MVP is resilience-oriented, not offline-first. Dependency failure degra
 - Retry ownership, timeout, fallback, and circuit-break behavior must be explicit per dependency after implementation technologies are selected.
 
 No production availability percentage or SLO is set before deployment and support maturity are known.
+
+Per [ADR-0019](./adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md), the MVP/pilot deployment is a single Linux VPS and therefore one infrastructure failure domain: this is an intentional founder-led trade-off, and graceful degradation cannot make an unavailable single server available. No zero-downtime, high-availability, multi-zone, or provider-failure fault-tolerance claim is made for MVP/pilot.
 
 ## 6. Security
 
@@ -171,6 +173,17 @@ Before production capacity planning, define:
 
 No database SLO, RPO, or RTO is set by this section; see [Open Decisions](#15-open-decisions).
 
+### Deployment Portability and Operational Requirements
+
+- Normal application execution must remain portable between compatible ordinary Linux VPS providers ([ADR-0019](./adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md)); application code must not depend on a Tencent-proprietary API or SDK for normal runtime behavior.
+- Public traffic must use HTTPS; real classroom pilot usage must not rely on plain HTTP.
+- PostgreSQL must never be publicly exposed; the database binds only to the private Docker/internal host boundary.
+- Durable pilot data requires an automated backup plus a provider-replaceable off-host backup copy; a Docker volume or same-provider snapshot alone is not a backup, and restore readiness must be exercised before meaningful reliance on pilot data.
+- Runtime secrets must remain server-side, outside Git, outside container images, and outside frontend artifacts, with restrictive filesystem permissions; no cloud-vendor secret manager is required for the MVP/pilot baseline.
+- Operational resource visibility (disk, memory, CPU, PostgreSQL health, backup success/failure) must exist before meaningful pilot use.
+- Deployment must use an immutable/versioned release identity (a Git commit SHA or image digest); mutable `latest` is not the authoritative release identity.
+- MVP/pilot deployment is a single Linux VPS and therefore one infrastructure failure domain; this limitation must remain explicit rather than implied away by degradation policy.
+
 ### Curriculum Integrity and Reliability Requirements
 
 - Runtime grounding uses only activated controlled `Curriculum Corpus Version` data ([ADR-0015](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)).
@@ -251,6 +264,7 @@ Before a classroom pilot:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.9` | `2026-09-08` | Add deployment portability, HTTPS, non-public database, off-host backup, secret-protection, resource-visibility, and immutable-release requirements; acknowledge single-VPS failure domain for the portable MVP/pilot deployment baseline (ADR-0019) | Claude |
 | `0.8` | `2026-09-07` | Add AI generation gateway requirements for the OpenRouter bounded-generation baseline (ADR-0017) | Claude |
 | `0.7` | `2026-09-07` | Add Mathematics validator requirements for the scoped deterministic exact-arithmetic baseline (ADR-0016) | Claude |
 | `0.6` | `2026-09-07` | Add curriculum integrity/reliability requirements for the versioned controlled corpus baseline (ADR-0015) | Claude |

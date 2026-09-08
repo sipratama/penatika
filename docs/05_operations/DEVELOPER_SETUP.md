@@ -28,6 +28,8 @@ AI generation architecture is selected: OpenRouter as the controlled generative-
 
 Contract strategy is selected: contract-first OpenAPI 3.1.x for synchronous HTTP and JSON Schema Draft 2020-12 for justified reusable wire schemas. Redocly CLI is the baseline OpenAPI lint/bundle tool. AsyncAPI 3.1.x remains conditional on OAD-005. No field-level contracts exist, and contract tooling is not installed or configured yet.
 
+Deployment architecture is selected: a portable single-Linux-VPS MVP/pilot baseline — Ubuntu Server 24.04 LTS, Docker Engine + Docker Compose, Caddy as reverse proxy/HTTPS entry point, PostgreSQL colocated on the same host for `PILOT`, an off-host backup boundary, and a `LOCAL`/`PILOT`/`PROD` environment model — initially deployed on Tencent Cloud Lighthouse, Jakarta, as a replaceable provider ([ADR-0019](../02_architecture/adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md)). No VPS is provisioned, no Dockerfile exists, no Compose file exists, no Caddyfile exists, no GitHub Actions workflow exists, no GHCR pipeline exists, no deployment credential exists, and no backup implementation exists yet. This documentation change provisions no production/pilot infrastructure.
+
 Identity architecture is selected: OpenID Connect Authorization Code flow with
 PKCE `S256`, the Penatika Backend as confidential OIDC client/relying party,
 and backend-managed browser sessions. Penatika has no local teacher password
@@ -84,6 +86,7 @@ Resolve and record at minimum:
 - realtime protocol;
 - contract formats and tooling — resolved by ADR-0010; field-level contracts remain pending;
 - speech recognition provider strategy;
+- deployment platform, environments, and secret-management approach — resolved by ADR-0019 (portable single-Linux-VPS baseline, initially Tencent Cloud Lighthouse Jakarta); VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, and backup implementation remain pending;
 - local secret/configuration approach.
 
 Material decisions require ADRs where defined by `AGENTS.md`.
@@ -114,14 +117,17 @@ When source exists, this document must add exact, executed instructions for:
 Frontend and backend source have not been scaffolded, and no dependency
 installation or application run commands exist. Physical identity/session
 implementation, concrete OIDC provider, physical database schema/migrations,
-field-level contracts, other providers, deployment, build tool, JDK
-distribution, exact framework patches, and exact contract-tool pins remain
-open.
+field-level contracts, other providers, build tool, JDK distribution, exact
+framework patches, and exact contract-tool pins remain open. Deployment
+architecture is selected (ADR-0019), but VPS provisioning, Dockerfile,
+Compose file, Caddy configuration, CI/CD pipeline, deployment credentials,
+and backup implementation remain open.
 
 ## 9. Change Log
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-08` | Record portable single-Linux-VPS MVP/pilot deployment baseline (ADR-0019) without adding Dockerfile, Compose, Caddy, or CI/CD commands | Claude |
 | `2026-09-07` | Record OpenRouter bounded-generation AI baseline (ADR-0017) without adding AI SDK, API key, or dependency-install commands | Claude |
 | `2026-09-07` | Record scoped deterministic Mathematics validator baseline (ADR-0016) without adding validator source, parser, or dependency-install commands | Claude |
 | `2026-09-07` | Record controlled versioned curriculum corpus baseline (ADR-0015) without adding corpus/import/local setup commands | Claude |

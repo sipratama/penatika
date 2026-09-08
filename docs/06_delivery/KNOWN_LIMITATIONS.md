@@ -5,7 +5,8 @@
 ## Current Repository Limitations
 
 - No application source code or executable prototype exists; client and backend architecture are selected but not scaffolded.
-- The backend baseline is Java 21 LTS + Spring Boot 4.x with module-first Hexagonal Architecture; persistence technology is selected as PostgreSQL 18.x + Flyway 13.x + Spring JDBC/JdbcClient (ADR-0014), but physical schema, SQL migration files, indexes, query implementation, and runtime data access do not yet exist; identity architecture is OIDC with backend-managed browser sessions, but the JDK distribution, exact framework patch, build tool, concrete OIDC provider, physical browser-session schema/representation, expiry/index design and implementation, other providers, field-level contracts, backup/recovery, managed database deployment, and deployment platform are not selected.
+- The backend baseline is Java 21 LTS + Spring Boot 4.x with module-first Hexagonal Architecture; persistence technology is selected as PostgreSQL 18.x + Flyway 13.x + Spring JDBC/JdbcClient (ADR-0014), but physical schema, SQL migration files, indexes, query implementation, and runtime data access do not yet exist; identity architecture is OIDC with backend-managed browser sessions, but the JDK distribution, exact framework patch, build tool, concrete OIDC provider, physical browser-session schema/representation, expiry/index design and implementation, other providers, field-level contracts, and backup/recovery implementation are not selected; managed database deployment is not selected.
+- Deployment architecture is selected (ADR-0019: portable single-Linux-VPS baseline, Docker Engine + Docker Compose, Caddy, colocated PostgreSQL for PILOT, off-host backup boundary, LOCAL/PILOT/PROD environments, initially Tencent Cloud Lighthouse Jakarta as a replaceable provider), but: no VPS is provisioned; no Dockerfile exists; no Compose deployment exists; no Caddy configuration exists; no CI/CD exists; no deployment credential exists; no backup implementation exists; no restore evidence exists; no final domain is selected; no real provider activation evidence exists; no production architecture is defined; and no physical capacity benchmark exists. Single VPS remains one infrastructure failure domain for MVP/pilot.
 - Contract strategy is selected, but no field-level OpenAPI or JSON Schema contract exists yet; AsyncAPI remains inactive per ADR-0012 — future SSE push contracts, if formalized, use OpenAPI + JSON Schema rather than AsyncAPI.
 - Developer setup contains no application install/run commands.
 - Deployment, runbook, and release checklist remain conditional.
@@ -31,7 +32,7 @@
 - Formal accessibility target.
 - Identity architecture is selected, but the concrete OIDC provider, physical browser-session schema/representation, expiry/index design, deployment configuration, exact cookie/CSRF details, and field-level auth contracts are not implemented.
 - Field-level contracts.
-- Remaining persistence, identity, AI, and speech implementation work (physical schema, credentials, evaluation evidence). OAD-010 (deployment platform, environments, secret management, regional requirements) is the only unconditional architecture decision still `NEXT`; OAD-011 (background execution/queue) remains `CONDITIONAL` on measured evidence.
+- Remaining persistence, identity, AI, speech, and deployment implementation work (physical schema, credentials, evaluation evidence, VPS provisioning, CI/CD, backup). All unconditional architecture decisions (OAD-001 through OAD-010, and OAD-012) are now resolved; OAD-011 (background execution/queue) remains `CONDITIONAL` on measured evidence.
 - Numerical latency/reliability targets where evidence is required.
 
 ## Trust and Quality Limitations
