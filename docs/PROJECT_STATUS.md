@@ -23,9 +23,9 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.1 |
-| Last Updated | 2026-09-06 |
-| Current Phase | Architecture & Technology Decisioning |
+| Version | 0.15 |
+| Last Updated | 2026-09-08 |
+| Current Phase | Architecture Foundation Complete — Merge Ready |
 | Implementation State | Pre-source / Pre-scaffolding |
 | Product Owner | sipratama |
 
@@ -57,9 +57,10 @@ created.
 | Data-lifecycle policy | COMPLETE | [DATA_RETENTION_POLICY.md](./06_delivery/DATA_RETENTION_POLICY.md) |
 | First-pilot definition | COMPLETE | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) |
 | Pendago legacy review | COMPLETE | [PENDAGO_MIGRATION_REVIEW.md](./06_delivery/PENDAGO_MIGRATION_REVIEW.md) |
-| Initial architecture principles | ESTABLISHED | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) + ADR-0001–ADR-0007 |
-| Architecture / technology decisions | ACTIVE | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) OAD-001–OAD-012 |
-| Field-level contracts | PENDING | create only after relevant OAD decisions |
+| Initial architecture principles | ESTABLISHED | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) + Accepted ADR register |
+| Architecture / technology decisions | COMPLETE (unconditional) | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md); OAD-011 remains CONDITIONAL |
+| Contract strategy | COMPLETE | [ADR-0010](./02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md) / [contracts](../contracts/README.md) |
+| Field-level contracts | PENDING | identity and realtime transport semantics are now selected (ADR-0011, ADR-0012); field-level OpenAPI/JSON Schema work has not started |
 | Source scaffolding | PENDING | after blocking OADs/contracts |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
@@ -97,18 +98,18 @@ tracks status only and does not redefine the OAD descriptions.
 
 | ID | Decision | Status |
 |---|---|---|
-| OAD-001 | Client application strategy and frontend framework(s) | NEXT |
-| OAD-002 | Backend language and framework | NEXT |
-| OAD-003 | Database and migration technology | PENDING |
-| OAD-004 | Identity, authentication, and account model | PENDING |
-| OAD-005 | Realtime transport and reconnect protocol | PENDING |
-| OAD-006 | AI provider/model strategy and fallback | PENDING |
-| OAD-007 | Speech recognition strategy | PENDING |
-| OAD-008 | Mathematics validator approach per content type | PENDING |
-| OAD-009 | Curriculum ingestion, normalization, integrity/versioning, local-context modeling, and retrieval | PENDING |
-| OAD-010 | Deployment platform, environments, secret management, and regional requirements | PENDING |
+| OAD-001 | Client application strategy and frontend framework(s) | COMPLETE |
+| OAD-002 | Backend language and framework | COMPLETE |
+| OAD-003 | Database and migration technology | COMPLETE |
+| OAD-004 | Identity, authentication, and account model | COMPLETE |
+| OAD-005 | Realtime transport and reconnect protocol | COMPLETE |
+| OAD-006 | AI provider/model strategy and fallback | COMPLETE |
+| OAD-007 | Speech recognition strategy | COMPLETE |
+| OAD-008 | Mathematics validator approach per content type | COMPLETE |
+| OAD-009 | Curriculum ingestion, normalization, integrity/versioning, local-context modeling, and retrieval | COMPLETE |
+| OAD-010 | Deployment platform, environments, secret management, and regional requirements | COMPLETE |
 | OAD-011 | Background execution and queue needs | CONDITIONAL |
-| OAD-012 | Contract protocols and schema tooling | PENDING |
+| OAD-012 | Contract protocols and schema tooling | COMPLETE |
 
 OAD-011 remains evidence-triggered and must not be selected merely because a
 queue is common or familiar.
@@ -118,16 +119,85 @@ The exact OAD definitions and `Needed Before` rules remain authoritative in
 
 Architecture reasoning is not duplicated here.
 
+OAD-002's current implementation baseline is
+[ADR-0013](./02_architecture/adr/ADR-0013-java21-module-first-hexagonal-backend.md):
+Java 21 LTS + Spring Boot 4.x + module-first Hexagonal Architecture.
+[ADR-0009](./02_architecture/adr/ADR-0009-java-spring-boot-backend.md) is
+historical/superseded.
+
+OAD-003 is resolved by
+[ADR-0014](./02_architecture/adr/ADR-0014-postgresql-flyway-sql-first-persistence.md):
+PostgreSQL 18.x + Flyway 13.x + Spring JDBC/JdbcClient SQL-first persistence
+adapters behind module-owned output ports (ADR-0013's Hexagonal persistence
+boundary). No JPA/Hibernate, Redis, cache, or vector database is selected.
+
+OAD-009 is resolved by
+[ADR-0015](./02_architecture/adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md):
+a controlled, versioned, human-verified curriculum corpus with deterministic
+metadata-first retrieval. Runtime authority never depends on AI model
+memory, live web retrieval, or vector/embedding similarity. No vector
+database is selected; Official Guidance substantial content remains
+unactivated pending licensing/usage review.
+
+OAD-008 is resolved by
+[ADR-0016](./02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md):
+scoped deterministic validators (`EXACT_RATIONAL`, `AFFINE_EXPRESSION`,
+`LINEAR_EQUATION`) using exact rational arithmetic for the Grade 5
+Fractions / Grade 7 Basic Algebra / Linear Equations pilot scope. No
+general-purpose CAS, external mathematical service, or LLM-as-validator is
+selected; deterministic validation requires no network dependency.
+
+OAD-006 is resolved by
+[ADR-0017](./02_architecture/adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md):
+OpenRouter as the initial controlled generative-model gateway behind a
+Penatika-owned `GenerativeModelPort`, server-owned `ROUTER`/`FAST`/`QUALITY`
+model profiles, a pre-provider scope/capability/resource pipeline that
+rejects unsupported and over-scale requests before expensive generation, an
+application-owned per-teacher daily AI allowance with atomic usage
+reservation, privacy-constrained provider routing (`zdr=true`,
+`data_collection=deny`, no unapproved automatic fallback), and graceful
+degradation as the MVP fallback policy. This also resolves the pre-provider
+request-scope/budget-control and per-teacher usage-accounting concern
+previously flagged against OAD-006.
+
+OAD-007 is resolved by
+[ADR-0018](./02_architecture/adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md):
+Deepgram Nova-3 (Indonesian, AU regional endpoint, `mip_opt_out=true`) as
+the initial speech provider, backend-mediated pre-recorded/completed-
+utterance push-to-talk transcription with browser `MediaRecorder` capture,
+deterministic `DIRECT_ACTION`-first transcript routing that falls back to
+the ADR-0017 semantic pipeline only when no direct action matches, raw
+audio excluded from durable storage and from the generative gateway, and
+speech usage/cost tracked separately from the generative `AIAllowanceWindow`.
+
+OAD-010 is resolved by
+[ADR-0019](./02_architecture/adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md):
+a portable single-Linux-VPS MVP/pilot deployment baseline — Docker Engine +
+Docker Compose, Caddy for HTTPS, PostgreSQL colocated on the same host for
+`PILOT`, an off-host backup boundary, and a `LOCAL`/`PILOT`/`PROD`
+environment model — initially deployed on Tencent Cloud Lighthouse,
+Jakarta, as a replaceable provider. The architecture decision (deployment
+class) is locked; the provider and commercial plan remain explicitly
+replaceable and are not treated as architecture. No VPS is provisioned, and
+no Dockerfile, Compose file, Caddy configuration, CI/CD pipeline, or backup
+implementation exists yet.
+
 ## Immediate Next Step
 
-Immediate next decision work:
+All unconditional architecture decisions (OAD-001 through OAD-010, and
+OAD-012) are COMPLETE; OAD-011 remains CONDITIONAL and is not activated
+merely because deployment orchestration exists. The Architecture Foundation
+Checkpoint + Merge Readiness Audit has passed — see
+[Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md).
+The immediate next work is:
 
-1. OAD-001 — Client Application Strategy
-2. OAD-002 — Backend Language and Framework
+1. Merge `feat/architecture-foundation` into `main`.
 
-These decisions establish the implementation platform boundaries needed before
-source scaffolding. Later OAD sequencing will follow dependency and evidence
-requirements.
+This is a deliberate, human-reviewed merge action; it is not performed
+automatically by the checkpoint/audit task itself. Field-level contracts and
+source scaffolding remain PENDING until after that merge. After the merge,
+the next phase is Field-Level Contract Foundation — NOT source scaffolding.
+`SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
 
@@ -135,12 +205,14 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 ### Architecture / Implementation
 
-- OAD-001 through OAD-012 as applicable;
+- OAD-011 as applicable (CONDITIONAL only);
+- Architecture Foundation Checkpoint + Merge Readiness Audit;
 - field-level structured contracts;
 - physical persistence model/migrations;
 - identity implementation;
-- reconnect/transport protocol;
-- provider integrations.
+- realtime/reconnect transport implementation;
+- provider integrations;
+- deployment implementation evidence (VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, backup) per ADR-0019.
 
 ### UX / Compatibility
 
@@ -168,6 +240,24 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 - unit-economics evidence;
 - willingness-to-pay evidence;
 - commercial launch gates.
+
+## Latest Handoff Checkpoint
+
+[Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md)
+records the final state of the Architecture Foundation phase: every
+unconditional OAD resolved, the ADR register audited, the template validator
+closed out, and branch ancestry/merge-conflict-free status confirmed against
+`origin/main`. It is a non-authoritative handoff snapshot and does not
+replace the canonical project, product, architecture, ADR, contract, or
+policy documents.
+
+The prior [Architecture Foundation Checkpoint — After OAD-004](./checkpoints/2026-09-07-architecture-foundation-after-oad004.md)
+remains historical and is retained unmodified. It predates ADR-0013 and
+ADR-0019; any Java 25 or "deployment not selected" reference in that
+checkpoint reflects the state at its own creation and is superseded by the
+current canonical architecture (ADR-0013: Java 21 LTS; ADR-0019: portable
+single-Linux-VPS deployment). Neither checkpoint document is modified after
+creation.
 
 ## AI / Contributor Reading Route
 

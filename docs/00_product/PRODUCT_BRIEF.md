@@ -292,7 +292,7 @@ Diagnostic metrics include proposal decisions, p50/p95 AI and transcription late
 ### Technology Constraints
 
 - Backend-managed classroom state adalah constraint yang sudah dikonfirmasi.
-- Programming language, framework, database, cloud provider, deployment target, identity solution, realtime transport, AI provider, dan speech provider belum diputuskan.
+- Programming language, framework, database, cloud provider/deployment target, identity solution, realtime transport, AI provider, dan speech provider sudah dipilih melalui Accepted ADR (lihat System Architecture); physical implementation, credentials, dan operational evidence masih tertunda.
 
 ---
 

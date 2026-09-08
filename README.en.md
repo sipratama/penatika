@@ -53,16 +53,24 @@ Initial validation work prioritizes Grade 5 fractions and Grade 7 basic algebra 
 |---|---|
 | Base profile | `fullstack` |
 | Modifier | `ai-enabled` |
-| Initial backend shape | Modular monolith with explicit domain modules |
+| Backend | Java 21 LTS + Spring Boot 4.x module-first Hexagonal modular monolith |
+| Persistence | PostgreSQL 18.x + Flyway 13.x + Spring JDBC/JdbcClient SQL-first adapters |
+| Curriculum | Controlled versioned curriculum corpus with deterministic metadata-first retrieval; no live-web/vector authority |
+| Mathematics validator | Scoped deterministic exact-rational and one-variable affine/linear validation; unsupported Mathematics remains explicit; AI is not correctness authority |
 | Classroom state | Backend-authoritative and revision-aware |
 | Classroom content | Versioned structured model; no arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; not an authority |
+| AI generation gateway | OpenRouter as the controlled generative-model gateway; server-owned ROUTER/FAST/QUALITY model profile; bounded capability/resource guard and per-teacher daily AI allowance before expensive generation |
+| Speech recognition | Backend-mediated Deepgram Nova-3 (Indonesian) push-to-talk; completed utterance only, not always-listening; DIRECT_ACTION-first transcript routing before semantic AI |
 | Mathematics trust | Deterministic validation for supported scope |
 | Curriculum trust | BSKAP 046/H/KR/2025 as the Mathematics normative authority; official guidance is interpretive and local context is an overlay |
 | Product Owner | `sipratama` |
 | Business Model | Teacher-first freemium SaaS; Teacher Pro as the first paid offer; institutional path later |
-| Implementation stack | Not decided |
-| Deployment target | Not decided |
+| Client strategy | Browser-first React + TypeScript + Vite |
+| Client surfaces | Teacher Web (Preparation + Controller) and separate Classroom Display Web |
+| Identity | OIDC Authorization Code + PKCE with backend-managed browser sessions; provider not yet selected |
+| Contract strategy | Contract-first OpenAPI 3.1.x + JSON Schema 2020-12; realtime transport is resolved by ADR-0012, AsyncAPI remains inactive |
+| Deployment target | MVP/pilot: portable single Ubuntu Linux VPS + Docker Compose + Caddy, initially Tencent Cloud Lighthouse Jakarta as a replaceable provider (ADR-0019) |
 
 Material decisions are recorded in [`docs/02_architecture/adr/`](./docs/02_architecture/adr/).
 
@@ -77,6 +85,10 @@ The repository does not yet contain application source code, package manifests, 
 ### Project Status
 
 - [Project Status](./docs/PROJECT_STATUS.md) — current project phase, completed milestones, and pending architecture work.
+
+### Architecture Handoff Checkpoint
+
+- [Checkpoint after OAD-004](./docs/checkpoints/2026-09-07-architecture-foundation-after-oad004.md) — historical cross-device/AI handoff snapshot; canonical documents remain authoritative.
 
 ### Product
 
@@ -139,17 +151,11 @@ This validator checks local Markdown links and unresolved core metadata placehol
 
 ## Open Architecture and Implementation Decisions
 
-- Curriculum ingestion, provenance contracts, local-context modeling, and official-guidance usage/licensing.
-- Client/frontend strategy.
-- Backend language/framework.
-- Persistence and migration technology.
-- Identity/authentication.
-- Realtime transport and reconnect protocol.
-- AI provider/model strategy.
-- Speech recognition strategy.
-- Mathematics validator approach.
-- Contract protocols/schema tooling and field-level contracts.
-- Deployment environment and secret management.
+- Curriculum corpus data/import artifact does not exist yet (architecture is selected: controlled versioned corpus, see ADR-0015); the Official Guidance licensing review remains pending.
+- Physical persistence schema and migrations (technology is selected: PostgreSQL + Flyway).
+- Concrete OIDC provider, physical session schema/representation, and expiry/index implementation.
+- Field-level contract definitions.
+- Deployment implementation evidence: VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, backup (architecture is selected: see ADR-0019).
 - Evidence-driven device/accessibility/performance targets where relevant.
 
 See the Product Brief, PRD, System Architecture, Risks, and Known Limitations for the complete decision record and timing.

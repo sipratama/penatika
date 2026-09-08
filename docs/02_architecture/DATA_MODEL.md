@@ -8,9 +8,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft conceptual baseline |
-| Version | `0.2` |
-| Last Updated | `2026-09-06` |
-| Database Technology | Open Architecture Decision |
+| Version | `0.8` |
+| Last Updated | `2026-09-08` |
+| Database Technology | PostgreSQL 18.x |
 
 ## 1. Modeling Principles
 
@@ -23,6 +23,7 @@
 - Model retention by purpose and data class rather than applying one indefinite history policy to every entity.
 - Distinguish active data, deletion processing, primary-store purge, and backup expiry without claiming completed deletion prematurely.
 - Add physical schema and migrations only after persistence technology is selected.
+- This document remains CONCEPTUAL: no physical schema exists yet, even though the persistence technology (PostgreSQL, Flyway, Spring JDBC/JdbcClient) is now selected by [ADR-0014](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md).
 
 ### Conceptual Retention State
 
@@ -39,12 +40,71 @@ This is a conceptual baseline. It does not require every entity to carry identic
 
 ## 2. Core Concepts
 
-### Teacher Identity
+### TeacherAccount
 
-Represents the teacher principal used for ownership and authorization. Teacher account/profile data remains active until teacher-requested deletion or legitimate account closure under future policy. Normal access is revoked immediately on account deletion, teacher-owned personal product data is deleted or anonymized from primary active storage within `30 days`, and protected backup copies expire within `30 additional days` unless a documented narrow preservation requirement applies. Exact account fields, identity provider linkage, and organization membership remain open.
+Represents the stable internal Penatika teacher identity used for ownership and
+authorization.
+
+Known conceptual attributes:
+
+- stable Penatika account identity;
+- lifecycle state equivalent to `ACTIVE`, `DISABLED`, `DELETION_REQUESTED`, or
+  `CLOSED`;
+- minimal profile/contact attributes legitimately required by the product;
+- ownership references for lessons, classroom sessions, and teacher data;
+- account, security, and deletion audit metadata required by policy.
+
+No local password, password hash, password-reset token, recovery question, or
+local credential-MFA field is required for MVP. Teacher account/profile data
+remains active until teacher-requested deletion or legitimate account closure.
+Normal access is revoked immediately on accepted account deletion,
+teacher-owned personal product data is deleted or anonymized from primary
+active storage within `30 days`, and protected backup copies expire within
+`30 additional days` unless a documented narrow preservation requirement
+applies.
 
 **Owner:** Identity and Access module
 **Classification:** Personal data
+
+### ExternalIdentityLink
+
+Associates a `TeacherAccount` with one validated upstream OIDC identity.
+
+Known conceptual attributes:
+
+- owning `TeacherAccount`;
+- validated OIDC issuer (`iss`);
+- validated OIDC subject (`sub`);
+- minimal required provider-link metadata;
+- lifecycle or unlinking state where later supported.
+
+The `(issuer, subject)` pair is unique and is the authoritative external
+identity key. Email address, display name, and provider username are not stable
+identity keys. Multiple links may be modeled for future explicit account
+linking, but email-based or automatic cross-provider merging is prohibited.
+
+**Owner:** Identity and Access module
+**Classification:** Personal data
+
+### Authenticated Browser Session
+
+Represents revocable server-managed authentication for Teacher Web.
+
+Known conceptual attributes:
+
+- opaque session identity/reference;
+- authenticated `TeacherAccount`;
+- created, last-active, idle-expiry, and absolute-expiry concepts;
+- revocation and logout state;
+- security context required to validate the browser session.
+
+The browser receives only an opaque protected session reference. Upstream
+OAuth/OIDC access, refresh, and ID tokens remain server-side and are not
+ordinary teacher profile or domain data. Their exact secure storage remains an
+implementation decision.
+
+**Owner:** Identity and Access module
+**Classification:** Secret security state
 
 ### Lesson
 
@@ -102,19 +162,46 @@ Known conceptual attributes:
 
 A successfully saved session is eligible for retained teacher history for `90 days` after session end/save and may be deleted earlier by the teacher.
 
-### Session Participant
+### PairingGrant
 
-Represents an authorized participant and role in a session, such as teacher controller or classroom display.
+Represents a short-lived single-use authorization grant for joining one
+classroom session in one intended participant role.
 
 Known conceptual attributes:
 
-- participant identity or session-scoped identity;
+- classroom session identity;
+- intended participant role/purpose;
+- issued and expiry timestamps;
+- single-use redemption state;
+- revocation state;
+- secret verification material that does not require reusable plaintext.
+
+The initial MVP lifetime is five minutes. Successful redemption, explicit
+revocation, expiry, or classroom-session end invalidates the grant.
+
+**Owner:** Identity and Access with Classroom Session coordination
+**Classification:** Secret
+
+### SessionParticipant
+
+Represents an authorized session-scoped participant, separate from product
+account identity.
+
+Known conceptual attributes:
+
+- session-scoped participant identity;
 - session identity;
-- role;
+- role: `TEACHER_CONTROLLER` or `CLASSROOM_DISPLAY`;
 - authorization state;
+- linked `TeacherAccount` and browser-session authorization where required for
+  a teacher controller;
+- replacement and revocation state;
 - joined, last-seen, disconnected, and revoked timestamps where needed.
 
-Pairing credentials are separate ephemeral secrets and are not stored as reusable plaintext.
+`CLASSROOM_DISPLAY` has no teacher-account authority. A
+`TEACHER_CONTROLLER` requires an active authenticated teacher and classroom-
+session authorization. MVP permits at most one active mutation-authorized
+controller and one active display participant per classroom session.
 
 **Owner:** Identity and Access with Classroom Session coordination
 
@@ -180,44 +267,266 @@ Known conceptual attributes:
 
 Rejected, regenerated, abandoned, failed, and blocked proposal bodies are transient by default and may use at most the `24-hour` diagnostic window where necessary. Privacy-minimized lifecycle and teacher-decision metadata may follow an associated saved session for up to `90 days`. Accepted structured content follows the lifecycle of the lesson/session artifact it becomes part of; a redundant raw-provider copy is not retained.
 
+### AI Generation
+
+Represents one provider-facing generation attempt submitted to the OpenRouter
+gateway on behalf of a lesson-generation flow or an `Adaptation Request`. Per
+[ADR-0017](./adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md).
+
+Known conceptual attributes:
+
+- generation identity;
+- owning teacher reference;
+- supported capability;
+- model profile (`ROUTER`, `FAST`, or `QUALITY`);
+- `GenerationPolicyVersion`;
+- `PromptPolicyVersion`;
+- output schema version;
+- gateway/model slug and selected upstream provider route where known;
+- lifecycle/result state (for example, requested, reserved, in-flight, completed, failed, rejected);
+- provider correlation identity excluding secrets;
+- relevant curriculum corpus version and Mathematics validator version references where applicable;
+- created and completed timestamps.
+
+**Owner:** AI Orchestration module
+
+Full prompt and full provider response bodies are not retained as part of an
+`AI Generation` record; only the bounded metadata above is retained for
+traceability. An `AI Generation` never becomes authoritative by existing — it
+produces at most an `AI Proposal` that still requires schema, policy,
+curriculum, and Mathematics checks before any publication decision.
+
+### AI Allowance Window
+
+Represents one teacher's application-owned AI usage allowance for a bounded
+period (the MVP baseline is daily). Per ADR-0017.
+
+Known conceptual attributes:
+
+- owning `TeacherAccount`;
+- window identity and period (for example, the current daily window);
+- allowance granted for the window;
+- allowance consumed/reserved so far;
+- window start and reset timestamps;
+- exhausted state.
+
+**Owner:** AI Orchestration module, coordinating with Identity and Access
+
+An `AI Allowance Window` is the teacher-facing quota source of truth. It is
+independent of any OpenRouter API-key limit or provider credit balance, which
+remain infrastructure-level circuit breakers rather than the product quota.
+
+### AI Usage Reservation
+
+Represents an atomic bounded-allowance hold created before an expensive
+generation call and reconciled after actual provider usage/cost is known. Per
+ADR-0017.
+
+Known conceptual attributes:
+
+- reservation identity;
+- owning `AI Allowance Window` and associated `AI Generation`;
+- reserved allowance amount;
+- reservation state (for example, held, released, reconciled, expired);
+- creation and reconciliation timestamps.
+
+**Owner:** AI Orchestration module
+
+A reservation prevents concurrent requests from observing the same remaining
+allowance. If a request is rejected before provider invocation, no
+reservation is created. If a reserved request fails before provider usage,
+the reservation may be released; if the outcome is uncertain, the reservation
+remains in a conservative pending state until reconciled.
+
+### AI Usage Event
+
+Represents one privacy-minimized usage/cost record for a completed or failed
+generation attempt. Per ADR-0017.
+
+Known conceptual attributes:
+
+- event identity;
+- teacher/account internal reference;
+- associated `AI Generation` identity;
+- supported capability;
+- model profile and model slug;
+- actual upstream provider route where available;
+- status;
+- input token count;
+- output token count;
+- gateway-reported cost;
+- reservation/reconciliation result;
+- retry state;
+- rejection category where applicable;
+- timestamp.
+
+**Owner:** AI Orchestration module
+
+Full prompt, full provider response, and raw audio are not required to be
+stored in an `AI Usage Event`. Applicable metadata follows
+[DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md).
+
+### Speech Recognition Request
+
+Represents one backend-mediated push-to-talk transcription attempt submitted
+to the speech provider. Per
+[ADR-0018](./adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md).
+
+Known conceptual attributes:
+
+- speech request identity;
+- teacher/session binding;
+- provider and speech model;
+- language;
+- `SpeechPolicyVersion` and `SpeechLexiconVersion` references;
+- lifecycle status (for example, uploaded, transcribing, completed, failed, rejected);
+- provider correlation identity where safe.
+
+**Owner:** AI Orchestration module (Speech Recognition adapter boundary)
+
+Raw audio is never modeled as durable data for a `Speech Recognition
+Request`; the request's role ends once transcription completes or fails and
+downstream routing (direct action, semantic pipeline, or clarification)
+takes over.
+
+### Speech Usage Event
+
+Represents one privacy-minimized usage/cost record for a completed or failed
+speech recognition attempt. Per ADR-0018.
+
+Known conceptual attributes:
+
+- event identity;
+- teacher/account internal reference;
+- associated `Speech Recognition Request` identity;
+- audio duration;
+- audio container/codec category;
+- transcription outcome;
+- latency;
+- provider, speech model, and provider region;
+- billed/estimated speech cost;
+- routing outcome (`DIRECT_ACTION`, `SEMANTIC_AI`, `CLARIFICATION`, `REJECTED`);
+- failure/resource-rejection category where applicable;
+- timestamp.
+
+**Owner:** AI Orchestration module
+
+Raw audio and a durable full transcript are not required to be stored in a
+`Speech Usage Event`. Speech usage is tracked independently of `AI Usage
+Event`/`AI Allowance Window`; a `Speech Usage Event` routed to
+`DIRECT_ACTION` does not imply any generative AI allowance consumption.
+
 ### Mathematics Validation Result
 
-Reproducible assurance record for supported content.
+Reproducible assurance record for supported content. Per
+[ADR-0016](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md).
 
 Known conceptual attributes:
 
 - result identity;
-- content identity and version;
-- normalized validation input;
-- validator and rule version;
-- status: valid, invalid, unsupported, inconclusive, or error;
-- bounded diagnostic and timestamp.
+- content/claim identity and content version;
+- validator family (for example, `EXACT_RATIONAL`, `AFFINE_EXPRESSION`, `LINEAR_EQUATION`);
+- validator/ruleset version;
+- normalized mathematical representation where safe/useful;
+- validation status: valid, invalid, unsupported, inconclusive, or error;
+- bounded diagnostic;
+- validation timestamp.
 
 **Owner:** Mathematics Assurance module
 
 Assurance references required to explain or reproduce retained accepted content follow the owning lesson/session lifecycle. Unaccepted content retains only privacy-minimized result metadata where needed for bounded diagnostics or pilot evidence.
 
-### Curriculum Source Version
+### Curriculum Source
 
-Controlled reference describing curriculum authority level, origin, and version.
+Stable controlled source identity, independent of any particular version. Per
+[ADR-0015](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md).
 
 Known conceptual attributes:
 
-- authority level: `NORMATIVE`, `OFFICIAL_GUIDANCE`, or `LOCAL_CONTEXT`;
-- stable source identity, title, and source version or decision number;
-- jurisdiction, subject, phase or effective scope, and relevant reference identity;
-- retrieval or matching provenance;
-- local-context identity/version when applicable;
-- integrity and licensing metadata;
-- activation status.
+- authority level and source kind;
+- stable source identifier and official title;
+- issuing authority and jurisdiction;
+- subject;
+- official location/reference;
+- applicable scope;
+- content-use / licensing review status.
 
 **Owner:** Curriculum module
 
-Controlled curriculum source/version metadata may be archived beyond teacher-content retention for provenance, integrity, supersession tracking, and historical reproducibility. Teacher-specific or local-context data follows teacher-owned data policy.
+A registered source is not automatically active; registration is metadata
+acquisition, not authority activation.
+
+### Curriculum Source Version
+
+One immutable official source version belonging to a `Curriculum Source`.
+
+Known conceptual attributes:
+
+- owning `Curriculum Source`;
+- official version / decision number;
+- publication/effective metadata where applicable;
+- subject and applicable phase/scope;
+- acquisition provenance;
+- source-artifact integrity digest (SHA-256 baseline);
+- verification, activation, and supersession state.
+
+**Owner:** Curriculum module
+
+Controlled curriculum source/version metadata may be archived beyond teacher-content retention for provenance, integrity, supersession tracking, and historical reproducibility. Teacher-specific or local-context data follows teacher-owned data policy. Large source binaries are not required to be stored in the primary database; raw-artifact archival remains a separate implementation/operations decision.
+
+### Curriculum Corpus Version
+
+Penatika's own immutable normalization of one or more `Curriculum Source Version` records for a defined scope. Distinct from, and versioned separately from, the official source version — a normalization correction does not change the official source version.
+
+Known conceptual attributes:
+
+- corpus identity/version;
+- source-version references;
+- normalization/schema version;
+- corpus integrity digest;
+- creation/review information;
+- validation, activation, and supersession state.
+
+**Owner:** Curriculum module
+
+Once activated, a corpus version is immutable. A correction creates a new `Curriculum Corpus Version`; the old version is not edited in place, and historical lesson provenance remains bound to the corpus version that was active when it was created.
+
+### Curriculum Entry
+
+Atomic grounding unit inside a `Curriculum Corpus Version`. The unit boundary preserves curriculum meaning and source reference rather than arbitrary chunking.
+
+Known conceptual attributes:
+
+- owning `Curriculum Corpus Version`;
+- authority level;
+- subject and phase/scope;
+- curriculum element/domain where applicable;
+- controlled source reference;
+- normalized topic classification and controlled topic aliases/bindings;
+- source-supported statement/content allowed by source policy;
+- source/corpus provenance.
+
+**Owner:** Curriculum module
+
+### Local Curriculum Context Version
+
+Teacher-owned `LOCAL_CONTEXT` overlay (for example, ATP sequencing, KSP/KOSP-derived context, or explicit teacher sequencing decisions).
+
+Known conceptual attributes:
+
+- owning `TeacherAccount`;
+- explicit `LOCAL_CONTEXT` classification;
+- version and lifecycle state;
+- sequencing/context content;
+- traceability reference when used for lesson grounding.
+
+**Owner:** Curriculum module, teacher-authorized
+
+Local context can never mutate or be promoted to `NORMATIVE` corpus entries. When local context affects sequencing without contradicting the normative source, both provenances are retained; a genuine contradiction produces an explicit conflict/warning state rather than a silent merge.
 
 ### Curriculum Reference
 
-Links lesson or content claims to an authority level, controlled curriculum source version, relevant phase/scope, reference identity, retrieval or matching provenance, and optional local-context version.
+Links a retained lesson/content claim to a `Curriculum Source Version`, a `Curriculum Corpus Version`, a `Curriculum Entry`, the relevant phase/scope, retrieval or matching provenance, and an optional `Local Curriculum Context Version`.
 
 **Owner:** Curriculum module
 
@@ -238,17 +547,35 @@ Saved history retains only the allowed stable lesson reference/snapshot, accepte
 ## 3. Relationships
 
 ```text
-Teacher Identity 1 ── * Lesson
+TeacherAccount 1 ── * ExternalIdentityLink
+TeacherAccount 1 ── * Authenticated Browser Session
+TeacherAccount 1 ── * Lesson
 Lesson 1 ── * Lesson Version
 Lesson Version 1 ── * Classroom Session
-Classroom Session 1 ── * Session Participant
+Classroom Session 1 ── * PairingGrant
+Classroom Session 1 ── * SessionParticipant
+TeacherAccount 1 ── 0..* SessionParticipant (TEACHER_CONTROLLER only)
 Classroom Session 1 ── * Classroom Scene revision/state
 Classroom Scene 1 ── * Annotation Operation
 Classroom Session 1 ── * Adaptation Request
+Adaptation Request / Lesson Generation Request 1 ── 1 AI Generation
+AI Generation 1 ── 0..* AI Proposal
+AI Generation 1 ── 0..1 AI Usage Reservation
+AI Generation 1 ── 0..1 AI Usage Event
+TeacherAccount 1 ── * AI Allowance Window
+AI Allowance Window 1 ── * AI Usage Reservation
 Adaptation Request 1 ── 0..* AI Proposal
+TeacherAccount 1 ── * Speech Recognition Request
+Speech Recognition Request 1 ── 0..1 Speech Usage Event
+Speech Recognition Request 1 ── 0..1 Adaptation Request
 Lesson Version / AI Proposal / Scene Element 1 ── 0..* Mathematics Validation Result
 Lesson Version / Scene Element * ── * Curriculum Reference
-Curriculum Reference * ── 1 Curriculum Source Version
+Curriculum Source 1 ── * Curriculum Source Version
+Curriculum Source Version * ── * Curriculum Corpus Version
+Curriculum Corpus Version 1 ── * Curriculum Entry
+Curriculum Reference * ── 1 Curriculum Entry
+Curriculum Reference * ── 0..1 Local Curriculum Context Version
+TeacherAccount 1 ── * Local Curriculum Context Version
 Classroom Session 1 ── 0..* Session Snapshot or Save Record
 ```
 
@@ -261,7 +588,14 @@ Classroom Session 1 ── 0..* Session Snapshot or Save Record
 - Every grounded curriculum claim references an explicit authority level, controlled source, source version, relevant phase/scope, and provenance.
 - A newer curriculum source version does not silently rewrite provenance stored by an existing lesson version.
 - A classroom projection excludes teacher-private fields by construction.
-- An expired or consumed pairing credential cannot authorize a new participant.
+- An external identity resolves by unique validated `(issuer, subject)`; email does not identify or merge accounts.
+- An authenticated browser session and each participant session are revocable.
+- OAuth/OIDC access, refresh, and ID tokens are never browser-stored application credentials or ordinary profile data.
+- Pairing alone cannot authenticate a teacher or grant teacher-account authority.
+- A `CLASSROOM_DISPLAY` participant has no teacher authority.
+- A `TEACHER_CONTROLLER` participant requires an active authenticated teacher authorization.
+- MVP permits at most one active mutation-authorized controller and one active display participant per classroom session.
+- An expired, consumed, or revoked pairing grant cannot authorize a participant and every grant expires after five minutes.
 - A save operation is idempotent for the same session and intended final revision.
 - A retained lesson exists until teacher deletion; deletion processing does not mutate the historical content of stable versions while they remain retained.
 - A saved session expires after `90 days` by default, and retained annotations cannot outlive that owning session.
@@ -269,12 +603,26 @@ Classroom Session 1 ── 0..* Session Snapshot or Save Record
 - Accepted AI content follows the owning lesson/session lifecycle, while rejected or unaccepted proposal bodies do not become durable history.
 - Required assurance and curriculum provenance cannot be independently removed while a retained artifact depends on it.
 - Product state distinguishes ordinary-access removal, primary purge, and backup expiry.
+- An activated `Curriculum Corpus Version` is immutable; a normalization correction creates a new corpus version rather than mutating the activated one in place.
+- A newer official `Curriculum Source Version` does not automatically become active, and source supersession does not rewrite the provenance of previously saved lesson/session `Curriculum Reference` records.
+- A `Local Curriculum Context Version` can never become or override a `NORMATIVE` `Curriculum Entry`.
+- Curriculum retrieval that finds no adequate grounding produces an explicit `NO_MATCH`/`UNGROUNDED` state rather than falling back to unverified AI knowledge.
+- A `Mathematics Validation Result` applies only to the exact content/claim version it evaluated; if that content changes, the prior result becomes stale and must be recalculated against the new version.
+- An `AI Generation` never becomes authoritative merely by completing; it produces at most a non-authoritative `AI Proposal` subject to existing schema/policy/curriculum/Mathematics checks.
+- An expensive generation call requires a prior successful `AI Usage Reservation` against a non-exhausted `AI Allowance Window`; a request rejected before provider invocation consumes no reservation.
+- An `AI Usage Event` does not retain full prompt, full provider response, or raw audio.
+- Raw push-to-talk audio is transient and is never modeled as durable data for a `Speech Recognition Request` or `Speech Usage Event`.
+- A `Speech Recognition Request` result does not by itself authorize an application action; it must still pass deterministic direct-action validation or the ADR-0017 semantic pipeline.
+- A voice request resolved as `DIRECT_ACTION` does not consume `AI Allowance Window`/`AI Usage Reservation`.
+- An unclear or low-confidence transcript cannot create an authoritative action; it produces a clarification/retry state instead.
 
 ## 5. Data Classification
 
 | Data | Classification | Notes |
 |---|---|---|
 | Teacher identity and account metadata | Personal | Retain until account deletion/closure; minimize and protect |
+| External identity issuer/subject link | Personal | Stable external identity key; email is not the key |
+| Authenticated browser and participant sessions | Secret security state | Opaque, bounded, revocable; never log reusable values |
 | Lesson and lesson-version content | Potentially sensitive educational/work product | Retain until teacher deletion; access-controlled |
 | Saved session content and retained annotations | Potentially sensitive educational/work product | `90-day` default; teacher may delete earlier |
 | Raw push-to-talk audio | Sensitive transient input | Zero default persistence |
@@ -315,10 +663,47 @@ No physical tables, collections, indexes, or migrations are created during initi
 - define uniqueness, foreign-key, and revision constraints;
 - test migration safety and rollback/forward-fix strategy.
 
+### Physical Persistence Baseline
+
+[ADR-0014](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
+selects the persistence technology without yet creating a physical schema:
+
+- PostgreSQL as the primary authoritative database;
+- one database for the modular monolith;
+- Flyway-controlled schema evolution through version-controlled SQL
+  migrations;
+- Spring JDBC/JdbcClient persistence adapters as the initial data-access
+  baseline;
+- module-owned persistence boundaries (each business-capability module owns
+  its persistent structures behind its own output ports);
+- relational-first modeling with selective PostgreSQL JSONB for justified
+  structured content (see §2 and §1's modeling principles);
+- executable migrations under `migrations/schema` plus Flyway history
+  become the physical schema source of truth once they are created; this
+  document remains the conceptual model.
+
+Likely integrity expectations for physical schema design include:
+
+- unique `(issuer, subject)` for `ExternalIdentityLink`;
+- concurrency-safe single-use `PairingGrant` redemption;
+- atomic enforcement of at most one active `TEACHER_CONTROLLER` and one
+  active `CLASSROOM_DISPLAY` per classroom session;
+- revision-aware atomic session mutation (optimistic conflict detection);
+- queryable retention/expiry lifecycle fields to support
+  [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md).
+
+Table and column names are not defined here.
+
 ## 8. Related Documents
 
 - [System Architecture](./SYSTEM_ARCHITECTURE.md)
 - [ADR-0005 — Layered Curriculum Authority](./adr/ADR-0005-layered-curriculum-authority.md)
+- [ADR-0011 — OIDC with Backend-Managed Browser Sessions and Scoped Pairing](./adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
+- [ADR-0014 — PostgreSQL with Flyway and SQL-First Hexagonal Persistence](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
+- [ADR-0015 — Versioned Controlled Curriculum Corpus with Deterministic Retrieval](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
+- [ADR-0016 — Scoped Deterministic Mathematics Validators with Exact Arithmetic](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
+- [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](./adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
+- [ADR-0018 — Use Deepgram Nova-3 for Backend-Mediated Push-to-Talk Speech Recognition](./adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md)
 - [PRD](../00_product/PRD.md)
 - [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 - [Threat Model](../04_engineering/THREAT_MODEL.md)
@@ -328,5 +713,11 @@ No physical tables, collections, indexes, or migrations are created during initi
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.8` | `2026-09-08` | Resolve OAD-007: add Speech Recognition Request and Speech Usage Event concepts, separated from generative AI allowance (ADR-0018) | Claude |
+| `0.7` | `2026-09-07` | Resolve OAD-006: add AI Generation, AI Allowance Window, AI Usage Reservation, and AI Usage Event concepts (ADR-0017) | Claude |
+| `0.6` | `2026-09-07` | Resolve OAD-008: refine Mathematics Validation Result with validator family/ruleset version and content-version-scoped invalidation | Claude |
+| `0.5` | `2026-09-07` | Resolve OAD-009: refine curriculum concepts into Curriculum Source, Curriculum Source Version, Curriculum Corpus Version, Curriculum Entry, and Local Curriculum Context Version | Claude |
+| `0.4` | `2026-09-07` | Resolve OAD-003: record PostgreSQL/Flyway/Spring JDBC physical persistence baseline and likely integrity expectations while remaining conceptual | Claude |
+| `0.3` | `2026-09-07` | Define local teacher accounts, OIDC identity links, revocable browser sessions, scoped pairing grants, and participant authority | Codex |
 | `0.2` | `2026-09-06` | Resolve the conceptual retention, history, export, deletion, and backup-expiry lifecycle baseline | Codex |
 | `0.1` | `2026-09-06` | Initial conceptual domain model | Codex |

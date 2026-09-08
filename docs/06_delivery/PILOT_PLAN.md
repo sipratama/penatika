@@ -400,7 +400,7 @@ The aggregate pilot report must also include participant/session counts, topic r
 - Deployment and support readiness for Stage B.
 - Target device, browser, display, stylus, and network baseline.
 - Evidence-driven numerical latency and reliability targets.
-- AI, speech, validation, identity, persistence, realtime, and deployment technology decisions.
+- AI, speech, validation, identity, persistence, realtime, and deployment implementation evidence (architecture decisions are resolved; see System Architecture and the Accepted ADR register).
 
 ## 20. Change Log
 

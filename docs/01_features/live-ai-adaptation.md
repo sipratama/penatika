@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.4` |
-| Last Updated | `2026-09-06` |
+| Version | `0.6` |
+| Last Updated | `2026-09-08` |
 | PRD Capability | `CAP-ADAPT-001` |
 
 ## 1. Feature Intent
@@ -67,6 +67,63 @@ This path does not invoke AI Orchestration and does not create or imitate an AI 
 8. The Classroom Session publishes updated role-specific projections.
 
 Transcription, generation progress, proposal preview, assurance results, warnings, alternatives, and other `PRIVATE_ONLY` work remain teacher-private and do not mutate student-facing authoritative state.
+
+## 3a. Architecture Resolution (OAD-006)
+
+[ADR-0017](../02_architecture/adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
+resolves the AI provider/gateway architecture for the Semantic AI Adaptation
+Path without changing the execution-class semantics already established
+above or in ADR-0006.
+
+- Penatika AI is a bounded Mathematics-teaching capability, not a
+  general-purpose chatbot; a request identifiable as unsupported before
+  generation is rejected or redirected before `FAST`/`QUALITY` generation is
+  invoked.
+- Every semantic request passes a pre-provider pipeline — hard resource
+  guard, deterministic capability/scope guard, optional bounded `ROUTER`
+  classification, per-teacher AI allowance check, atomic usage reservation,
+  and concurrency/idempotency check — before any expensive provider call.
+- Model, provider, and route selection are resolved entirely by the backend
+  using server-owned `ROUTER`/`FAST`/`QUALITY` profiles; teacher/browser
+  input never selects a model, provider, route, or generation parameter.
+- Allowance exhaustion degrades new semantic AI generation only, following
+  the existing Q-03/ADR-0007 degradation policy; current reviewed content
+  and supported deterministic controls remain usable.
+- Raw push-to-talk audio is never sent to the generative-model provider;
+  only a bounded transcript or normalized request may reach generation,
+  subject to the same guards.
+
+## 3b. Architecture Resolution (OAD-007)
+
+[ADR-0018](../02_architecture/adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md)
+resolves the speech recognition architecture for push-to-talk without
+changing the execution-class semantics already established above or in
+ADR-0006.
+
+- Push-to-talk capture uses the browser's native `MediaRecorder`; the
+  browser uploads one completed, bounded utterance to the Penatika Backend
+  after the teacher releases push-to-talk.
+- The backend calls Deepgram Nova-3 (Indonesian) to transcribe the
+  uploaded utterance; raw audio never enters OpenRouter or any generative
+  provider.
+- The resulting transcript is untrusted input, exactly like AI provider
+  output; recognition success alone authorizes nothing.
+- Deterministic `DIRECT_ACTION` matching is attempted before semantic
+  generation; only a transcript that does not match a supported direct
+  action proceeds to the semantic pipeline.
+- A semantic transcript still passes the full ADR-0017 scope/resource/
+  allowance pipeline; speech success does not imply AI generation
+  permission.
+- Low-confidence or ambiguous speech produces a private
+  `NEEDS_CLARIFICATION`/`RETRY_SPEECH` state and asks the teacher to
+  repeat, type, or use a deterministic control — it never silently
+  executes an action or guesses intent.
+- Speech-provider cost/usage is tracked separately from the generative
+  `AIAllowanceWindow`; a voice command resolved as `DIRECT_ACTION`
+  consumes no generative AI allowance.
+- Speech failure disables only push-to-talk transcription; text input,
+  deterministic controls, the current reviewed lesson, and non-voice AI
+  requests remain available (`PR-020`, ADR-0007).
 
 ## 4. Functional Requirements
 
@@ -161,6 +218,42 @@ Full raw transcription or command content, full prompts, raw provider outputs, a
 ### FR-ADAPT-023 — Retain Only Accepted Results and Minimized Metadata
 
 Accepted proposal content shall follow the retention lifecycle of the lesson or session artifact into which it is published, without retaining a redundant raw-provider copy. Privacy-minimized lifecycle and teacher-decision metadata may follow the associated saved session for its `90-day` retention window when required for history, assurance, diagnostics, or pilot evidence.
+
+### FR-ADAPT-024 — Enforce Capability Guard Before Generation
+
+The system shall classify whether a semantic AI request is a supported Penatika capability before invoking `FAST` or `QUALITY` generation; a request identifiable as unsupported shall be rejected or redirected without consuming main-generation capacity.
+
+### FR-ADAPT-025 — Reject General-Purpose Requests
+
+The system shall not treat subject relevance alone as sufficient for capability support. Requests for unsupported software, website, coding, or general-purpose research artifacts shall not reach `FAST` or `QUALITY` generation merely because they reference Mathematics.
+
+### FR-ADAPT-026 — Apply Hard Resource Bounds
+
+The system shall bound request size, requested output quantity, rate, and concurrency before generation. A request exceeding a bound shall be rejected as a resource failure independent of capability support.
+
+### FR-ADAPT-027 — Enforce Per-Teacher Daily AI Allowance
+
+The system shall check and atomically reserve sufficient teacher AI allowance before an expensive generation call. A request rejected before provider invocation shall not consume allowance.
+
+### FR-ADAPT-028 — Enforce Backend Concurrency Control
+
+The system shall bound concurrent in-flight generation requests per teacher/session so that repeated taps, multiple browser tabs, or repeated voice requests cannot create unbounded simultaneous expensive requests or duplicate provider calls for the same accepted request.
+
+### FR-ADAPT-029 — Support Bounded Ambiguous-Intent Classification
+
+When deterministic scope rules cannot classify a request, the system may invoke a bounded classification call using minimal context. This classification is advisory to the scope decision and is not authorization, quota, Mathematics, curriculum, or publication authority.
+
+### FR-ADAPT-030 — Keep Model Selection Backend-Controlled
+
+The system shall resolve model, provider, and route entirely on the backend. Teacher/browser input shall not select a model, provider, reasoning level, output-token limit, temperature, tool, or route.
+
+### FR-ADAPT-031 — Degrade Gracefully on Allowance Exhaustion
+
+When a teacher's AI allowance is exhausted, the system shall make new semantic AI generation unavailable while leaving current reviewed content and supported deterministic controls usable, per the existing Q-03/ADR-0007 degradation policy.
+
+### FR-ADAPT-032 — Exclude Raw Audio from Generative Provider Payloads
+
+Raw push-to-talk audio shall never be sent to the generative-model provider. Only a bounded transcript or normalized request derived through the speech pipeline may reach generation, subject to the same scope/resource/allowance guards.
 
 ### Execution Classes
 
@@ -272,16 +365,39 @@ Record correlation-safe operational events for request lifecycle, execution-clas
 - Private state absent from classroom projection.
 - Deterministic replay tests using recorded sanitized fixtures.
 - AI quality evaluation for scoped Mathematics tasks before pilot.
+- "Create another fraction example" is allowed when all other checks pass.
+- "Create a website to teach fractions" is rejected before `FAST`/`QUALITY` generation.
+- "Write React code for an algebra visualization" is rejected before main generation.
+- "Create 10,000 questions" is rejected as a resource failure.
+- An oversized input is rejected before generation.
+- An exhausted daily allowance prevents any `FAST`/`QUALITY` provider call.
+- Parallel requests cannot bypass the allowance reservation and consume more than the available allowance.
+- A `ROUTER` classification of `OUT_OF_SCOPE` prevents any main-generation call.
+- An OpenRouter route with no compliant ZDR/approved provider causes AI generation to degrade/fail closed rather than silently using a non-compliant route.
+- "halaman berikutnya" transcribes and matches a valid `DIRECT_ACTION` with zero OpenRouter generation.
+- "buat contoh pecahan lain" transcribes and is routed to the transcript → ADR-0017 semantic path.
+- "buat website React untuk pecahan" transcribes successfully, but the ADR-0017 capability guard rejects it as `OUT_OF_SCOPE`.
+- An unclear transcription produces no command and no generation.
+- A speech-provider timeout leaves non-voice controls usable.
+- Cancelling push-to-talk before upload means the speech provider is never called.
+- Oversized or over-duration audio is rejected before the speech provider is called.
+- An unsupported audio container is rejected before the speech provider is called.
+- No-speech (silent) audio produces a safe retry state.
+- Keyterm-enhanced recognition improves pilot Mathematics terminology transcription.
+- A direct-action false positive is not accepted when confidence/match policy is insufficient.
 
 ## 10. Open Questions
 
-- Which speech and AI providers or models are acceptable?
 - What latency budget maintains teaching flow?
 - What de-identified evaluation fixtures, if any, require a separate approved purpose and retention decision?
+- What exact numeric AI allowance, resource limits, and capability resource weights apply (evidence-driven configuration per ADR-0017)?
+- What exact numeric speech duration/size/rate/concurrency limits and confidence thresholds apply (evidence-driven configuration per ADR-0018)?
 
 ## 11. Related Decisions
 
 - [ADR-0006 — Teacher Approval and AI Publication Policy](../02_architecture/adr/ADR-0006-teacher-approval-ai-publication-policy.md)
+- [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](../02_architecture/adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
+- [ADR-0018 — Use Deepgram Nova-3 for Backend-Mediated Push-to-Talk Speech Recognition](../02_architecture/adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md)
 
 ## 12. Definition of Done
 
@@ -289,3 +405,11 @@ Record correlation-safe operational events for request lifecycle, execution-clas
 - Provider adapters are isolated from domain authority.
 - Evaluation evidence exists for the initial Mathematics scope.
 - Resource, cost, and observability controls are defined.
+
+## 13. Change Log
+
+| Version | Date | Change | Author |
+|---|---|---|---|
+| `0.6` | `2026-09-08` | Record OAD-007 architecture resolution (ADR-0018): backend-mediated Deepgram Nova-3 transcription, direct-action-first routing, untrusted-transcript handling, and separated speech/AI resource accounting | Claude |
+| `0.5` | `2026-09-07` | Record OAD-006 architecture resolution (ADR-0017): capability guard, resource bounds, per-teacher allowance, backend-controlled model routing, degradation, and raw-audio exclusion | Claude |
+| `0.4` | `2026-09-06` | (see prior repository history) |

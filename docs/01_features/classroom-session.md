@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.3` |
-| Last Updated | `2026-09-06` |
+| Version | `0.4` |
+| Last Updated | `2026-09-07` |
 | PRD Capabilities | `CAP-SESSION-001`, `CAP-SESSION-002` |
 
 ## 1. Feature Intent
@@ -135,6 +135,41 @@ An authorized teacher shall be able to delete a retained saved session before it
 
 Retained annotations shall follow the owning saved-session lifecycle. Session history shall not contain raw audio, full prompts, raw provider payloads, full AI conversation history, permanent rejected-proposal bodies, or persistent student identity/profiling.
 
+### FR-SESSION-021 — Require Authenticated Teacher for Controller Authority
+
+Teacher controller authority shall require an active authenticated
+`TeacherAccount` browser session, authorization for the classroom session, and
+an active `TEACHER_CONTROLLER` participant binding. A pairing credential alone
+shall never authenticate a teacher or grant teacher-account authority.
+
+### FR-SESSION-022 — Use Single-Use Role-Bound Pairing Grants
+
+Each pairing grant shall be bound to one classroom session and one intended
+participant role/purpose, shall be single-use and revocable, and shall expire
+five minutes after issuance. Successful redemption, explicit revocation, or
+classroom-session end shall invalidate the grant immediately.
+
+### FR-SESSION-023 — Limit Active Controller
+
+MVP shall permit at most one active mutation-authorized
+`TEACHER_CONTROLLER` participant per classroom session. Explicitly authorized
+replacement or handoff shall revoke the previous controller authority before
+the replacement may mutate classroom state.
+
+### FR-SESSION-024 — Limit Active Classroom Display
+
+MVP shall permit one active `CLASSROOM_DISPLAY` participant per classroom
+session. Reconnect by the same valid participant shall preserve its authority,
+while explicit replacement or re-pair shall revoke the previous display
+participant credential.
+
+### FR-SESSION-025 — Revoke Session Participant Authority
+
+Classroom-session end, explicit participant replacement or revocation, and an
+invalid teacher account/browser authorization for a controller shall revoke
+the affected participant authority. Reconnect shall not recreate revoked
+authority.
+
 ## 5. State Model
 
 ```text
@@ -175,22 +210,38 @@ SAVED → RETAINED_HISTORY
 
 - One backend revision is authoritative at a time.
 - A classroom display cannot issue teacher commands.
-- An expired pairing credential cannot be reused.
+- Pairing alone cannot authenticate a teacher or grant teacher-account authority.
+- A classroom display participant cannot obtain teacher-private or teacher mutation authority.
+- An expired, consumed, or revoked pairing grant cannot authorize a participant.
+- MVP has at most one active mutation-authorized controller and one active display participant per classroom session.
 - A saved session references a stable lesson version and durable authoritative save acknowledgement.
 - Cached client state is never promoted to temporary authority.
 - Newly created offline mutations are never queued for automatic replay.
 
 ## 6. Permissions and Authorization
 
-- Teacher: start, pair controller, navigate, adapt, annotate, end, and save.
-- Classroom display: read classroom-safe projection only.
+- Teacher: must have an active authenticated `TeacherAccount` browser session,
+  may access only owned or otherwise authorized objects/sessions, and must also
+  hold the active `TEACHER_CONTROLLER` participant binding to perform classroom
+  mutations from a controller.
+- Classroom display: requires no `TeacherAccount`; it uses a distinct
+  `CLASSROOM_DISPLAY` participant session and may read classroom-safe projection
+  only.
 - Student: no device role in MVP.
 
-The identity provider and authentication mechanism remain open, but server-side authorization is mandatory.
+Teacher authentication uses OIDC Authorization Code flow with PKCE `S256` and
+a backend-managed browser session. The concrete OIDC provider remains open.
+Backend object/session authorization is mandatory; provider claims, pairing,
+or client visibility alone never authorize protected behavior.
 
 ## 7. Data Requirements
 
-Active session data may include session identity, teacher identity reference, lesson version, participant roles, pairing status, authoritative revision, accepted scene state, annotations, dependency status, timestamps, and save outcome.
+Active session data may include session identity, `TeacherAccount` reference,
+lesson version, participant identities and roles, pairing-grant state,
+authoritative revision, accepted scene state, annotations, dependency status,
+timestamps, and save outcome. Display participant sessions remain separate
+from teacher account/browser sessions, and pairing grants are not retained as
+reusable plaintext credentials.
 
 Retained saved-session history is limited to the data classes allowed by [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md) and expires after `90 days` by default. Retained annotations expire or are deleted with the owning session. Save, retention, deletion, primary-purge, backup-expiry, and export states must remain truthful and authorization-controlled.
 
@@ -218,6 +269,15 @@ Safe behavior must favor existing authoritative state, visible teacher status, i
 - Reject an unreviewed lesson.
 - Pair devices across different networks.
 - Reject expired and replayed pairing credentials.
+- Reject use of a pairing credential alone as teacher authentication.
+- Reject a classroom display participant calling teacher APIs or receiving teacher-private state.
+- Reject cross-teacher controller or pairing attempts against another teacher's classroom session.
+- Expire an unredeemed pairing grant exactly at the approved five-minute boundary.
+- Reject replay of a pairing grant after successful redemption.
+- Replace a controller only through explicit authorization and revoke the prior controller's mutation authority.
+- Replace a classroom display explicitly and revoke the prior display participant credential.
+- Invalidate teacher browser and controller authority on logout, account disablement, or accepted account deletion.
+- Prove reconnect does not recreate participant authority that was revoked or replaced.
 - Prove private teacher state is absent from classroom projection.
 - Reconcile a stale client without overwriting authoritative state.
 - Handle duplicate state-changing commands idempotently.
@@ -236,9 +296,6 @@ Safe behavior must favor existing authoritative state, visible teacher status, i
 
 ## 10. Open Questions
 
-- What identity and authentication model is required for MVP?
-- Can more than one teacher controller be active?
-- What is the pairing credential lifetime and replacement flow?
 - What exact teacher-visible history and deletion/export interaction design should represent the policy-compliant saved-session data?
 
 ## 11. Definition of Done

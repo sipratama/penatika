@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.1` |
-| Last Updated | `2026-09-06` |
+| Version | `0.4` |
+| Last Updated | `2026-09-08` |
 | Test Tooling | Open Architecture Decision |
 
 ## 1. Testing Objectives
@@ -101,7 +101,39 @@ Use real or representative smartphones, laptops/PCs, classroom displays, mouse, 
 - official guidance cannot be surfaced as a national normative requirement;
 - local sequencing remains `LOCAL_CONTEXT`;
 - authority level, source version, phase/scope, and matching provenance are retained;
-- saved lesson provenance remains stable after a newer source version is introduced.
+- saved lesson provenance remains stable after a newer source version is introduced;
+- exact rational arithmetic properties (per [ADR-0016](../02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md)): `(a + b) - b = a`, `(a / b) * b = a` for supported nonzero values;
+- Grade 5 fraction corpus: equivalent/non-equivalent fractions (`2/3 = 4/5` must be `INVALID`), reduction, addition, subtraction, multiplication, division, negative values, zero numerator, zero-denominator rejection, mixed numbers, large exact values within limits;
+- Grade 7 affine/linear-equation corpus: affine equivalence, distributive simplification, exact rational coefficients, valid/invalid solutions, equivalent transformations, identity, contradiction/no-solution, malformed expressions, nonlinear expressions, multiple variables, variable denominators, unsupported functions, extreme/nested resource-bound input;
+- unsupported nonlinear and multi-variable cases return `UNSUPPORTED`, never `VALID`;
+- resource-bound adversarial expressions fail safely without unbounded CPU/memory use;
+- validator/ruleset-version reproducibility;
+- AI cannot override a deterministic `INVALID` result;
+- content edit invalidates prior validation (`FR-MATH-007`).
+
+### Deployment Verification Suite (Future, Per ADR-0019)
+
+Once a real `PILOT` deployment exists, verification must cover:
+
+- application health-check endpoint responds correctly;
+- Docker Compose stack starts successfully from a clean host;
+- Teacher Web and Classroom Display static assets are accessible through the reverse proxy;
+- the backend is reachable only behind the reverse proxy, never directly as the public entry point;
+- HTTPS is enforced for real pilot traffic;
+- the SSE realtime channel functions correctly through the reverse proxy;
+- PostgreSQL is not publicly reachable;
+- secrets are absent from the frontend bundle, the backend image, and the repository;
+- a failing database migration blocks deployment progression;
+- the deployed artifact identity is immutable (commit SHA or image digest, never `latest`);
+- automated PostgreSQL backup creation succeeds and is observable;
+- the off-host backup copy exists at the approved destination;
+- a restore exercise succeeds before meaningful reliance on pilot data;
+- containers restart/recover correctly after failure;
+- log rotation functions as configured;
+- disk-pressure visibility/alerting is observable;
+- an end-to-end deployment smoke test passes after each release.
+
+No implementation or test exists yet for this suite; it defines future evidence requirements only.
 
 ## 5. AI Evaluation Strategy
 
@@ -120,6 +152,8 @@ Evaluate:
 - quality difference across candidate providers/models.
 
 Evaluation datasets must use sanitized or synthetic content unless an approved policy permits otherwise. Provider output snapshots alone are not sufficient acceptance evidence.
+
+Per ADR-0017, a model/profile/provider route is activated for pilot/production only after passing Penatika's versioned evaluation corpus; `ROUTER` additionally requires classification-accuracy evaluation for `SUPPORTED`/`OUT_OF_SCOPE`/`UNSUPPORTED_CAPABILITY`/`NEEDS_CLARIFICATION` outcomes.
 
 ## 6. Security Testing
 
@@ -200,9 +234,15 @@ Before pilot, evidence must cover all release blockers, high threats, architectu
 - [System Architecture](../02_architecture/SYSTEM_ARCHITECTURE.md)
 - [Non-Functional Requirements](../02_architecture/NON_FUNCTIONAL_REQUIREMENTS.md)
 - [Threat Model](./THREAT_MODEL.md)
+- [ADR-0016 — Scoped Deterministic Mathematics Validators with Exact Arithmetic](../02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
+- [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](../02_architecture/adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
+- [ADR-0019 — Use a Portable Single-Linux-VPS Deployment Baseline for MVP/Pilot, Initially on Tencent Cloud Lighthouse Jakarta](../02_architecture/adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md)
 
 ## 14. Change Log
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.4` | `2026-09-08` | Add future Deployment Verification Suite concepts (health checks, reverse-proxy boundary, HTTPS, SSE, non-public database, secret absence, migration-blocking, immutable artifact identity, backup/restore, container recovery, log rotation, disk-pressure visibility, deployment smoke test) for the portable single-Linux-VPS MVP/pilot baseline (ADR-0019); no implementation exists yet | Claude |
+| `0.3` | `2026-09-07` | Add AI Generation Gateway Suite and model/route evaluation-gate requirements for the OpenRouter bounded-generation baseline (ADR-0017) | Claude |
+| `0.2` | `2026-09-07` | Expand Mathematics Assurance Suite with exact-arithmetic properties, Grade 5/7 corpora, resource-bound adversarial cases, and validator-version reproducibility (ADR-0016) | Claude |
 | `0.1` | `2026-09-06` | Initial risk-based test strategy | Codex |

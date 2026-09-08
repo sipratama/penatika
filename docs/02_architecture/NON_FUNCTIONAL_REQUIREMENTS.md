@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.3` |
-| Last Updated | `2026-09-06` |
+| Version | `0.9` |
+| Last Updated | `2026-09-08` |
 
 ## 1. Quality Priorities
 
@@ -76,10 +76,20 @@ Penatika MVP is resilience-oriented, not offline-first. Dependency failure degra
 
 No production availability percentage or SLO is set before deployment and support maturity are known.
 
+Per [ADR-0019](./adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md), the MVP/pilot deployment is a single Linux VPS and therefore one infrastructure failure domain: this is an intentional founder-led trade-off, and graceful degradation cannot make an unavailable single server available. No zero-downtime, high-availability, multi-zone, or provider-failure fault-tolerance claim is made for MVP/pilot.
+
 ## 6. Security
 
-- All protected actions require backend-enforced authentication and authorization.
-- Pairing credentials must be short-lived, purpose-bound, non-guessable, and replay-resistant.
+- Teacher authentication must use OIDC Authorization Code flow with PKCE `S256` and required state, nonce, redirect, issuer, subject, audience/client, signature, and time validation.
+- OAuth/OIDC access, refresh, and ID tokens must remain server-side and must not be exposed to or stored by ordinary browser application JavaScript.
+- Protected teacher actions require a bounded, revocable backend-managed browser session represented by an opaque protected cookie.
+- Cookie-authenticated state-changing requests require explicit CSRF protection; SameSite alone is not sufficient.
+- All protected actions require backend-enforced object, ownership, classroom-session, participant, and revision authorization as applicable; authentication or a coarse role alone is insufficient.
+- External identity linkage uses validated `(issuer, subject)` and must not automatically merge accounts by email.
+- Penatika MVP must not store local teacher passwords or password-recovery credentials.
+- Pairing grants must be five-minute bounded, session-bound, role/purpose-bound, single-use, non-guessable, revocable, and replay-resistant.
+- Pairing alone must never authenticate a teacher, and a display participant must never obtain teacher authority.
+- MVP permits at most one active mutation-authorized teacher controller and one active classroom display participant per classroom session.
 - Structured rendering must prevent arbitrary script execution.
 - Secrets, access tokens, and provider credentials must not ship in untrusted clients.
 - Sensitive traffic requires transport protection in production.
@@ -149,6 +159,55 @@ Before production capacity planning, define:
 - Database changes require migrations once persistence is selected.
 - Source structure must follow documented module ownership.
 
+### Persistence Quality Requirements
+
+- Authoritative persistence uses PostgreSQL ([ADR-0014](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)).
+- Physical schema is controlled by version-controlled Flyway migrations.
+- Runtime schema auto-generation (for example, ORM `ddl-auto=create`/`update`) is prohibited.
+- Critical revision updates require database-backed atomic conflict protection.
+- Durable save succeeds only after the authoritative database transaction commits.
+- Migration fresh-create and upgrade-path tests are required once migrations exist.
+- Application runtime uses least-privilege database credentials.
+- Migration and runtime database privileges are separated where the deployment supports it.
+- Retention/deletion behavior must be operationally testable against the persistence layer.
+
+No database SLO, RPO, or RTO is set by this section; see [Open Decisions](#15-open-decisions).
+
+### Deployment Portability and Operational Requirements
+
+- Normal application execution must remain portable between compatible ordinary Linux VPS providers ([ADR-0019](./adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md)); application code must not depend on a Tencent-proprietary API or SDK for normal runtime behavior.
+- Public traffic must use HTTPS; real classroom pilot usage must not rely on plain HTTP.
+- PostgreSQL must never be publicly exposed; the database binds only to the private Docker/internal host boundary.
+- Durable pilot data requires an automated backup plus a provider-replaceable off-host backup copy; a Docker volume or same-provider snapshot alone is not a backup, and restore readiness must be exercised before meaningful reliance on pilot data.
+- Runtime secrets must remain server-side, outside Git, outside container images, and outside frontend artifacts, with restrictive filesystem permissions; no cloud-vendor secret manager is required for the MVP/pilot baseline.
+- Operational resource visibility (disk, memory, CPU, PostgreSQL health, backup success/failure) must exist before meaningful pilot use.
+- Deployment must use an immutable/versioned release identity (a Git commit SHA or image digest); mutable `latest` is not the authoritative release identity.
+- MVP/pilot deployment is a single Linux VPS and therefore one infrastructure failure domain; this limitation must remain explicit rather than implied away by degradation policy.
+
+### Curriculum Integrity and Reliability Requirements
+
+- Runtime grounding uses only activated controlled `Curriculum Corpus Version` data ([ADR-0015](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)).
+- Official source and normalized corpus integrity must be verifiable (SHA-256 baseline).
+- Activated corpus versions are immutable; corrections create a new version rather than mutating an activated one.
+- Source version and corpus version are retained for reproducibility of previously saved lesson/session curriculum provenance.
+- Curriculum runtime must not depend on official-source-website availability.
+- No unreviewed source may become `NORMATIVE` runtime authority.
+- No-match/ungrounded retrieval must be an explicit state, not a silent AI fallback.
+- Retrieval relevance, similarity score, or AI confidence cannot change curriculum authority level.
+
+No numerical curriculum-retrieval SLO is required by this section.
+
+### Mathematics Validator Requirements
+
+- Supported rational claims use exact arithmetic ([ADR-0016](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md)); floating-point equality is not used as correctness authority.
+- Deterministic Mathematics validation requires no AI provider or network dependency.
+- The mathematical parser/normalizer enforces explicit resource limits (expression length, nesting depth, literal size, operation count).
+- Validator/ruleset versions are reproducible and bound to each validation result.
+- Unsupported Mathematics scope is explicit (`UNSUPPORTED`/`INCONCLUSIVE`), not silently approximated.
+- No validator failure silently produces `VALID`.
+
+No numerical validator-latency SLO is set by this section.
+
 ## 13. AI Quality and Cost
 
 - AI behavior requires versioned evaluation scenarios for initial lesson and adaptation tasks.
@@ -160,6 +219,15 @@ Before production capacity planning, define:
 
 Before a classroom pilot:
 
+- OIDC login-flow integrity covers state/nonce handling, PKCE `S256`, exact redirect validation, and validated issuer/subject/client/signature/time semantics;
+- browser storage and application responses contain no OAuth/OIDC access or refresh tokens;
+- successful authentication rotates the backend session identifier and session fixation attempts fail;
+- logout, session revocation, account disablement, and accepted account deletion terminate teacher access and active controller authority;
+- cross-teacher lesson/session/controller authorization attempts fail;
+- cookie-authenticated mutations reject missing or invalid CSRF proof and disallowed origins;
+- expired, replayed, role-incompatible, and already-consumed pairing grants fail safely;
+- controller replacement revokes prior mutation authority and display replacement revokes the prior participant credential;
+- reconnect does not recreate revoked controller or display authority;
 - no critical teacher-private/classroom projection leakage;
 - no known session authorization bypass;
 - structured content and command contracts pass compatibility tests;
@@ -196,6 +264,12 @@ Before a classroom pilot:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.9` | `2026-09-08` | Add deployment portability, HTTPS, non-public database, off-host backup, secret-protection, resource-visibility, and immutable-release requirements; acknowledge single-VPS failure domain for the portable MVP/pilot deployment baseline (ADR-0019) | Claude |
+| `0.8` | `2026-09-07` | Add AI generation gateway requirements for the OpenRouter bounded-generation baseline (ADR-0017) | Claude |
+| `0.7` | `2026-09-07` | Add Mathematics validator requirements for the scoped deterministic exact-arithmetic baseline (ADR-0016) | Claude |
+| `0.6` | `2026-09-07` | Add curriculum integrity/reliability requirements for the versioned controlled corpus baseline (ADR-0015) | Claude |
+| `0.5` | `2026-09-07` | Add persistence quality requirements for the PostgreSQL/Flyway/Spring JDBC baseline (ADR-0014) | Claude |
+| `0.4` | `2026-09-07` | Add OIDC, backend-session, CSRF, object-authorization, and scoped-pairing security evidence requirements | Codex |
 | `0.3` | `2026-09-06` | Add enforceable privacy and release gates for the approved data-lifecycle policy | Codex |
 | `0.2` | `2026-09-06` | Define resilience-oriented degradation, reconciliation, and truthful save requirements | Codex |
 | `0.1` | `2026-09-06` | Initial quality baseline grounded in MVP constraints | Codex |

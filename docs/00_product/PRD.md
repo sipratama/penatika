@@ -12,9 +12,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.9` |
+| Version | `0.11` |
 | Owner | `sipratama — Product Owner / Requirement Approver` |
-| Last Updated | `2026-09-06` |
+| Last Updated | `2026-09-08` |
 | Target Phase | MVP baseline dan classroom pilot preparation |
 
 ---
@@ -33,7 +33,7 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 
 | Actor | Goal | MVP Scope |
 |---|---|---|
-| Teacher | Prepare, control, adapt, annotate, and save a lesson | Primary authenticated or authorized actor; identity mechanism belum dipilih |
+| Teacher | Prepare, control, adapt, annotate, and save a lesson | Primary authenticated or authorized actor; identity architecture selected (ADR-0011: OIDC Authorization Code with PKCE, backend-managed browser sessions), concrete OIDC provider pending |
 | Classroom Viewer | View appropriate teaching content on the classroom display | Display participant; tidak mendapat private controls atau AI working state |
 | Student | Receive the classroom experience | Beneficiary; tidak menggunakan student device pada MVP |
 | External AI Capability | Produce lesson or adaptation proposals | Untrusted integration, bukan decision-maker |
@@ -166,13 +166,14 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 ### J-03 — Teach and Adapt
 
 1. Guru menavigasi lesson dan memberi annotation.
-2. Guru meminta adaptation menggunakan push-to-talk atau direct control.
-3. Penatika mengubah request menjadi structured AI proposal.
-4. Policy, curriculum grounding, dan mathematics validation diterapkan sesuai content type.
-5. Guru menerima private preview berupa clean proposal, proposal with warning, atau blocked result.
-6. Guru memberikan approval atau explicit warned override bila diizinkan; blocked result tidak dapat dipublikasikan.
-7. Proposal yang memiliki publication authorization valid menjadi accepted revision-aware classroom command.
-8. Classroom display menerima role-specific projection yang sudah diperbarui.
+2. Guru meminta adaptation atau command menggunakan push-to-talk atau direct control.
+3. Jika request cocok dengan supported deterministic `DIRECT_ACTION`, Penatika mengeksekusi command tersebut langsung melalui existing command validation tanpa membuat AI proposal.
+4. Jika request adalah semantic adaptation request, Penatika mengubahnya menjadi structured AI proposal melalui ADR-0017 scope/resource/allowance pipeline.
+5. Untuk AI proposal path, policy, curriculum grounding, dan mathematics validation diterapkan sesuai content type.
+6. Guru menerima private preview berupa clean proposal, proposal with warning, atau blocked result.
+7. Guru memberikan approval atau explicit warned override bila diizinkan; blocked result tidak dapat dipublikasikan.
+8. Proposal yang memiliki publication authorization valid, atau command `DIRECT_ACTION` yang tervalidasi, menjadi accepted revision-aware classroom command.
+9. Classroom display menerima role-specific projection yang sudah diperbarui.
 
 **Outcome:** Classroom content berubah tanpa guru keluar dari teaching flow.
 
@@ -252,6 +253,13 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | PR-056 | Institutional licensing is a later commercial path and does not automatically introduce school-administration capabilities into MVP scope. |
 | PR-057 | Commercial launch requires evidence for product value, unit economics, willingness to pay, billing correctness, support readiness, privacy/legal readiness, and Product Owner approval. |
 | PR-058 | Commercial metrics remain separate from the Q-04 first-pilot pass/fail thresholds unless the Product Owner explicitly approves a future pilot-policy change. |
+| PR-059 | Penatika AI is limited to explicitly supported Mathematics-teaching capabilities and is not a general-purpose chatbot. Unsupported software, website, coding, research, or other general-purpose tasks do not gain generation access merely because they mention Mathematics. Requests that can be identified as unsupported before expensive generation must be rejected or redirected before the main semantic model is invoked. |
+| PR-060 | Backend-enforced AI resource controls bound request size, requested output quantity, rate, concurrency, and available AI allowance before expensive generation. Exhaustion affects new AI generation only and must not weaken safety/trust controls or corrupt the active classroom session. |
+| PR-061 | Each teacher's AI usage is subject to an application-owned daily allowance window. The teacher must be able to understand current allowance usage, remaining allowance, exhaustion state, and reset timing without needing to understand provider-token billing. Exact numeric quotas and weighting remain evidence-driven configuration. |
+| PR-062 | Authorized Penatika internal operations must be able to inspect privacy-minimized aggregate and per-teacher AI usage/cost metadata for operations, abuse detection, quota tuning, and unit-economics analysis. This does not create a school-administrator MVP role and does not authorize access to unnecessary teacher-private content. |
+| PR-063 | Push-to-talk audio is transcribed through a backend-controlled speech recognition boundary. Speech recognition is an input modality and does not by itself authorize a direct action, AI generation, or classroom mutation. |
+| PR-064 | Speech resource usage is bounded and accounted separately from generative AI allowance. A voice request that resolves to a deterministic `DIRECT_ACTION` must not consume generative AI allowance merely because speech recognition was used. Exact speech resource quotas remain evidence-driven. |
+| PR-065 | A low-confidence, ambiguous, malformed, or otherwise unsafe speech transcription must not silently execute a `DIRECT_ACTION` or be treated as certain semantic intent. Penatika must request clarification/retry or provide non-voice fallback. |
 
 ---
 
@@ -267,7 +275,7 @@ Penatika menyediakan teacher-controlled workflow untuk menyiapkan, menyajikan, d
 | Change authoritative classroom state | Yes, through supported commands | No | Not supported |
 | Save session | Yes | No | Not supported |
 
-Exact identity, authentication, and session authorization mechanisms remain an Open Architecture Decision.
+Identity, authentication, and session authorization architecture is selected (ADR-0011: OIDC Authorization Code with PKCE, backend-managed browser sessions, scoped pairing); the concrete OIDC provider, physical session schema/representation, expiry/index design, and field-level authentication contracts remain pending implementation decisions.
 
 ---
 
@@ -366,10 +374,10 @@ The canonical detailed policy is [DATA_RETENTION_POLICY.md](../06_delivery/DATA_
 
 | Integration | Purpose | Status |
 |---|---|---|
-| AI model/provider | Lesson and live adaptation proposals | Open Architecture Decision |
-| Speech recognition | Push-to-talk command transcription | Open Architecture Decision |
-| Curriculum source | Controlled and versioned curriculum grounding | Normative authority selected; ingestion, retrieval, integrity, local-context modeling, and guidance usage/licensing remain architecture follow-up |
-| Mathematics validation engine | Deterministic validation for scoped content | Open Architecture Decision |
+| AI model/provider | Lesson and live adaptation proposals | Selected: OpenRouter gateway with server-owned model profiles (ADR-0017); provider-route approval evidence and field-level contracts remain pending |
+| Speech recognition | Push-to-talk command transcription | Selected: Deepgram Nova-3 Indonesian, backend-mediated (ADR-0018); provider privacy review and field-level contracts remain pending |
+| Curriculum source | Controlled and versioned curriculum grounding | Selected: controlled versioned corpus with deterministic metadata-first retrieval (ADR-0015); corpus/import/schema/runtime implementation and Official Guidance usage/licensing review remain pending |
+| Mathematics validation engine | Deterministic validation for scoped content | Selected: scoped deterministic validators (ADR-0016); validator source/parser/dependency pin remain pending |
 
 Integrations must be isolated behind supported application boundaries and must not become authoritative owners of classroom state.
 
@@ -491,6 +499,8 @@ The MVP product baseline is acceptable when:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.11` | `2026-09-08` | Resolve OAD-007 with backend-controlled speech-recognition, separated speech/AI resource-accounting, and low-confidence-transcript rules (ADR-0018); correct stale "Open Architecture Decision" wording for identity (ADR-0011), AI provider (ADR-0017), and Mathematics validation (ADR-0016) | Claude |
+| `0.10` | `2026-09-07` | Resolve OAD-006 with bounded-AI-capability, resource-control, per-teacher allowance, and internal usage-visibility rules (ADR-0017) | Claude |
 | `0.9` | `2026-09-06` | Resolve `OPD-007` and add teacher-first commercial and release-readiness rules | Codex |
 | `0.8` | `2026-09-06` | Resolve `OPD-006` and add founder-led product and requirement approval rules | Codex |
 | `0.7` | `2026-09-06` | Resolve `OPD-005` with product-wide retention, history, export, and deletion requirements | Codex |

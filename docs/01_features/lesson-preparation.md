@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.2` |
-| Last Updated | `2026-09-06` |
+| Version | `0.3` |
+| Last Updated | `2026-09-07` |
 | PRD Capability | `CAP-LESSON-001` |
 
 ## 1. Feature Intent
@@ -56,6 +56,27 @@ The teacher creates a curriculum-aware lesson draft, understands its generation 
 6. Teacher reviews status, warnings, and content.
 7. Teacher edits, accepts, rejects, or regenerates supported sections.
 8. Teacher saves a new lesson version.
+
+## 3a. Architecture Resolution (OAD-006)
+
+[ADR-0017](../02_architecture/adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
+resolves the AI provider/gateway architecture for lesson generation without
+changing the review/save behavior already established above.
+
+- Lesson generation is a bounded Penatika capability, not a generic
+  prompt-to-anything interface; the request scope/capability guard applies
+  before generation, the same as for live adaptation.
+- The backend selects the applicable model profile (`FAST` or `QUALITY`)
+  for lesson generation; the teacher/browser never selects a model,
+  provider, or route.
+- Scope, resource, and per-teacher daily AI allowance rules apply to lesson
+  generation the same as to live adaptation; only the relevant curriculum
+  context needed for the requested grade/topic is sent to the provider.
+- Allowance or resource exhaustion prevents new lesson generation only; an
+  existing reviewed draft or saved lesson version remains safe and usable.
+- OpenRouter output remains a structured, non-authoritative proposal that
+  must still pass schema, Mathematics, and curriculum checks before it can
+  reach the teacher-reviewed state.
 
 ## 4. Functional Requirements
 
@@ -174,6 +195,7 @@ The system must preserve the last safe teacher-authored state and must not mark 
 ## 12. Related Decisions
 
 - [ADR-0005 — Use Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
+- [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](../02_architecture/adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
 - [Data Retention, History, Export, and Deletion Policy](../06_delivery/DATA_RETENTION_POLICY.md)
 
 ## 13. Definition of Done
@@ -183,3 +205,10 @@ The system must preserve the last safe teacher-authored state and must not mark 
 - Required warning and failure states are usable.
 - Curriculum and Mathematics assurance dependencies are resolved for MVP topics.
 - Relevant PRD acceptance and privacy rules are satisfied.
+
+## 14. Change Log
+
+| Version | Date | Change | Author |
+|---|---|---|---|
+| `0.3` | `2026-09-07` | Record OAD-006 architecture resolution (ADR-0017): bounded generation capability, backend-controlled model profile, scope/resource/allowance rules, and non-authoritative proposal status | Claude |
+| `0.2` | `2026-09-06` | (see prior repository history) |

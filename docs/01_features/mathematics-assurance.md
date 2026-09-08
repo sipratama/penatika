@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft |
-| Version | `0.2` |
-| Last Updated | `2026-09-06` |
+| Version | `0.4` |
+| Last Updated | `2026-09-07` |
 | PRD Capability | `CAP-MATH-001` |
 
 ## 1. Feature Intent
@@ -158,15 +158,93 @@ The system must prefer an explicit unsupported/inconclusive state over a fabrica
 - AI provider assertion cannot mark content valid.
 - Property-based or generated deterministic test cases where suitable.
 
-## 9. Open Questions
+## 9a. Architecture Resolution (OAD-009)
 
-- Which validator approach covers each MVP content type?
+[ADR-0015](../02_architecture/adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
+resolves curriculum ingestion, normalization, integrity/versioning,
+local-context modeling, and retrieval architecture for this feature without
+changing the authority rules already established above or in ADR-0005.
+
+- **Controlled Source Registry**: a stable `Curriculum Source` identity is
+  registered independently of any specific version; registration is
+  metadata acquisition, not authority activation.
+- **Source-Version vs. Corpus-Version distinction**: the official
+  `Curriculum Source Version` (for example, 046/H/KR/2025) is versioned
+  separately from Penatika's own normalized `Curriculum Corpus Version`. A
+  normalization correction creates a new corpus version and never mutates
+  an activated one in place; official source supersession is a separate,
+  explicit review-and-activate step that does not rewrite existing saved
+  provenance.
+- **Deterministic metadata-first retrieval**: runtime grounding resolves
+  through authority level, subject, grade → phase mapping, and curated
+  topic bindings against explicitly activated corpus data — not through
+  embedding similarity or AI model memory.
+- **Curated topic binding**: the initial pilot corpus supports controlled
+  topic identifiers for at least `FRACTIONS`, `BASIC_ALGEBRA`, and
+  `LINEAR_EQUATIONS` as reviewable, versioned data, not logic hidden in a
+  prompt.
+- **Separate local-context overlay**: a `LocalCurriculumContextVersion` is
+  teacher-owned, versioned, and traceable; it may add sequencing context
+  alongside a `NORMATIVE` claim but can never become or override one. A
+  genuine contradiction (not mere narrowing/sequencing) produces an
+  explicit conflict/warning state instead of a silent merge.
+- **Explicit `NO_MATCH`/`UNGROUNDED` behavior**: when controlled retrieval
+  finds no adequate grounding, the system returns an explicit ungrounded
+  state rather than presenting unverified AI knowledge as grounded.
+- **No vector-retrieval baseline**: pgvector, embeddings providers, and
+  similarity-based reranking are not selected for MVP; similarity never
+  redefines authority level even if evaluated later.
+- **Official Guidance activation pending review**: `Panduan Mata Pelajaran
+  Matematika 2025` remains `OFFICIAL_GUIDANCE`; its substantial content
+  remains disabled/not activated in the default runtime corpus until an
+  explicit licensing/usage/legal review approves compliant use (the source
+  repository currently marks it CC BY-NC 4.0).
+
+## 9c. Architecture Resolution (OAD-008)
+
+[ADR-0016](../02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
+resolves the Mathematics validator approach for this feature's MVP scope
+without changing the result-state semantics or business rules already
+established above.
+
+- **Scoped deterministic validators, not general AI self-evaluation**: the
+  MVP supports exactly three validator families — `EXACT_RATIONAL` (Grade 5
+  fractions), `AFFINE_EXPRESSION` and `LINEAR_EQUATION` (Grade 7 basic
+  algebra / linear equations). Other Mathematics content remains
+  `UNSUPPORTED` until a future validator family is added with evidence.
+- **Exact rational arithmetic**: fraction correctness uses exact rational
+  arithmetic (Apache Commons Numbers `BigFraction` as the initial
+  primitive); binary floating-point equality is never the correctness
+  authority.
+- **Restricted affine/linear-equation grammar**: Grade 7 content is
+  normalized into a canonical affine form (`a*x + b`) and classified into
+  `UNIQUE_SOLUTION`, `IDENTITY`, or `CONTRADICTION`/`NO_SOLUTION`; this is a
+  restricted grammar, not a general Computer Algebra System, and nonlinear,
+  multi-variable, or higher-power expressions remain `UNSUPPORTED`.
+- **AI independence**: deterministic validation runs inside the backend
+  with no AI provider, network CAS, or external mathematical service
+  dependency; AI cannot convert `INVALID`/`UNSUPPORTED` to `VALID`, and a
+  post-`INVALID` AI correction is a new proposal that must be revalidated.
+- **Curriculum independence unchanged**: mathematical correctness and
+  curriculum grounding (ADR-0015) remain separate assurance dimensions.
+- **No general CAS baseline**: SymPy, Symja, and the Wolfram API are not
+  selected for MVP; a CAS may be reconsidered only if supported scope
+  expands beyond the bounded validator families with evidence.
+
+## 9d. Open Questions
+
+- Exact teacher UX for entering/selecting local curriculum context.
+- Exact field-level OpenAPI/JSON Schema contracts for the curriculum
+  context bundle, curriculum references, local-context records, and
+  Mathematics claims/results.
+- Outcome of the applicable legal/licensing review for Official Guidance
+  substantial-content usage.
+- Exact curriculum corpus normalization data schema and topic taxonomy.
+- Exact parser grammar, resource-limit values, and Apache Commons Numbers
+  version pin (deferred to source scaffolding).
 - What teacher override behavior is allowed for invalid, unsupported, or inconclusive states?
 - Which explanation-quality checks are deterministic versus AI-evaluated?
-- What evidence threshold is required before adding another topic or grade?
-- What ingestion, normalization, integrity-verification, and retrieval approach should be used for BSKAP 046/H/KR/2025?
-- What usage/licensing policy applies before storing or redistributing substantial official guidance content?
-- How should school/teacher local curriculum context be created and versioned?
+- What evidence threshold is required before adding another topic, grade, or validator family?
 
 ## 10. Definition of Done
 
@@ -179,3 +257,14 @@ The system must prefer an explicit unsupported/inconclusive state over a fabrica
 
 - [ADR-0004 — Separate AI Generation from Mathematical and Curriculum Authority](../02_architecture/adr/ADR-0004-ai-assurance-boundary.md)
 - [ADR-0005 — Use Layered Curriculum Authority and Versioned Provenance](../02_architecture/adr/ADR-0005-layered-curriculum-authority.md)
+- [ADR-0015 — Use a Versioned Controlled Curriculum Corpus with Deterministic Retrieval](../02_architecture/adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
+- [ADR-0016 — Use Scoped Deterministic Mathematics Validators with Exact Arithmetic](../02_architecture/adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
+
+## 12. Change Log
+
+| Version | Date | Change | Author |
+|---|---|---|---|
+| `0.4` | `2026-09-07` | Record OAD-008 architecture resolution (ADR-0016); remove resolved validator-approach question from Open Questions | Claude |
+| `0.3` | `2026-09-07` | Record OAD-009 architecture resolution (ADR-0015); remove resolved ingestion/retrieval/local-context questions from Open Questions | Claude |
+| `0.2` | `2026-09-06` | (see prior repository history) |
+| `0.1` | `2026-09-06` | Initial Mathematics assurance and curriculum grounding feature specification |

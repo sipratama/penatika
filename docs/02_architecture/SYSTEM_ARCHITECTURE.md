@@ -8,11 +8,11 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.5` |
-| Last Updated | `2026-09-06` |
+| Version | `0.17` |
+| Last Updated | `2026-09-08` |
 | Base Profile | `fullstack` |
 | Modifiers | `ai-enabled` |
-| Deployment Maturity | Pre-implementation; target environment not decided |
+| Deployment Maturity | Pre-implementation; deployment architecture selected (ADR-0019), no VPS provisioned |
 
 ## 1. Architecture Summary
 
@@ -23,7 +23,55 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 ### Selected Baseline
 
 - Multiple client surfaces interact with one backend-owned application boundary.
-- The initial backend is a modular monolith with explicit domain modules.
+- Browser-first client strategy uses React, TypeScript, and Vite.
+- Teacher Web contains Preparation and private Controller modes; Classroom Display is a separate browser application entry/build boundary.
+- No native mobile client is used in the MVP.
+- Frontend clients are browser application layers and do not become a BFF or application authority.
+- The authoritative backend uses Java 21 LTS and Spring Boot 4.x.
+- The backend remains one deployable modular monolith with explicit domain/application modules and no microservice split.
+- Backend internal organization is module-first Hexagonal Architecture: business-capability modules are the primary boundary, and Hexagonal (ports/adapters) structure applies locally inside each module that is complex enough to benefit from it.
+- Domain/application core remains framework-light; inbound and outbound adapters contain delivery and infrastructure detail.
+- Ports protect meaningful boundaries and are not created mechanically for every dependency.
+- The primary authoritative database is PostgreSQL 18.x (current stable at decision time: PostgreSQL 18.6), used as one database for the modular monolith with module-owned logical ownership.
+- Physical schema evolution uses Flyway 13.x version-controlled SQL migrations.
+- The initial data-access baseline is Spring JDBC / JdbcClient-style explicit SQL; no JPA/Hibernate baseline is selected.
+- Persistence adapters live behind module-owned output ports per the Hexagonal persistence boundary; persistence is relational-first with selective PostgreSQL JSONB for justified structured content.
+- No Redis, cache, or vector database is selected; physical schema and migrations do not yet exist.
+- Teacher authentication uses OpenID Connect Authorization Code flow with PKCE `S256`; the Penatika Backend is the confidential OIDC client and relying party.
+- OAuth/OIDC access, refresh, and ID tokens remain server-side; Teacher Web receives only an opaque protected backend-session cookie.
+- Penatika owns a stable internal `TeacherAccount` linked to external identity by validated `(issuer, subject)`; email is not an identity key.
+- Penatika stores no teacher passwords for MVP and does not make provider claims the application authorization model.
+- Teacher controller authority requires an authenticated active `TeacherAccount` plus a session-scoped `TEACHER_CONTROLLER` participant binding.
+- Classroom Display uses a distinct session-scoped `CLASSROOM_DISPLAY` participant authorization and receives no teacher-account privilege.
+- MVP permits at most one active mutation-authorized controller and one active classroom display per classroom session.
+- Pairing grants are classroom-session-bound, role/purpose-bound, single-use, revocable, and expire after five minutes.
+- Core domain/application behavior remains framework-light Java where practical; Spring-specific, persistence, provider, and transport concerns belong at composition and adapter boundaries.
+- Concrete OIDC provider/deployment configuration and deployment technologies remain open adapter-level decisions where applicable; persistence (ADR-0014), realtime transport (ADR-0012), curriculum (ADR-0015), Mathematics validation (ADR-0016), generative AI (ADR-0017), and speech recognition (ADR-0018) are resolved.
+- Push-to-talk speech recognition uses Deepgram Nova-3 (Indonesian, `language=id`) through a backend-mediated adapter — Browser → Penatika Backend → Deepgram, never Browser → Deepgram direct — using pre-recorded/completed-utterance transcription on the Deepgram Australia regional endpoint with model-improvement opt-out (`mip_opt_out=true`).
+- Browser audio capture uses `MediaDevices.getUserMedia()` + `MediaRecorder`, preferring `audio/webm;codecs=opus` with a browser-supported MP4/AAC fallback; no client-side transcoding, no always-listening capture, and no speaker diarization are used for MVP.
+- A speech transcript is untrusted input: deterministic `DIRECT_ACTION` matching is attempted before any semantic routing, and a supported semantic transcript still passes the full ADR-0017 scope/resource/allowance pipeline; speech success never implies AI generation permission.
+- Speech resource/cost usage (`SpeechRecognitionRequest`, `SpeechUsageEvent`) is tracked separately from the generative `AIAllowanceWindow`; a voice command resolved as `DIRECT_ACTION` consumes no generative AI allowance.
+- Raw push-to-talk audio remains transient and is never written to durable storage, logs, or analytics; low-confidence or ambiguous transcripts produce a `NEEDS_CLARIFICATION`/`RETRY_SPEECH` state rather than a silent action or generation call.
+- Speech-provider failure follows the existing ADR-0007/`PR-020` degradation policy: only push-to-talk transcription becomes unavailable while text, deterministic controls, and non-voice AI requests remain usable.
+- Penatika uses OpenRouter as its generative-model gateway behind a Penatika-owned `GenerativeModelPort`, using the OpenRouter OpenAI-compatible Chat Completions API; OpenRouter is a replaceable infrastructure adapter, never curriculum, Mathematics, authorization, or publication authority.
+- Server-owned semantic model profiles (`ROUTER`, `FAST`, `QUALITY`; initial bindings `openai/gpt-5.6-luna` for `ROUTER`/`FAST` and `openai/gpt-5.6-terra` for `QUALITY`) resolve generation, never the browser client; OpenRouter's automatic Auto Router and Free Router are not used for pilot/production behavior.
+- Every generation request passes a pre-provider pipeline — authorization, hard resource guard, deterministic capability/scope guard, optional bounded `ROUTER` classification, per-teacher AI allowance check, atomic usage reservation, and concurrency/idempotency check — before any `FAST`/`QUALITY` call, so unsupported or over-scale requests never reach expensive generation.
+- Penatika owns per-teacher AI usage through an application-level daily allowance window, atomic usage reservation/reconciliation, and privacy-minimized aggregate/per-teacher usage-and-cost visibility for authorized internal operations; an OpenRouter API key is never the per-teacher quota mechanism.
+- Every approved OpenRouter generation route requires `zdr=true`, `data_collection=deny`, and `require_parameters=true` where structured output matters; unapproved automatic provider fallback is disabled, and a route price ceiling and the OpenRouter key spend limit apply as defense-in-depth, not as the product quota source of truth.
+- AI structured output passes gateway-level structured-output support and mandatory canonical Penatika schema revalidation; gateway/provider tools (web/file search, browsing, code execution, computer use, MCP) are not enabled for MVP generative paths.
+- Model, profile, and provider-route changes require Penatika's versioned AI evaluation corpus before pilot/production activation; AI-provider failure follows the existing graceful-degradation fallback (ADR-0007), not automatic cross-model or cross-provider fallback.
+- Curriculum uses a controlled, versioned, human-verified corpus with deterministic metadata-first retrieval; runtime authority never depends on live web retrieval, AI model memory, or vector/embedding similarity ranking.
+- A registered controlled source produces an immutable `CurriculumSourceVersion`; Penatika's own normalization is a separately versioned, immutable `CurriculumCorpusVersion` that requires human review and explicit activation before runtime use.
+- Runtime curriculum retrieval reads only activated corpus data from PostgreSQL through the Curriculum module's persistence adapter; it does not depend on official-website availability, PDF parsing, web scraping, or AI-provider availability.
+- Local school/teacher curriculum context is a versioned `LOCAL_CONTEXT` overlay that cannot mutate or be promoted to `NORMATIVE` corpus entries.
+- AI Orchestration receives a provider-neutral `CurriculumContextBundle`; AI provider payloads do not become the curriculum model, and no AI provider owns retrieval authority.
+- Cross-component wire interfaces follow contract-first design: contract, compatibility review, implementation, then conformance evidence.
+- Synchronous HTTPS/JSON APIs use OpenAPI 3.1.x; justified reusable wire structures use JSON Schema Draft 2020-12.
+- RFC 9457 Problem Details is the HTTP error baseline.
+- Teacher-initiated state-changing commands remain on the synchronous HTTPS/JSON OpenAPI boundary; the backend pushes authoritative revision/projection updates to the Controller and Classroom Display over per-participant Server-Sent Events (SSE), authorized by the existing backend-managed session/participant credential.
+- SSE reconnect uses the browser-native `Last-Event-ID` mechanism, carrying the authoritative revision, as the resync entry point into the existing ADR-0007 reconciliation policy.
+- AsyncAPI 3.1.x remains inactive; the SSE push channel is documented as an OpenAPI `text/event-stream` operation referencing standalone JSON Schema event payloads rather than a separate contract family.
+- Contract files are authoritative for wire interfaces; generated and implementation types are derived consumers.
 - Classroom session state is authoritative on the backend and projected differently to teacher and display surfaces.
 - Classroom content uses a versioned structured model; arbitrary generated HTML or executable AI output is not supported.
 - AI providers are proposal generators, not authorities for session state, mathematical correctness, curriculum truth, authorization, or policy.
@@ -31,7 +79,10 @@ Penatika coordinates teacher preparation, a private teacher controller, a studen
 - Deterministic non-generative direct actions use explicitly supported command classes rather than the AI proposal path.
 - Penatika is resilience-oriented, not offline-first; dependency failures degrade affected capabilities without creating competing state authority.
 - Loss of backend authority freezes new authoritative mutations instead of promoting a client to temporary authority.
-- Persistence, realtime transport, identity provider, client frameworks, programming languages, cloud, and external providers remain open decisions.
+- Per [ADR-0019](./adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md), the MVP/pilot deployment class is a portable single ordinary Linux VPS (Ubuntu Server 24.04 LTS) running Docker Engine + Docker Compose, fronted by Caddy for HTTPS, with PostgreSQL colocated on the same host for `PILOT`; the initial replaceable provider/region is Tencent Cloud Lighthouse, Jakarta.
+- Normal Penatika runtime depends only on portable standards (Linux, OCI containers, Docker Compose, PostgreSQL, HTTPS, standard DNS, filesystem/container volumes, outbound HTTPS), never on a Tencent-proprietary API or SDK; a VPS provider change does not require rewriting application logic while the deployment class in ADR-0019 remains unchanged.
+- Durable pilot data requires an automated PostgreSQL backup with a provider-replaceable off-host copy; a Docker volume or same-provider snapshot is never treated as the sole backup.
+- A single VPS is one infrastructure failure domain for MVP/pilot; this is an intentional founder-led trade-off, and graceful degradation (ADR-0007) cannot make an unavailable single server available.
 
 ### Why This Shape
 
@@ -41,12 +92,15 @@ The MVP has tightly coupled workflows and shared consistency rules but no confir
 
 ```text
 Teacher
-  ├─ Preparation Client
-  └─ Private Controller Client
+  └─ Teacher Web
+       ├─ Preparation mode
+       └─ Private Controller mode
              │
              │ authorized application + realtime interactions
              ▼
       Penatika Backend
+      Java 21 / Spring Boot 4.x
+      one deployable modular monolith
        ├─ Identity & Access
        ├─ Lesson
        ├─ Classroom Session
@@ -61,15 +115,19 @@ Teacher
              └─ Controlled Curriculum Source
              │
              ▼
-     Classroom Display Client
+     Classroom Display Web
        classroom-safe projection only
 ```
 
 Students consume the classroom display but do not require a Penatika device identity in the MVP.
 
+Teacher Web is one browser application containing Preparation and private
+Controller modes. Classroom Display Web is a separate browser application
+entry/build boundary.
+
 ## 3. Main Runtime Components
 
-### 3.1 Preparation Client
+### 3.1 Preparation Client (Teacher Web)
 
 Responsibilities:
 
@@ -80,7 +138,7 @@ Responsibilities:
 
 It does not own authoritative lesson or curriculum provenance.
 
-### 3.2 Private Controller Client
+### 3.2 Private Controller Client (Teacher Web)
 
 Responsibilities:
 
@@ -96,7 +154,7 @@ Responsibilities:
 
 It must be treated as an untrusted client for authorization.
 
-### 3.3 Classroom Display Client
+### 3.3 Classroom Display Web
 
 Responsibilities:
 
@@ -110,15 +168,26 @@ It has no authority to issue teacher commands.
 
 ### 3.4 Penatika Backend
 
-The backend is initially one deployable application with explicit internal modules and infrastructure adapters.
+The backend is one deployable Java 21 LTS / Spring Boot 4.x application with explicit internal modules and infrastructure adapters. It remains a modular monolith; no microservice split is selected. Internal organization is module-first Hexagonal Architecture, per [ADR-0013](./adr/ADR-0013-java21-module-first-hexagonal-backend.md).
+
+Core domain and application behavior should remain framework-light Java where practical. Spring-specific composition, delivery, persistence, and provider integration concerns belong primarily at adapter boundaries. Domain models must not depend on transport models, database entities, provider SDKs, or AI SDK types.
 
 #### Identity and Access Module
 
-- resolves teacher identity and participant authorization;
-- creates bounded pairing credentials;
-- enforces session roles and access to projections.
+- acts as the backend OIDC relying party and confidential client;
+- validates external OIDC authentication and resolves `(issuer, subject)` to a local `TeacherAccount` through an `ExternalIdentityLink`;
+- applies explicit account-provisioning policy and rejects non-active accounts;
+- creates, rotates, expires, and revokes opaque backend-managed `BrowserSession` authority;
+- retains upstream OAuth/OIDC tokens server-side and never exposes them to ordinary browser JavaScript;
+- issues and redeems five-minute, role-bound, single-use `PairingGrant` records;
+- creates and revokes session-scoped `SessionParticipant` authority;
+- enforces object ownership, session roles, active participant constraints, and access to role-specific projections;
+- revokes controller authority when its teacher account or browser authorization becomes invalid.
 
-Identity technology and account lifecycle remain open.
+PostgreSQL (ADR-0014) is already the selected persistence baseline; the
+physical browser-session schema/representation, expiry/index design, concrete
+OIDC provider, account-linking UX, and field-level authentication contracts
+remain open implementation decisions.
 
 #### Lesson Module
 
@@ -151,24 +220,32 @@ Identity technology and account lifecycle remain open.
 - isolates provider/model-specific behavior;
 - enforces context, timeout, cost, resource, privacy, and output-schema controls;
 - produces structured proposals and assurance inputs;
+- per [ADR-0017](./adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md), routes generation through OpenRouter using server-owned `ROUTER`/`FAST`/`QUALITY` model profiles behind the `GenerativeModelPort`, enforcing scope/capability, hard resource, and per-teacher allowance guards before any provider call;
+- per [ADR-0018](./adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md), receives an untrusted transcript from the Speech Recognition adapter and routes it to deterministic `DIRECT_ACTION` matching first, falling back to the ADR-0017 semantic pipeline only when no direct action matches;
 - returns proposals, never authoritative session mutations, and does not own publication authorization.
 
 #### Mathematics Assurance Module
 
 - classifies content requiring deterministic validation;
 - owns normalized inputs, validation result semantics, and validator version references;
-- remains independent of AI provider confidence.
+- remains independent of AI provider confidence;
+- per [ADR-0016](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md), routes supported claims to a scoped deterministic validator family (`EXACT_RATIONAL`, `AFFINE_EXPRESSION`, `LINEAR_EQUATION`) using exact rational arithmetic, never floating-point equality or AI self-evaluation;
+- returns `UNSUPPORTED`/`INCONCLUSIVE` for content outside the currently implemented validator scope rather than approximating certainty.
 
 #### Curriculum Module
 
 - owns curriculum authority levels, controlled source metadata, versions, supported scope, and provenance;
 - provides grounded reference context through supported interfaces;
 - distinguishes national normative authority, official interpretive guidance, and local school/teacher context;
-- does not permit provider output to redefine curriculum truth.
+- does not permit provider output to redefine curriculum truth;
+- per [ADR-0015](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md), uses deterministic metadata-first retrieval (authority level, subject, grade→phase, topic) against an explicitly activated `CurriculumCorpusVersion`, never AI model memory or live web retrieval;
+- returns an explicit `NO_MATCH`/`UNGROUNDED` state when controlled retrieval finds no adequate grounding, rather than falling back to unverified AI knowledge.
 
 ### 3.5 Infrastructure Adapters
 
 Adapters implement persistence, realtime communication, AI generation, speech recognition, curriculum ingestion/retrieval, deterministic validation engines, telemetry, and clocks. Domain/application modules depend on ports rather than vendor SDKs.
+
+Per [ADR-0018](./adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md), the Speech Recognition adapter accepts a backend-uploaded bounded push-to-talk utterance, validates it, calls Deepgram Nova-3 (Indonesian, AU regional endpoint, `mip_opt_out=true`) for pre-recorded/completed-utterance transcription, and returns an untrusted `SpeechRecognitionResult` to AI Orchestration; it never receives a direct browser connection and never forwards raw audio to the OpenRouter generative gateway.
 
 ## 4. Architecture Style and Dependency Direction
 
@@ -196,10 +273,11 @@ Rules:
 
 | Data / State | Authoritative Owner | Notes |
 |---|---|---|
-| Teacher identity and authorization grants | Identity and Access | Provider/schema open |
+| `TeacherAccount` and `ExternalIdentityLink` | Identity and Access | Stable local account; external key is validated `(issuer, subject)` |
+| Authenticated `BrowserSession` | Identity and Access | Opaque, revocable backend session; upstream OAuth/OIDC tokens remain server-side |
 | Lesson draft and lesson version | Lesson | Version identity must remain stable |
 | Classroom session lifecycle and revision | Classroom Session | Backend authoritative |
-| Participant role and pairing state | Identity and Access with Session coordination | Pairing secret is ephemeral and bounded |
+| `PairingGrant` and `SessionParticipant` authority | Identity and Access with Session coordination | Five-minute single-use grant; one active controller/display per session for MVP |
 | Structured scene and supported element schema | Classroom Scene | Versioned contract required before implementation |
 | Accepted scene state and annotations | Classroom Session through Scene commands | Client cache is not authoritative |
 | AI request/proposal lifecycle | AI Orchestration | Proposal remains untrusted and teacher-private until checks and publication authorization complete |
@@ -212,8 +290,8 @@ Rules:
 ### 6.1 Lesson Preparation
 
 1. Preparation client submits lesson intent.
-2. Lesson module resolves controlled curriculum context.
-3. AI Orchestration requests a structured proposal.
+2. Lesson module resolves controlled curriculum context: Curriculum module performs deterministic metadata-first retrieval (subject, grade→phase, topic) against activated `CurriculumCorpusVersion` data and any applicable teacher `LocalCurriculumContextVersion`, and returns a provider-neutral `CurriculumContextBundle` with retrieval provenance, or an explicit `NO_MATCH`/`UNGROUNDED` state.
+3. AI Orchestration requests a structured proposal using the resolved curriculum context.
 4. Classroom Scene validates structure.
 5. Mathematics Assurance validates supported claims.
 6. Lesson module exposes proposal and assurance state to the teacher.
@@ -221,11 +299,15 @@ Rules:
 
 ### 6.2 Session Start and Pairing
 
-1. Teacher starts a session from a reviewed lesson version.
-2. Classroom Session creates the authoritative state and revision.
-3. Identity and Access authorizes display and controller participants.
-4. Pairing credentials are short-lived, single-purpose, and server-validated.
-5. Session module returns role-specific projections.
+1. Teacher authenticates through OIDC Authorization Code flow with PKCE `S256`; the backend validates the external identity and resolves an active local `TeacherAccount`.
+2. The backend creates or rotates the revocable authenticated browser session while retaining OAuth/OIDC tokens server-side.
+3. The authorized teacher starts a session from a reviewed lesson version.
+4. Classroom Session creates the authoritative state and revision.
+5. Identity and Access issues role/session-bound, single-use pairing grants that expire after five minutes.
+6. A controller grant may establish `TEACHER_CONTROLLER` authority only when redeemed from an authenticated, session-authorized teacher browser session.
+7. A display grant establishes only a distinct `CLASSROOM_DISPLAY` participant session and cannot grant teacher authority.
+8. Identity and Access enforces one active controller and one active display per session; explicit replacement revokes prior participant authority.
+9. Session module returns role-specific projections.
 
 ### 6.3 Live Adaptation
 
@@ -255,7 +337,15 @@ This path does not enter AI Orchestration and does not create or imitate an AI p
 
 Transcription, generation progress, proposal preview, assurance results, warnings, alternatives, and other `PRIVATE_ONLY` work remain teacher-private and do not mutate student-facing authoritative state.
 
-### 6.4 Reconnect and Save
+### 6.4 Realtime Push (SSE)
+
+1. Controller and Classroom Display each hold one authorized `text/event-stream` connection, established with their existing backend-managed session/participant credential, carrying only their own role-specific projection.
+2. The backend never multiplexes both projections onto one stream.
+3. State-changing commands never travel over the push channel; they remain on the synchronous HTTP command boundary (section 6.3).
+4. Each pushed event's `id` carries the authoritative revision/sequence. On browser-native SSE reconnect, `Last-Event-ID` lets the backend emit a bounded catch-up delta or direct the client to fetch a full authoritative snapshot before push resumes.
+5. A pushed event's revision/sequence identifier is advisory for reconnect resync only; mutation resumes only after backend-authoritative reconciliation (section 6.5, ADR-0007).
+
+### 6.5 Reconnect and Save
 
 1. The application identifies which dependency or participant is degraded and exposes an appropriate teacher-private status.
 2. AI or speech failure disables only the affected capability while backend-authoritative classroom behavior continues where healthy.
@@ -272,7 +362,10 @@ Transcription, generation progress, proposal preview, assurance results, warning
 | Boundary | Trust Position |
 |---|---|
 | Teacher and display clients → backend | Untrusted input; authenticate, authorize, validate, and bound |
-| Pairing credential → session access | Limited proof for a single purpose; not broad account authority |
+| OIDC provider → Identity and Access | External authentication source; validate issuer, subject, audience/client, signature, nonce, state, redirect, and time constraints before local use |
+| OIDC claims → Penatika account/authorization | Untrusted until validated and normalized; provider roles/groups and email do not become application authority |
+| Pairing credential → session access | Five-minute single-use proof for one session role/purpose; never teacher-account authentication |
+| Browser/participant session reference → backend | Opaque revocable credential; validate lifecycle, account, role, ownership, and session state on use |
 | AI/speech provider → application | Untrusted external dependency and output |
 | Curriculum source → curriculum module | Normative source is selected for MVP Mathematics; each ingested source still requires version, integrity, authority-level, provenance, and applicable usage policy |
 | Backend → persistence | Privileged boundary using least-privilege credentials |
@@ -280,8 +373,15 @@ Transcription, generation progress, proposal preview, assurance results, warning
 
 ## 8. Security and Privacy Baseline
 
-- Server-side authentication and authorization are required for protected actions.
-- Pairing tokens must be purpose-bound, expiring, non-guessable, and replay-resistant.
+- Teacher authentication uses OIDC Authorization Code flow with PKCE `S256`, `state`, `nonce`, exact redirect validation, and applicable issuer, subject, client/audience, signature, and time validation.
+- The backend is the confidential OIDC client; OAuth/OIDC access, refresh, and ID tokens remain server-side and are not stored by browser application JavaScript.
+- Teacher Web uses a revocable opaque backend session cookie that is `Secure`, `HttpOnly`, narrowly scoped, and host-only where practical; `SameSite=Strict` is preferred when compatible with the final OIDC deployment.
+- Cookie-authenticated state changes require explicit CSRF protection; SameSite alone is insufficient, state-changing behavior must not use `GET`, and credentialed CORS must use explicit trusted origins rather than wildcards.
+- Server-side object/session authorization is required for every protected action; authentication or a coarse teacher role alone is insufficient.
+- Pairing grants must be purpose/role-bound, session-bound, five-minute bounded, single-use, non-guessable, revocable, and replay-resistant.
+- Pairing alone cannot authenticate a teacher, and a display participant can never derive teacher authority.
+- Browser and participant session identifiers rotate or revoke as applicable, expire after bounded lifetimes, and terminate local authority independently of upstream logout.
+- Penatika stores no local teacher passwords for MVP and does not automatically link accounts by email.
 - Raw push-to-talk audio is ephemeral by default and excluded from logs and ordinary persistence.
 - Secrets, tokens, raw provider payloads, and private teacher state must not appear in classroom projections.
 - AI output, user input, lesson content, and curriculum content are untrusted for rendering and prompt control.
@@ -324,13 +424,32 @@ Penatika is resilience-oriented, not offline-first. The degradation policy prese
 
 ## 11. Persistence Baseline
 
-Persistent domain data is required for lesson versions, curriculum provenance, session saves, assurance results, and authorization-related records. The database technology and physical schema are not selected.
+Persistent domain data is required for lesson versions, curriculum provenance, session saves, assurance results, and authorization-related records. Per [ADR-0014](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md), the primary authoritative database is PostgreSQL 18.x (one database for the modular monolith, with module-owned logical ownership), physical schema evolution uses Flyway 13.x version-controlled SQL migrations, and the initial data-access baseline is Spring JDBC / JdbcClient-style explicit SQL. Persistence adapters implement module-owned output ports per the Hexagonal persistence boundary in ADR-0013/ADR-0014; no JPA/Hibernate, Redis, cache, or vector database is selected. Physical schema, migrations, and physical database credentials/deployment do not yet exist.
 
-The conceptual model is defined in [DATA_MODEL.md](./DATA_MODEL.md). Migrations will become mandatory when a physical persistence technology is selected. Persistent data follows the approved retention classes in [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md); persistence does not imply indefinite retention for AI or assurance records.
+The conceptual model is defined in [DATA_MODEL.md](./DATA_MODEL.md). Persistent data follows the approved retention classes in [DATA_RETENTION_POLICY.md](../06_delivery/DATA_RETENTION_POLICY.md); persistence does not imply indefinite retention for AI or assurance records.
 
 ## 12. Contracts
 
-Cross-component contracts are required before application source implementation, including:
+Penatika uses contract-first cross-boundary design. Machine-readable contract
+files are authoritative for wire interfaces; generated code, handwritten DTOs,
+documentation rendering, client types, and implementation classes are derived
+consumers.
+
+Contract ownership is divided by responsibility:
+
+- `contracts/openapi/` owns synchronous HTTPS/JSON application API definitions
+  using OpenAPI 3.1.x when field-level contracts are created;
+- `contracts/schemas/` owns justified reusable structured wire schemas using
+  JSON Schema Draft 2020-12;
+- `contracts/asyncapi/` stays inactive; ADR-0012 documents the SSE push
+  channel within `contracts/openapi/` and `contracts/schemas/` instead.
+
+RFC 9457 Problem Details with `application/problem+json` is the HTTP error
+baseline. Each wire shape has one canonical schema owner; other contracts and
+derived code reference that owner rather than redefining the same structure.
+
+Cross-component field-level contracts are required before relevant application
+implementation, including:
 
 - structured lesson and scene schema;
 - role-specific session projections;
@@ -338,7 +457,11 @@ Cross-component contracts are required before application source implementation,
 - AI proposal envelope;
 - assurance result and curriculum provenance.
 
-No OpenAPI, AsyncAPI, or schema directory is created during initialization because transport, protocol, and initial field-level models are not yet sufficiently decided. Contract creation is the next architecture step after those decisions.
+The contract repository boundary is active, but no field-level OpenAPI or JSON
+Schema contract is created merely because the strategy is resolved. Identity
+semantics are selected by ADR-0011; realtime transport and credential carriage
+are selected by ADR-0012. AsyncAPI remains inactive; the SSE push channel is a
+future OpenAPI/JSON Schema addition, not an AsyncAPI contract.
 
 ## 13. Observability Baseline
 
@@ -372,6 +495,14 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 - `INV-020`: Mutation may resume only after reconciliation with backend-authoritative state.
 - `INV-021`: A durable save is successful only after authoritative persistence acknowledgement.
 - `INV-022`: Degraded mode cannot bypass approval, assurance, authorization, privacy, structured-content, curriculum provenance, or revision policy.
+- `INV-023`: OAuth/OIDC access, refresh, and ID tokens are not exposed to ordinary browser JavaScript; protected teacher requests use a revocable opaque backend session.
+- `INV-024`: External teacher identity is linked by validated `(issuer, subject)` and is never established or merged solely by email.
+- `INV-025`: Pairing alone cannot authenticate a teacher or grant teacher-account authority.
+- `INV-026`: A `CLASSROOM_DISPLAY` participant cannot obtain teacher-private projection or teacher mutation authority.
+- `INV-027`: MVP permits at most one active mutation-authorized `TEACHER_CONTROLLER` and one active `CLASSROOM_DISPLAY` participant per classroom session.
+- `INV-028`: Pairing grants are role/session-bound, single-use, revocable, and expire after five minutes.
+- `INV-029`: Realtime push connections (for example, SSE) transmit projections only; state-changing commands must use the authorized synchronous HTTP command boundary, never the push channel.
+- `INV-030`: A pushed event's revision/sequence identifier is advisory for reconnect resync only; only backend-authoritative revision retrieval and reconciliation determines whether mutation may resume.
 
 ## 15. Selected Architecture Decisions
 
@@ -382,23 +513,26 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 - [ADR-0005 — Use Layered Curriculum Authority and Versioned Provenance](./adr/ADR-0005-layered-curriculum-authority.md)
 - [ADR-0006 — Teacher Approval and AI Publication Policy](./adr/ADR-0006-teacher-approval-ai-publication-policy.md)
 - [ADR-0007 — Graceful Degradation Without Offline Authority](./adr/ADR-0007-graceful-degradation-without-offline-authority.md)
+- [ADR-0008 — Use Browser-First React Clients with Separate Teacher and Classroom Display Boundaries](./adr/ADR-0008-browser-first-react-client-strategy.md)
+- [ADR-0009 — Use Java 25 LTS and Spring Boot for the Authoritative Backend](./adr/ADR-0009-java-spring-boot-backend.md) (Superseded by ADR-0013)
+- [ADR-0010 — Use Contract-First OpenAPI and JSON Schema Boundaries](./adr/ADR-0010-contract-first-openapi-json-schema.md)
+- [ADR-0011 — Use OIDC with Backend-Managed Browser Sessions and Scoped Pairing](./adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
+- [ADR-0012 — Use Server-Sent Events for Realtime Push with Existing HTTP Commands](./adr/ADR-0012-sse-realtime-push-with-existing-http-commands.md)
+- [ADR-0013 — Use Java 21 LTS with Module-First Hexagonal Backend Architecture](./adr/ADR-0013-java21-module-first-hexagonal-backend.md)
+- [ADR-0014 — Use PostgreSQL with Flyway and SQL-First Hexagonal Persistence](./adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
+- [ADR-0015 — Use a Versioned Controlled Curriculum Corpus with Deterministic Retrieval](./adr/ADR-0015-versioned-curriculum-corpus-and-deterministic-retrieval.md)
+- [ADR-0016 — Use Scoped Deterministic Mathematics Validators with Exact Arithmetic](./adr/ADR-0016-scoped-deterministic-mathematics-validation.md)
+- [ADR-0017 — Use OpenRouter for Bounded Generative AI with Scope, Quota, and Privacy Routing Controls](./adr/ADR-0017-openrouter-bounded-generation-and-usage-controls.md)
+- [ADR-0018 — Use Deepgram Nova-3 for Backend-Mediated Push-to-Talk Speech Recognition](./adr/ADR-0018-deepgram-push-to-talk-speech-recognition.md)
+- [ADR-0019 — Use a Portable Single-Linux-VPS Deployment Baseline for MVP/Pilot, Initially on Tencent Cloud Lighthouse Jakarta](./adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md)
 
 ## 16. Open Architecture Decisions
 
 | ID | Decision | Needed Before |
 |---|---|---|
-| OAD-001 | Client application strategy and frontend framework(s) | Source scaffolding |
-| OAD-002 | Backend language and framework | Source scaffolding |
-| OAD-003 | Database and migration technology | Persistent implementation |
-| OAD-004 | Identity, authentication, and account model | Protected workflow implementation |
-| OAD-005 | Realtime transport and reconnect protocol | Session contract implementation |
-| OAD-006 | AI provider/model strategy and fallback | AI integration implementation |
-| OAD-007 | Speech recognition strategy | Push-to-talk implementation |
-| OAD-008 | Mathematics validator approach per content type | Assurance implementation |
-| OAD-009 | Curriculum ingestion, normalization, integrity/versioning, local-context modeling, and retrieval approach | Curriculum implementation |
-| OAD-010 | Deployment platform, environments, secret management, and regional requirements | Deployment planning |
 | OAD-011 | Background execution and queue needs | When measured request duration or reliability requires it |
-| OAD-012 | Contract protocols and schema tooling | Before application source implementation |
+
+OAD-010 is resolved by [ADR-0019](./adr/ADR-0019-portable-linux-vps-mvp-pilot-deployment.md): a portable single-Linux-VPS MVP/pilot deployment baseline (Docker Compose, Caddy, colocated PostgreSQL, off-host backup boundary, `LOCAL`/`PILOT`/`PROD` environment model), initially on Tencent Cloud Lighthouse Jakarta as a replaceable provider. No VPS is provisioned, no Dockerfile/Compose/Caddy configuration exists, and no CI/CD pipeline exists yet.
 
 ## 17. Architecture Evolution Rules
 
@@ -421,6 +555,18 @@ No OpenAPI, AsyncAPI, or schema directory is created during initialization becau
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.17` | `2026-09-08` | Resolve OAD-010 with a portable single-Linux-VPS MVP/pilot deployment baseline (Docker Compose, Caddy, colocated PostgreSQL, off-host backup boundary, LOCAL/PILOT/PROD environments), initially on Tencent Cloud Lighthouse Jakarta as a replaceable provider; document the single-failure-domain limitation | Claude |
+| `0.16` | `2026-09-08` | Resolve OAD-007 with backend-mediated Deepgram Nova-3 Indonesian push-to-talk transcription, bounded browser audio capture, controlled Mathematics vocabulary, privacy-minimized speech usage accounting, and deterministic direct-action-first transcript routing | Claude |
+| `0.15` | `2026-09-07` | Resolve OAD-006 with OpenRouter, bounded model profiles, pre-provider scope/resource controls, per-teacher AI allowances, privacy-constrained provider routing, and graceful degradation | Claude |
+| `0.14` | `2026-09-07` | Resolve OAD-008 with scoped deterministic exact-rational and restricted affine/linear-equation validation | Claude |
+| `0.13` | `2026-09-07` | Resolve OAD-009 with controlled versioned curriculum corpus, deterministic metadata-first retrieval, explicit activation, and local-context overlays | Claude |
+| `0.12` | `2026-09-07` | Resolve OAD-003 with PostgreSQL 18.x, Flyway 13.x, and SQL-first Hexagonal persistence adapters | Claude |
+| `0.11` | `2026-09-07` | Refine backend baseline to Java 21 LTS and explicit module-first Hexagonal Architecture; ADR-0013 supersedes ADR-0009 | Claude |
+| `0.10` | `2026-09-07` | Resolve OAD-005 with SSE realtime push, existing HTTP commands, and inactive AsyncAPI | Claude |
+| `0.9` | `2026-09-07` | Resolve OAD-004 with OIDC, backend-managed browser sessions, local teacher accounts, and scoped pairing | Codex |
+| `0.8` | `2026-09-06` | Resolve OAD-012 with contract-first OpenAPI 3.1.x and JSON Schema Draft 2020-12 boundaries | Codex |
+| `0.7` | `2026-09-06` | Resolve OAD-002 with Java 25 LTS / Spring Boot modular-monolith backend | Codex |
+| `0.6` | `2026-09-06` | Resolve OAD-001 with browser-first React client architecture | Codex |
 | `0.5` | `2026-09-06` | Align security and persistence wording with the approved product data-lifecycle baseline | Codex |
 | `0.4` | `2026-09-06` | Apply resilience-oriented degradation and recovery architecture from ADR-0007 | Codex |
 | `0.3` | `2026-09-06` | Apply separate AI generation and teacher-authorized publication architecture from ADR-0006 | Codex |

@@ -53,16 +53,24 @@ Validation awal diprioritaskan untuk pecahan kelas 5 dan aljabar dasar atau pers
 |---|---|
 | Base profile | `fullstack` |
 | Modifier | `ai-enabled` |
-| Initial backend shape | Modular monolith dengan explicit domain modules |
+| Backend | Java 21 LTS + Spring Boot 4.x module-first Hexagonal modular monolith |
+| Persistence | PostgreSQL 18.x + Flyway 13.x + Spring JDBC/JdbcClient SQL-first adapters |
+| Curriculum | Controlled versioned curriculum corpus dengan deterministic metadata-first retrieval; no live-web/vector authority |
+| Mathematics validator | Scoped deterministic exact-rational dan one-variable affine/linear validation; unsupported Mathematics tetap explicit; AI bukan correctness authority |
 | Classroom state | Backend-authoritative, revision-aware |
 | Classroom content | Versioned structured model; bukan arbitrary generated HTML |
 | AI trust | Untrusted proposal generator; bukan authority |
+| AI generation gateway | OpenRouter sebagai controlled generative-model gateway; server-owned ROUTER/FAST/QUALITY model profile; bounded capability/resource guard dan per-teacher daily AI allowance sebelum expensive generation |
+| Speech recognition | Backend-mediated Deepgram Nova-3 (Indonesian) push-to-talk; completed utterance saja, bukan always-listening; DIRECT_ACTION-first transcript routing sebelum semantic AI |
 | Mathematics trust | Deterministic validation untuk supported scope |
 | Curriculum trust | BSKAP 046/H/KR/2025 as Mathematics normative authority; official guidance is interpretive and local context is an overlay |
 | Product Owner | `sipratama` |
 | Business Model | Teacher-first freemium SaaS; Teacher Pro sebagai paid offer pertama; institutional path kemudian |
-| Implementation stack | Belum diputuskan |
-| Deployment target | Belum diputuskan |
+| Client strategy | Browser-first React + TypeScript + Vite |
+| Client surfaces | Teacher Web (Preparation + Controller) dan Classroom Display Web terpisah |
+| Identity | OIDC Authorization Code + PKCE dengan backend-managed browser sessions; provider belum dipilih |
+| Contract strategy | Contract-first OpenAPI 3.1.x + JSON Schema 2020-12; realtime transport sudah diselesaikan oleh ADR-0012, AsyncAPI tetap inactive |
+| Deployment target | MVP/pilot: portable single Ubuntu Linux VPS + Docker Compose + Caddy, awalnya Tencent Cloud Lighthouse Jakarta sebagai provider yang dapat diganti (ADR-0019) |
 
 Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architecture/adr/).
 
@@ -77,6 +85,10 @@ Repository belum memiliki application source code, package manifest, database mi
 ### Project Status
 
 - [Project Status](./docs/PROJECT_STATUS.md) — fase proyek saat ini, milestone yang selesai, dan pekerjaan arsitektur yang tertunda.
+
+### Architecture Handoff Checkpoint
+
+- [Checkpoint setelah OAD-004](./docs/checkpoints/2026-09-07-architecture-foundation-after-oad004.md) — historical cross-device/AI handoff snapshot; canonical documents tetap authoritative.
 
 ### Product
 
@@ -139,17 +151,11 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 
 ## Open Architecture and Implementation Decisions
 
-- Curriculum ingestion, provenance contracts, local-context modeling, serta usage/licensing untuk official guidance.
-- Client/frontend strategy.
-- Backend language/framework.
-- Persistence dan migration technology.
-- Identity/authentication.
-- Realtime transport/reconnect protocol.
-- AI provider/model strategy.
-- Speech recognition strategy.
-- Mathematics validator approach.
-- Contract protocols/schema tooling dan field-level contracts.
-- Deployment/environment/secret management.
+- Curriculum corpus data/import artifact belum dibuat (arsitektur sudah dipilih: controlled versioned corpus, lihat ADR-0015); licensing review untuk official guidance masih tertunda.
+- Physical persistence schema dan migrations (teknologi sudah dipilih: PostgreSQL + Flyway).
+- Concrete OIDC provider, physical session schema/representation, dan expiry/index implementation.
+- Field-level contract definitions.
+- Deployment implementation evidence: VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, backup (arsitektur sudah dipilih: lihat ADR-0019).
 - Evidence-driven device/accessibility/performance targets bila relevan.
 
 Lihat Product Brief, PRD, System Architecture, Risks, dan Known Limitations untuk daftar lengkap beserta decision timing.
