@@ -15,9 +15,10 @@ contract between Teacher Web, Classroom Display Web, and the Penatika Backend.
 
 [`openapi.yaml`](./openapi.yaml) is active as the authoritative contract root.
 It currently defines shared HTTP wire primitives and the RFC 9457 Problem
-Details foundation. Application operations are being added incrementally
-during Contract Foundation; `paths` may remain empty until the next contract
-slice is authored.
+Details foundation, an authenticated Teacher session bootstrap, and the
+minimum operation for starting a Classroom Session from an existing
+classroom-ready `LessonVersion`. Pairing, commands, projections, snapshots,
+and SSE remain for later contract slices.
 
 ADR-0011 defines the conceptual identity, authentication, account,
 participant, and pairing model. ADR-0012 defines synchronous HTTP commands
@@ -27,10 +28,13 @@ contract authority.
 
 ## Protected Security Baseline
 
-Future teacher-protected HTTP operations will use:
+Teacher-protected HTTP operations use:
 
-- a backend-managed opaque teacher browser session cookie;
-- explicit CSRF protection for state-changing operations;
+- the `TeacherBrowserSession` OpenAPI security scheme with the host-only
+  `__Host-penatika-session` opaque backend-session cookie;
+- the session-bound `X-Penatika-CSRF` header for state-changing operations,
+  with CSRF material obtained from the authenticated
+  `GET /api/teacher-session` bootstrap operation;
 - backend object, ownership, classroom-session, participant, and revision
   authorization as applicable.
 
@@ -39,11 +43,10 @@ session and receive no teacher-account privilege. Controller classroom
 mutation requires both an authenticated teacher browser session and the active
 `TEACHER_CONTROLLER` participant authorization for the classroom session.
 
-Future OpenAPI contracts must document the applicable cookie security scheme
-and mutation anti-CSRF requirement without exposing OAuth/OIDC access, refresh,
-or ID tokens to browser clients. Exact cookie names, CSRF header names, and
-endpoint paths remain deferred to later operation-contract batches. The
-concrete OIDC provider is not an OpenAPI concern.
+The cookie and CSRF token are distinct opaque values; neither is a business
+identifier or client-supplied authorization decision. OAuth/OIDC access,
+refresh, and ID tokens remain outside browser-visible application contracts.
+The concrete OIDC provider is not an OpenAPI concern.
 
 If later decomposition is justified, `openapi.yaml` remains the contract entry
 point. Small contracts should not be fragmented preemptively.

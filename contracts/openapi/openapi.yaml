@@ -1,13 +1,126 @@
 openapi: 3.1.2
 info:
   title: Penatika HTTP API
-  version: 0.1.0
+  version: 0.2.0
   description: >-
-    Authoritative HTTP contract root for Penatika. Contract Foundation Batch 2
-    defines only shared HTTP wire primitives and the RFC 9457 Problem Details
-    foundation. Application operations are intentionally absent.
-paths: {}
+    Authoritative HTTP contract root for Penatika. It defines shared HTTP wire
+    primitives, the RFC 9457 Problem Details foundation, and the minimum
+    authenticated Teacher boundary for starting a Classroom Session from an
+    existing classroom-ready LessonVersion.
+paths:
+  /api/teacher-session:
+    get:
+      operationId: getAuthenticatedTeacherSession
+      summary: Bootstrap the authenticated Teacher browser session
+      description: >-
+        Confirms that the opaque backend-managed browser session currently
+        resolves to an active authorized TeacherAccount and returns the CSRF
+        material required for state-changing Teacher requests. The response
+        intentionally exposes no TeacherAccount identifier, OIDC identity,
+        provider token, profile, institution, or account-lifecycle detail.
+      security:
+        - TeacherBrowserSession: []
+      responses:
+        '200':
+          description: >-
+            The Teacher browser session is authenticated and currently usable.
+          headers:
+            Cache-Control:
+              description: Prevents storage of the session-bound CSRF material.
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticatedTeacherSession'
+              examples:
+                authenticatedSession:
+                  summary: Authenticated session bootstrap
+                  value:
+                    csrfToken: csrf_example_token_01
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+  /api/classroom-sessions:
+    post:
+      operationId: startClassroomSession
+      summary: Start a Classroom Session
+      description: >-
+        Creates backend-authoritative Classroom Session state from an existing
+        immutable classroom-ready LessonVersion. The authenticated Teacher must
+        be authorized for the referenced LessonVersion; possession of its
+        identifier does not prove ownership, authorization, or readiness.
+        Nonexistent and unauthorized LessonVersion references share the same
+        non-disclosing response. No Location header is defined because this
+        contract does not yet define a Classroom Session read operation.
+      security:
+        - TeacherBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/TeacherCsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartClassroomSessionRequest'
+            examples:
+              startSession:
+                summary: Start from an existing classroom-ready lesson version
+                value:
+                  lessonVersionId: lesson_version_example_01
+      responses:
+        '201':
+          description: Classroom Session created with authoritative revision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartClassroomSessionResponse'
+              examples:
+                sessionStarted:
+                  summary: Classroom Session started
+                  value:
+                    classroomSessionId: classroom_session_example_01
+                    lessonVersionId: lesson_version_example_01
+                    revision: 3
+        '400':
+          $ref: '#/components/responses/RequestValidationResponse'
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/CsrfRejectedResponse'
+        '404':
+          $ref: '#/components/responses/LessonVersionNotFoundResponse'
+        '409':
+          $ref: '#/components/responses/LessonVersionNotReadyResponse'
 components:
+  securitySchemes:
+    TeacherBrowserSession:
+      type: apiKey
+      in: cookie
+      name: __Host-penatika-session
+      description: >-
+        Opaque revocable Penatika browser-session reference for an authenticated
+        active TeacherAccount. It is not an OIDC access token, ID token, refresh
+        token, browser-supplied JWT, or TeacherAccountId. The runtime cookie must
+        use Secure, HttpOnly, Path=/, no Domain attribute, an appropriate
+        SameSite policy with Strict preferred when compatible, bounded
+        lifetimes, rotation after authentication, and server-side revocation.
+        Protected JSON API calls return Problem Details rather than redirecting
+        to an OIDC login page.
+  parameters:
+    TeacherCsrfToken:
+      name: X-Penatika-CSRF
+      in: header
+      required: true
+      description: >-
+        Opaque synchronizer token obtained from GET /api/teacher-session and
+        bound to the same authenticated Teacher browser session. The backend
+        validates it together with strict trusted-origin/CORS policy. It must
+        not be placed in a URL, logged, treated as authentication or
+        authorization, or reused as a session, correlation, or command value.
+        Missing or invalid material is rejected with CSRF_REJECTED.
+      schema:
+        $ref: '#/components/schemas/CsrfToken'
   schemas:
     LessonVersionId:
       type: string
@@ -57,6 +170,46 @@ components:
         Privacy-safe operational reference used to correlate a request or
         cross-boundary workflow. It is not a business identifier, CommandId,
         session credential, authorization input, or idempotency guarantee.
+    CsrfToken:
+      type: string
+      minLength: 1
+      maxLength: 256
+      pattern: '^\S+$'
+      description: >-
+        Opaque session-bound CSRF material safe for delivery to authenticated
+        Teacher Web JavaScript. It is submitted only in the X-Penatika-CSRF
+        request header and has no authentication or authorization meaning by
+        itself.
+    AuthenticatedTeacherSession:
+      type: object
+      additionalProperties: false
+      required:
+        - csrfToken
+      properties:
+        csrfToken:
+          $ref: '#/components/schemas/CsrfToken'
+    StartClassroomSessionRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lessonVersionId
+      properties:
+        lessonVersionId:
+          $ref: '#/components/schemas/LessonVersionId'
+    StartClassroomSessionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - classroomSessionId
+        - lessonVersionId
+        - revision
+      properties:
+        classroomSessionId:
+          $ref: '#/components/schemas/ClassroomSessionId'
+        lessonVersionId:
+          $ref: '#/components/schemas/LessonVersionId'
+        revision:
+          $ref: '#/components/schemas/Revision'
     FieldError:
       type: object
       additionalProperties: false
@@ -186,3 +339,97 @@ components:
                   - field: exampleField
                     code: INVALID_VALUE
                     message: The field value does not satisfy its contract.
+    TeacherSessionRequiredResponse:
+      description: >-
+        No valid authenticated Teacher browser session is available. Missing,
+        expired, revoked, or otherwise invalid sessions and sessions whose
+        TeacherAccount is no longer active use the same non-disclosing outcome.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Unauthorized
+            status: 401
+            detail: An authenticated Teacher session is required.
+            code: TEACHER_SESSION_REQUIRED
+            correlationId: corr_teacher_session_01
+    RequestValidationResponse:
+      description: The request body is malformed or fails structural validation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            missingLessonVersionId:
+              summary: Required lessonVersionId is missing
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_validation_01
+                fieldErrors:
+                  - field: lessonVersionId
+                    code: REQUIRED
+                    message: The field is required.
+            invalidLessonVersionId:
+              summary: lessonVersionId does not satisfy its wire contract
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_validation_02
+                fieldErrors:
+                  - field: lessonVersionId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+    CsrfRejectedResponse:
+      description: >-
+        The authenticated request is missing valid session-bound CSRF material.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Forbidden
+            status: 403
+            detail: The request did not include valid CSRF protection.
+            code: CSRF_REJECTED
+            correlationId: corr_csrf_01
+    LessonVersionNotFoundResponse:
+      description: >-
+        The LessonVersion does not exist or the authenticated Teacher is not
+        authorized to know it exists. The response deliberately does not
+        distinguish those cases.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Not Found
+            status: 404
+            detail: The requested lesson version was not found.
+            code: LESSON_VERSION_NOT_FOUND
+            correlationId: corr_lesson_lookup_01
+    LessonVersionNotReadyResponse:
+      description: >-
+        The authorized LessonVersion exists but is not classroom-ready and
+        therefore cannot start a Classroom Session.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Conflict
+            status: 409
+            detail: The lesson version is not ready for classroom use.
+            code: LESSON_VERSION_NOT_READY
+            correlationId: corr_lesson_readiness_01

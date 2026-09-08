@@ -105,10 +105,10 @@ DTOs, status mappings, physical persistence, or implementation structure.
 - physical persistence, migrations, application source, deployment, and CI/CD.
 
 Field-level details remain deferred until their owning contract slice,
-including operation paths and methods, cookie and CSRF names, pairing
-credential representation, command placement and deduplication duration,
-scene/projection fields, SSE event names and retry details, and operation-level
-problem codes, types, and status mappings.
+including later operation paths and methods, pairing credential
+representation, participant-session security names, command placement and
+deduplication duration, scene/projection fields, SSE event names and retry
+details, and later operation-level problem codes, types, and status mappings.
 
 ## Contract Foundation Sequence
 
@@ -116,8 +116,8 @@ problem codes, types, and status mappings.
 |---|---|
 | First vertical slice scope | COMPLETE |
 | Shared wire / RFC 9457 problem foundation | COMPLETE |
-| Authenticated Teacher / minimum LessonVersion and session start | NEXT |
-| Pairing | PENDING |
+| Authenticated Teacher / minimum LessonVersion and session start | COMPLETE |
+| Pairing | NEXT |
 | `NEXT` command / revision | PENDING |
 | Display projection | PENDING |
 | SSE / reconnect | PENDING |
