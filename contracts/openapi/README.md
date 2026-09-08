@@ -13,11 +13,12 @@ contract between Teacher Web, Classroom Display Web, and the Penatika Backend.
 - HTTP error baseline: RFC 9457 Problem Details using
   `application/problem+json`.
 
-No OpenAPI document exists yet because field-level endpoints and realtime
-semantics remain incomplete. OAD-004 now defines the conceptual identity,
-authentication, account, participant, and pairing model, but this task does not
-invent endpoint paths, security-scheme names, cookie names, CSRF header names,
-or field schemas.
+No OpenAPI document exists yet. ADR-0011 defines the conceptual identity,
+authentication, account, participant, and pairing model; ADR-0012 defines
+synchronous HTTP commands plus authorized SSE projection push and reconnect
+semantics. Contract Foundation Batch 1 freezes the first vertical slice but
+does not invent endpoint paths, security-scheme names, cookie names, CSRF
+header names, event names, or field schemas.
 
 ## Protected Security Baseline
 
@@ -44,4 +45,5 @@ point. Small contracts should not be fragmented preemptively.
 
 See [ADR-0010](../../docs/02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md),
 [ADR-0011](../../docs/02_architecture/adr/ADR-0011-oidc-backend-managed-browser-sessions.md),
+[ADR-0012](../../docs/02_architecture/adr/ADR-0012-sse-realtime-push-with-existing-http-commands.md),
 and the [contract index](../README.md).

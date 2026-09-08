@@ -26,12 +26,20 @@ schema version change, and a consumer rollout plan.
   current baseline OpenAPI 3.1.2.
 - `schemas/` — justified reusable structured JSON wire schemas using JSON
   Schema Draft 2020-12.
-- `asyncapi/` — not active. AsyncAPI 3.1.x is conditional on OAD-005 selecting
-  a realtime/message transport for which AsyncAPI provides useful semantics.
+- `asyncapi/` — inactive. ADR-0012 selects synchronous HTTP commands plus SSE
+  projection push and keeps the SSE contract in OpenAPI/JSON Schema rather
+  than activating AsyncAPI.
 
-Field-level contracts are intentionally not created yet. Identity semantics
-are selected by ADR-0011, while realtime and other dependent semantics still
-require architecture decisions before coherent field definitions are created.
+Identity semantics are selected by ADR-0011. Realtime transport, credential
+carriage, and reconnect semantics are selected by ADR-0012: state-changing
+commands remain synchronous HTTPS/JSON and authoritative role-specific
+projection push uses SSE with `Last-Event-ID` as the resynchronization entry
+point.
+
+Field-level definitions are now beginning under Contract Foundation. Batch 1
+freezes the first vertical slice without creating an `openapi.yaml` or
+standalone production JSON Schema; those machine-readable definitions begin
+in later field-level batches.
 
 ## Ownership
 
@@ -46,6 +54,7 @@ Each wire structure has one canonical schema owner:
 
 - [ADR-0010 — Use Contract-First OpenAPI and JSON Schema Boundaries](../docs/02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md)
 - [ADR-0011 — Use OIDC with Backend-Managed Browser Sessions and Scoped Pairing](../docs/02_architecture/adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
+- [ADR-0012 — Use Server-Sent Events for Realtime Push with Existing HTTP Commands](../docs/02_architecture/adr/ADR-0012-sse-realtime-push-with-existing-http-commands.md)
 - [System Architecture](../docs/02_architecture/SYSTEM_ARCHITECTURE.md)
 - [API and Integration Standard](../docs/standards/06_API_INTEGRATION_STANDARD.md)
 - [Project Status](../docs/PROJECT_STATUS.md)

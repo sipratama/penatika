@@ -23,9 +23,9 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.15 |
+| Version | 0.16 |
 | Last Updated | 2026-09-08 |
-| Current Phase | Architecture Foundation Complete — Merge Ready |
+| Current Phase | Field-Level Contract Foundation — Active |
 | Implementation State | Pre-source / Pre-scaffolding |
 | Product Owner | sipratama |
 
@@ -59,9 +59,11 @@ created.
 | Pendago legacy review | COMPLETE | [PENDAGO_MIGRATION_REVIEW.md](./06_delivery/PENDAGO_MIGRATION_REVIEW.md) |
 | Initial architecture principles | ESTABLISHED | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) + Accepted ADR register |
 | Architecture / technology decisions | COMPLETE (unconditional) | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md); OAD-011 remains CONDITIONAL |
+| Architecture Foundation merge to `main` | COMPLETE | merge commit `7cd6a2d` |
 | Contract strategy | COMPLETE | [ADR-0010](./02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md) / [contracts](../contracts/README.md) |
-| Field-level contracts | PENDING | identity and realtime transport semantics are now selected (ADR-0011, ADR-0012); field-level OpenAPI/JSON Schema work has not started |
-| Source scaffolding | PENDING | after blocking OADs/contracts |
+| Field-Level Contract Foundation | ACTIVE | identity and realtime semantics selected by ADR-0011/ADR-0012; Batch 1 scope freeze complete |
+| Contract Foundation Batch 1 scope freeze | COMPLETE | [Contract Foundation Scope Freeze](./checkpoints/2026-09-08-contract-foundation-scope-freeze.md) |
+| Source scaffolding | PENDING | after required field-level contracts |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
@@ -184,20 +186,16 @@ implementation exists yet.
 
 ## Immediate Next Step
 
-All unconditional architecture decisions (OAD-001 through OAD-010, and
-OAD-012) are COMPLETE; OAD-011 remains CONDITIONAL and is not activated
-merely because deployment orchestration exists. The Architecture Foundation
-Checkpoint + Merge Readiness Audit has passed — see
-[Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md).
-The immediate next work is:
+Architecture Foundation is complete and merged to `main` in `7cd6a2d`.
+Contract strategy is complete, and Field-Level Contract Foundation is now
+active. Batch 1 froze the first classroom vertical slice in the
+[Contract Foundation Scope Freeze](./checkpoints/2026-09-08-contract-foundation-scope-freeze.md).
 
-1. Merge `feat/architecture-foundation` into `main`.
-
-This is a deliberate, human-reviewed merge action; it is not performed
-automatically by the checkpoint/audit task itself. Field-level contracts and
-source scaffolding remain PENDING until after that merge. After the merge,
-the next phase is Field-Level Contract Foundation — NOT source scaffolding.
-`SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
+The immediate next work is Contract Foundation Batch 2: define shared wire
+primitives and the base RFC 9457 HTTP problem contract required by the frozen
+slice. Source scaffolding remains PENDING until the required field-level
+contracts exist. `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed
+Before` rules.
 
 ## Open Non-Product Follow-Ups
 
@@ -206,7 +204,6 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 ### Architecture / Implementation
 
 - OAD-011 as applicable (CONDITIONAL only);
-- Architecture Foundation Checkpoint + Merge Readiness Audit;
 - field-level structured contracts;
 - physical persistence model/migrations;
 - identity implementation;
@@ -243,13 +240,17 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 ## Latest Handoff Checkpoint
 
+[Contract Foundation Scope Freeze](./checkpoints/2026-09-08-contract-foundation-scope-freeze.md)
+records the first architecture-proving classroom vertical slice, its explicit
+scope boundaries, and the field-level decisions deferred to later Contract
+Foundation batches. It is a non-authoritative handoff snapshot and does not
+replace canonical product, feature, architecture, ADR, contract, or policy
+sources.
+
+The prior
 [Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md)
-records the final state of the Architecture Foundation phase: every
-unconditional OAD resolved, the ADR register audited, the template validator
-closed out, and branch ancestry/merge-conflict-free status confirmed against
-`origin/main`. It is a non-authoritative handoff snapshot and does not
-replace the canonical project, product, architecture, ADR, contract, or
-policy documents.
+remains the historical handoff for the completed architecture phase and its
+merge-readiness evidence.
 
 The prior [Architecture Foundation Checkpoint — After OAD-004](./checkpoints/2026-09-07-architecture-foundation-after-oad004.md)
 remains historical and is retained unmodified. It predates ADR-0013 and
