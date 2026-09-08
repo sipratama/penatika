@@ -1,0 +1,188 @@
+openapi: 3.1.2
+info:
+  title: Penatika HTTP API
+  version: 0.1.0
+  description: >-
+    Authoritative HTTP contract root for Penatika. Contract Foundation Batch 2
+    defines only shared HTTP wire primitives and the RFC 9457 Problem Details
+    foundation. Application operations are intentionally absent.
+paths: {}
+components:
+  schemas:
+    LessonVersionId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^\S+$'
+      description: >-
+        Opaque identifier for one immutable lesson version. Consumers must not
+        infer storage technology, ordering, ownership, or authorization from
+        its representation.
+    ClassroomSessionId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^\S+$'
+      description: >-
+        Opaque identifier for one Classroom Session. It is not globally
+        meaningful authority; the backend still validates authentication,
+        ownership, participant authority, and session state.
+    CommandId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^\S+$'
+      description: >-
+        Identifies one logical state-changing command and remains stable when
+        that same command is retried or reconciled after an uncertain
+        acknowledgement. It is not a tracing identifier and does not by itself
+        authorize or guarantee idempotent execution. Placement and detailed
+        deduplication policy are defined by a later command contract.
+    Revision:
+      type: integer
+      minimum: 0
+      maximum: 9007199254740991
+      description: >-
+        Backend-authoritative revision that increases monotonically within one
+        Classroom Session and is used for stale/conflict detection and
+        synchronization. It is not globally unique, does not imply an initial
+        value, and is not necessarily equal to an event count. The maximum
+        preserves exact integer representation in browser JavaScript.
+    CorrelationId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^\S+$'
+      description: >-
+        Privacy-safe operational reference used to correlate a request or
+        cross-boundary workflow. It is not a business identifier, CommandId,
+        session credential, authorization input, or idempotency guarantee.
+    FieldError:
+      type: object
+      additionalProperties: false
+      required:
+        - field
+        - code
+        - message
+      properties:
+        field:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: >-
+            Client-visible request field name or field path. It must not contain
+            a rejected value, credential, or raw request content.
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: '^\S+$'
+          description: >-
+            Machine-stable validation discriminator. Allowed values are defined
+            by the operation contracts that use this structure; clients must
+            not parse message for logic.
+        message:
+          type: string
+          minLength: 1
+          maxLength: 512
+          description: >-
+            Safe human-readable validation explanation. It must not expose raw
+            values, stack traces, exception names, SQL, provider payloads,
+            credentials, or private diagnostics.
+    ProblemDetails:
+      type: object
+      additionalProperties: true
+      required:
+        - type
+        - title
+        - status
+        - code
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          minLength: 1
+          maxLength: 2048
+          description: >-
+            RFC 9457 problem type URI reference. Use about:blank when no more
+            specific registered problem type applies.
+        title:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: >-
+            Short human-readable summary for the problem type. Clients must not
+            parse this value for application logic.
+        status:
+          type: integer
+          minimum: 100
+          maximum: 599
+          description: >-
+            HTTP status code generated for this occurrence. It mirrors the HTTP
+            response status and does not replace it.
+        detail:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: >-
+            Optional safe human-readable explanation specific to this
+            occurrence. It must not expose internal or sensitive diagnostics.
+        instance:
+          type: string
+          format: uri-reference
+          minLength: 1
+          maxLength: 2048
+          description: >-
+            Optional RFC 9457 URI reference identifying this problem occurrence.
+            It is not an authorization or resource-ownership guarantee.
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: '^\S+$'
+          description: >-
+            Required machine-stable Penatika error discriminator. Values are
+            introduced by later operation contracts; clients must not parse
+            title or detail for logic.
+        correlationId:
+          $ref: '#/components/schemas/CorrelationId'
+        fieldErrors:
+          type: array
+          minItems: 1
+          maxItems: 20
+          description: >-
+            Optional bounded request-validation details. A server may report a
+            safe subset when more than 20 fields fail; entries never contain
+            rejected values or internal diagnostics.
+          items:
+            $ref: '#/components/schemas/FieldError'
+  responses:
+    ProblemResponse:
+      description: RFC 9457 Problem Details response.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            genericProblem:
+              summary: Generic non-validation problem
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: The request could not be processed.
+                code: REQUEST_REJECTED
+                correlationId: corr_example_01
+            validationProblem:
+              summary: Request-validation problem
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_example_02
+                fieldErrors:
+                  - field: exampleField
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.

@@ -23,7 +23,7 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.16 |
+| Version | 0.17 |
 | Last Updated | 2026-09-08 |
 | Current Phase | Field-Level Contract Foundation — Active |
 | Implementation State | Pre-source / Pre-scaffolding |
@@ -61,8 +61,11 @@ created.
 | Architecture / technology decisions | COMPLETE (unconditional) | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md); OAD-011 remains CONDITIONAL |
 | Architecture Foundation merge to `main` | COMPLETE | merge commit `7cd6a2d` |
 | Contract strategy | COMPLETE | [ADR-0010](./02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md) / [contracts](../contracts/README.md) |
-| Field-Level Contract Foundation | ACTIVE | identity and realtime semantics selected by ADR-0011/ADR-0012; Batch 1 scope freeze complete |
+| Field-Level Contract Foundation | ACTIVE | Batch 1 scope freeze and Batch 2 shared wire/problem foundation complete |
 | Contract Foundation Batch 1 scope freeze | COMPLETE | [Contract Foundation Scope Freeze](./checkpoints/2026-09-08-contract-foundation-scope-freeze.md) |
+| Contract Foundation Batch 2 shared wire/problem foundation | COMPLETE | [Shared Wire Foundation](./checkpoints/2026-09-08-contract-foundation-shared-wire-foundation.md) / [OpenAPI](../contracts/openapi/openapi.yaml) |
+| Shared wire primitives / RFC 9457 HTTP problem foundation | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
+| Application operation contracts | NEXT | Batch 3: authenticated Teacher boundary plus minimum LessonVersion/session-start HTTP contract |
 | Source scaffolding | PENDING | after required field-level contracts |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
@@ -191,11 +194,17 @@ Contract strategy is complete, and Field-Level Contract Foundation is now
 active. Batch 1 froze the first classroom vertical slice in the
 [Contract Foundation Scope Freeze](./checkpoints/2026-09-08-contract-foundation-scope-freeze.md).
 
-The immediate next work is Contract Foundation Batch 2: define shared wire
-primitives and the base RFC 9457 HTTP problem contract required by the frozen
-slice. Source scaffolding remains PENDING until the required field-level
-contracts exist. `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed
-Before` rules.
+Contract Foundation Batch 2 has established the shared wire primitives and
+base RFC 9457 HTTP problem contract in
+[`contracts/openapi/openapi.yaml`](../contracts/openapi/openapi.yaml).
+
+The immediate next work is Contract Foundation Batch 3: define the
+authenticated Teacher boundary plus the minimum `LessonVersion`
+selection/reference and Classroom Session start HTTP contract required by the
+frozen slice. Pairing, `NEXT`, snapshot, and SSE operations remain later work.
+Source scaffolding remains PENDING until the required field-level contracts
+exist. `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before`
+rules.
 
 ## Open Non-Product Follow-Ups
 
@@ -240,12 +249,16 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 ## Latest Handoff Checkpoint
 
+[Contract Foundation Shared Wire Foundation](./checkpoints/2026-09-08-contract-foundation-shared-wire-foundation.md)
+records the Batch 2 schema-ownership audit, shared primitive and RFC 9457
+decisions, compatibility boundaries, validation evidence, and Batch 3 route.
+It is a non-authoritative handoff snapshot; the machine-readable OpenAPI file
+is authoritative for the wire definitions.
+
+The prior
 [Contract Foundation Scope Freeze](./checkpoints/2026-09-08-contract-foundation-scope-freeze.md)
-records the first architecture-proving classroom vertical slice, its explicit
-scope boundaries, and the field-level decisions deferred to later Contract
-Foundation batches. It is a non-authoritative handoff snapshot and does not
-replace canonical product, feature, architecture, ADR, contract, or policy
-sources.
+remains the non-authoritative scope handoff for the frozen first vertical
+slice.
 
 The prior
 [Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md)

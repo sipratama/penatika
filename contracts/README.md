@@ -36,10 +36,11 @@ commands remain synchronous HTTPS/JSON and authoritative role-specific
 projection push uses SSE with `Last-Event-ID` as the resynchronization entry
 point.
 
-Field-level definitions are now beginning under Contract Foundation. Batch 1
-freezes the first vertical slice without creating an `openapi.yaml` or
-standalone production JSON Schema; those machine-readable definitions begin
-in later field-level batches.
+Field-level definitions are active under Contract Foundation. Batch 1 froze
+the first vertical slice; Batch 2 activates
+[`openapi/openapi.yaml`](./openapi/openapi.yaml) with shared HTTP primitives
+and the RFC 9457 Problem Details foundation. Application operations and
+standalone production JSON Schemas remain for later batches.
 
 ## Ownership
 

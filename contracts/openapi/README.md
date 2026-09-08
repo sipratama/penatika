@@ -1,6 +1,6 @@
 # Penatika OpenAPI Contract
 
-This directory will own the authoritative synchronous Penatika HTTP API
+This directory owns the authoritative synchronous Penatika HTTP API
 contract between Teacher Web, Classroom Display Web, and the Penatika Backend.
 
 ## Baseline
@@ -13,16 +13,20 @@ contract between Teacher Web, Classroom Display Web, and the Penatika Backend.
 - HTTP error baseline: RFC 9457 Problem Details using
   `application/problem+json`.
 
-No OpenAPI document exists yet. ADR-0011 defines the conceptual identity,
-authentication, account, participant, and pairing model; ADR-0012 defines
-synchronous HTTP commands plus authorized SSE projection push and reconnect
-semantics. Contract Foundation Batch 1 freezes the first vertical slice but
-does not invent endpoint paths, security-scheme names, cookie names, CSRF
-header names, event names, or field schemas.
+[`openapi.yaml`](./openapi.yaml) is active as the authoritative contract root.
+Contract Foundation Batch 2 defines only shared HTTP wire primitives and the
+RFC 9457 Problem Details foundation. Application operations remain
+intentionally absent and `paths` is empty until later batches define them.
+
+ADR-0011 defines the conceptual identity, authentication, account,
+participant, and pairing model. ADR-0012 defines synchronous HTTP commands
+plus authorized SSE projection push and reconnect semantics. Later batches
+will define their operations and payloads without inventing a separate
+contract authority.
 
 ## Protected Security Baseline
 
-Future teacher-protected HTTP operations use:
+Future teacher-protected HTTP operations will use:
 
 - a backend-managed opaque teacher browser session cookie;
 - explicit CSRF protection for state-changing operations;
@@ -37,8 +41,8 @@ mutation requires both an authenticated teacher browser session and the active
 Future OpenAPI contracts must document the applicable cookie security scheme
 and mutation anti-CSRF requirement without exposing OAuth/OIDC access, refresh,
 or ID tokens to browser clients. Exact cookie names, CSRF header names, and
-endpoint paths remain deferred to field-level contract creation. The concrete
-OIDC provider is not an OpenAPI concern.
+endpoint paths remain deferred to later operation-contract batches. The
+concrete OIDC provider is not an OpenAPI concern.
 
 If later decomposition is justified, `openapi.yaml` remains the contract entry
 point. Small contracts should not be fragmented preemptively.
