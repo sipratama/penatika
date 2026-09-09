@@ -12,13 +12,14 @@
 | Field | Value |
 |---|---|
 | Phase | Source Scaffolding |
-| Batch | SS-02 — Backend Build + Module Skeleton |
+| Batch | SS-03 — Frontend Workspace + Teacher/Display Application Shells |
 | Date | `2026-09-09` |
 | Branch | `feat/source-scaffolding` |
 | Starting main SHA | `8b93c0415e913e194f93dcbabb264f4141fd65bd` |
-| Status | SS-01 complete; SS-02 complete; SS-03 next |
-| Implementation state | Backend shell scaffolded (no product behavior) |
+| Status | SS-01 complete; SS-02 complete; SS-03 complete; SS-04 next |
+| Implementation state | Backend and frontend application shells scaffolded (no product behavior) |
 | SS-02 selected baseline | Java 21 LTS; Apache Maven 3.9.16; Maven Wrapper Plugin 3.3.4 (`only-script`, distribution SHA-256 pinned); Spring Boot 4.1.1 (GA) |
+| SS-03 selected baseline | Node.js 24.21.0 LTS (Krypton); npm 11.19.0; React / React DOM 19.2.8; Vite 8.2.2; TypeScript 7.0.2; Vitest 5.0.0; React Testing Library 16.3.3; jest-dom 7.0.1; jsdom 30.0.1 |
 
 ## 1. Objective
 
@@ -140,13 +141,13 @@ directories.
 │           └── java/io/github/sipratama/penatika/
 │               ├── PenatikaApplicationTests.java CREATE IN SS-02
 │               └── architecture/                 CREATE IN SS-04
-├── web/                                          CREATE IN SS-03
-│   ├── package.json                              CREATE IN SS-03
-│   ├── package-lock.json                         CREATE IN SS-03
-│   ├── .nvmrc                                    CREATE IN SS-03
+├── web/                                          CURRENT
+│   ├── package.json                              CURRENT
+│   ├── package-lock.json                         CURRENT
+│   ├── .nvmrc                                    CURRENT
 │   ├── apps/
-│   │   ├── teacher/                              CREATE IN SS-03
-│   │   └── display/                              CREATE IN SS-03
+│   │   ├── teacher/                              CURRENT
+│   │   └── display/                              CURRENT
 │   └── packages/
 │       ├── transport-teacher/                    CREATE IN SS-04 IF GENERATOR SPIKE PASSES
 │       ├── transport-display/                    CREATE IN SS-04 IF GENERATOR SPIKE PASSES
@@ -278,6 +279,14 @@ models is forbidden.
 - React Testing Library for component behavior using accessible/user-facing
   queries.
 - Independent build and smoke test for Teacher and Display apps.
+- Exact resolved baseline: Node.js `24.21.0` LTS (`Krypton`) with bundled npm
+  `11.19.0`; React and React DOM `19.2.8`; Vite `8.2.2`; TypeScript `7.0.2`;
+  Vitest `5.0.0`; React Testing Library `16.3.3`; jest-dom `7.0.1`; jsdom
+  `30.0.1`; React type packages `@types/react` `19.2.18` and
+  `@types/react-dom` `19.2.7`; Vite React plugin `6.1.1`.
+- The root workspace owns shared development tooling; each private application
+  manifest owns only its React/React DOM runtime dependencies. No shared
+  workspace package or monorepo orchestrator exists.
 
 ### SS-04 Fitness and Contract Harness
 
@@ -376,6 +385,9 @@ Contract Foundation                           COMPLETE / MERGED
 Source Scaffolding                            ACTIVE
 SS-01 Plan + Repository Layout Freeze         COMPLETE
 SS-02 Backend Build + Module Skeleton         COMPLETE
-SS-03 Frontend Workspace + Teacher/Display    NEXT
+SS-03 Frontend Workspace + Teacher/Display    COMPLETE
+SS-04 Test + Contract Validation Harness      NEXT
+SS-05 Configuration + Persistence Baseline    PENDING
+SS-06 Consistency / Readiness Audit            PENDING
 Application Implementation                    PENDING
 ```

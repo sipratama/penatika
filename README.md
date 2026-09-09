@@ -78,7 +78,7 @@ Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architect
 
 Project Discovery sudah selesai. Inisialisasi product baseline Q-01–Q-07 / OPD-001–OPD-007 sudah selesai; tidak ada unresolved product decision dari set awal.
 
-Repository kini sudah memiliki source backend awal (`backend/`) dengan Maven wrapper/POM Java 21, shell Spring Boot minimal, dan smoke test context; contract schema juga sudah tersedia di `contracts/`. Database migration, source frontend, dan deployment configuration belum ada. Fase utama berikutnya adalah SS-03 source scaffolding frontend (Teacher/Display application shells).
+Repository kini sudah memiliki source backend awal (`backend/`) dengan Maven wrapper/POM Java 21, shell Spring Boot minimal, dan smoke test context. Workspace frontend (`web/`) juga sudah memiliki shell aplikasi Teacher dan Classroom Display berbasis React/TypeScript/Vite yang terpisah serta dapat dibangun dan diuji secara independen; contract schema tetap tersedia di `contracts/`. Database migration, product implementation, dan deployment configuration belum ada. Batch berikutnya adalah SS-04 test + contract validation harness.
 
 ## Documentation Map
 

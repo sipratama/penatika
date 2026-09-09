@@ -87,6 +87,14 @@ CORE_PROJECT_PLACEHOLDERS = [
 ]
 
 MARKDOWN_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+IGNORED_DIRECTORY_NAMES = {
+    ".git",
+    ".mvn",
+    ".vite",
+    "dist",
+    "node_modules",
+    "target",
+}
 
 
 def check_structure() -> list[str]:
@@ -100,6 +108,10 @@ def check_structure() -> list[str]:
 def check_local_markdown_links() -> list[str]:
     errors = []
     for md in ROOT.rglob("*.md"):
+        if any(
+            part in IGNORED_DIRECTORY_NAMES for part in md.relative_to(ROOT).parts
+        ):
+            continue
         text = md.read_text(encoding="utf-8")
         for raw in MARKDOWN_LINK_RE.findall(text):
             target = raw.strip().split()[0].strip("<>")

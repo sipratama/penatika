@@ -1,0 +1,30 @@
+{
+  "name": "@penatika/workspace",
+  "private": true,
+  "packageManager": "npm@11.19.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build:teacher && npm run build:display",
+    "build:teacher": "npm run build --workspace=@penatika/teacher",
+    "build:display": "npm run build --workspace=@penatika/display",
+    "test": "npm run test:teacher && npm run test:display",
+    "test:teacher": "npm run test --workspace=@penatika/teacher",
+    "test:display": "npm run test --workspace=@penatika/display"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@vitejs/plugin-react": "6.1.1",
+    "jsdom": "30.0.1",
+    "typescript": "7.0.2",
+    "vite": "8.2.2",
+    "vitest": "5.0.0"
+  }
+}

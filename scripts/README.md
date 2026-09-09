@@ -22,6 +22,10 @@ Script ini membantu mendeteksi masalah mekanis seperti:
 - local Markdown link yang rusak setelah file dipindahkan/di-rename;
 - metadata placeholder template yang masih tertinggal setelah repository diinisialisasi menjadi project nyata.
 
+Pemeriksaan Markdown hanya mencakup source/documentation repository. Generated
+dan dependency directory seperti `.git`, `.mvn`, `.vite`, `dist`,
+`node_modules`, dan `target` diabaikan.
+
 Script ini **tidak** menilai kualitas isi dokumen.
 
 Artinya validator tidak dapat menentukan apakah:

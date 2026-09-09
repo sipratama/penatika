@@ -64,3 +64,8 @@ tmp/
 # Maven
 backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
+
+# Frontend
+node_modules/
+.vite/
+coverage/
