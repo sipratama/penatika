@@ -23,9 +23,9 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.27 |
+| Version | 0.28 |
 | Last Updated | 2026-09-09 |
-| Current Phase | Source Scaffolding — Next |
+| Current Phase | Source Scaffolding — Active |
 | Implementation State | Pre-source / Pre-scaffolding |
 | Product Owner | sipratama |
 
@@ -72,7 +72,9 @@ Foundation handoff checkpoint was created.
 | Contract Foundation final audit | COMPLETE | current canonical contract and validation evidence |
 | Final Contract Foundation checkpoint | COMPLETE | [Contract Foundation Checkpoint](./checkpoints/2026-09-09-contract-foundation-complete.md) |
 | Contract Foundation merge to `main` | COMPLETE | merge commit `7995290b07c755425020b939fb669f9c4a0b2ce0` |
-| Source scaffolding | NEXT | create `feat/source-scaffolding` from verified `main`, then begin SS-01 |
+| Source scaffolding | ACTIVE | [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md) |
+| SS-01 plan / repository layout | COMPLETE | [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md) |
+| SS-02 backend build / module skeleton | NEXT | execute only after SS-01 review and commit |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
@@ -215,11 +217,13 @@ reconciliation contract, and explicit current-stream Display synchronization
 acknowledgement are defined. The final Contract Foundation consistency and
 readiness audit and the
 [Final Contract Foundation Handoff Checkpoint](./checkpoints/2026-09-09-contract-foundation-complete.md)
-are complete. The immediate next work is to create
-`feat/source-scaffolding` from verified `main`, then begin SS-01 — Source
-Scaffolding Plan + Repository Layout Freeze. Source Scaffolding has not started
-in this status-synchronization task. `SYSTEM_ARCHITECTURE.md` remains
-authoritative for `Needed Before` rules.
+are complete. Source Scaffolding is now active on
+`feat/source-scaffolding`. SS-01 — Source Scaffolding Plan + Repository Layout
+Freeze is complete in the
+[Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md). The
+immediate next work is SS-02 — Backend Build + Module Skeleton. Application
+implementation remains PENDING. `SYSTEM_ARCHITECTURE.md` remains authoritative
+for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
 
