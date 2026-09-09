@@ -23,10 +23,10 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.34 |
-| Last Updated | 2026-09-09 |
-| Current Phase | Source Scaffolding — Active |
-| Implementation State | Backend/frontend shells, executable contract/architecture harnesses, and optional configuration/PostgreSQL persistence mechanisms scaffolded; no product persistence or business behavior exists |
+| Version | 0.35 |
+| Last Updated | 2026-09-10 |
+| Current Phase | Source Scaffolding — Active / Handoff-Ready |
+| Implementation State | Scaffolding mechanisms are complete and handoff-ready; product implementation and product persistence have not started |
 | Product Owner | sipratama |
 
 The final product-baseline consistency audit passed before the Architecture
@@ -72,13 +72,15 @@ Foundation handoff checkpoint was created.
 | Contract Foundation final audit | COMPLETE | current canonical contract and validation evidence |
 | Final Contract Foundation checkpoint | COMPLETE | [Contract Foundation Checkpoint](./checkpoints/2026-09-09-contract-foundation-complete.md) |
 | Contract Foundation merge to `main` | COMPLETE | merge commit `7995290b07c755425020b939fb669f9c4a0b2ce0` |
-| Source scaffolding | ACTIVE | [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md) |
+| Source scaffolding | ACTIVE / HANDOFF-READY | [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md) |
 | SS-01 plan / repository layout | COMPLETE | [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md) |
 | SS-02 backend build / module skeleton | COMPLETE | backend Maven wrapper/POM + Java 21 Spring Boot shell and module package boundaries |
 | SS-03 frontend workspace / teacher-display shells | COMPLETE | npm workspace/lockfile plus independently buildable and testable React/TypeScript/Vite Teacher and Display shells |
 | SS-04 test + contract validation harness | COMPLETE | ArchUnit fitness rules, frontend boundary guard, Redocly/Ajv contract harness, and accepted role-scoped generation proof |
 | SS-05 configuration + persistence mechanism baseline | COMPLETE | typed safe configuration, disabled-by-default persistence, PostgreSQL 18.6/Testcontainers, Spring JDBC/JdbcClient, and Flyway 13.5.0 empty-baseline evidence |
-| SS-06 consistency / readiness audit | NEXT | execute after SS-05 review |
+| SS-06 consistency / readiness audit | COMPLETE | full backend, frontend, contract, persistence-mechanism, documentation, and merge-readiness evidence |
+| Final Source Scaffolding handoff checkpoint | NEXT | create only after SS-06 review and remote verification |
+| Source Scaffolding merge to `main` | PENDING | after final checkpoint review/commit/push |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
@@ -235,9 +237,12 @@ Schema validation, and deterministic role-scoped frontend transport
 declarations. SS-05 is complete with typed `penatika.*` configuration,
 disabled-by-default persistence, conditional PostgreSQL DataSource composition,
 Boot-provided JdbcClient support, Flyway 13.5.0 with zero versioned migrations,
-and a PostgreSQL 18.6 Testcontainers integration smoke. The immediate next work
-is SS-06 — Source Scaffolding Consistency / Readiness Audit. Application
-implementation remains PENDING.
+and a PostgreSQL 18.6 Testcontainers integration smoke. SS-06 is complete and
+confirms that the combined scaffolding is coherent, reproducible, contract-
+aligned, architecture-aligned, and still free of product behavior. Source
+Scaffolding is handoff-ready, but its final branch checkpoint has not yet been
+created. Creating that checkpoint is the immediate next work; merge to `main`
+and application implementation remain PENDING.
 `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups

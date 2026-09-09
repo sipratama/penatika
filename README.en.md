@@ -78,7 +78,7 @@ Material decisions are recorded in [`docs/02_architecture/adr/`](./docs/02_archi
 
 Product Discovery is complete. The initialized Q-01–Q-07 / OPD-001–OPD-007 product baseline is resolved; no unresolved product decisions remain from that set.
 
-The repository now contains an initial backend source shell (`backend/`) with a Java 21 Maven wrapper/POM, a minimal Spring Boot executable shell, and a context smoke test. The frontend workspace (`web/`) also contains separate React/TypeScript/Vite Teacher and Classroom Display application shells that build and test independently; contract schemas remain present in `contracts/`. Database migrations, product implementation, and deployment configuration are not present yet. The next batch is SS-04 test + contract validation harness.
+The repository now has a complete, validated Source Scaffolding foundation: one Java 21/Spring Boot/Maven backend, separate React/TypeScript/Vite Teacher and Classroom Display shells, architecture and contract validation harnesses, role-scoped generated transport declarations, typed configuration, and a disabled-by-default PostgreSQL/Flyway/JdbcClient mechanism with zero versioned migrations. The SS-06 audit makes this phase handoff-ready; the Final Source Scaffolding Handoff Checkpoint is next. Product implementation, the physical product database schema, security/auth implementation, deployment configuration, and CI/CD have not started.
 
 ## Documentation Map
 

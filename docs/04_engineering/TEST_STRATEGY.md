@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.6` |
-| Last Updated | `2026-09-09` |
+| Version | `0.7` |
+| Last Updated | `2026-09-10` |
 | Test Tooling | Deterministic scaffolding plus PostgreSQL infrastructure mechanism baseline established; implementation tooling remains incremental |
 
 ## 1. Testing Objectives
@@ -240,7 +240,9 @@ Required test environments will include:
 - multi-device classroom simulation;
 - pilot-like device and network environment.
 
-Environment and deployment technology remain open.
+Exact test-environment provisioning remains open. Deployment architecture is
+selected by ADR-0019, but no deployment implementation or pilot-like test
+environment exists yet.
 
 ## 12. Completion Evidence
 
@@ -250,7 +252,7 @@ Before pilot, evidence must cover all release blockers, high threats, architectu
 
 ## 12. Open Testing Decisions
 
-- Language/framework test tools and CI platform.
+- Remaining product-layer, browser E2E, AI-evaluation tooling, and CI platform.
 - Formal coverage expectations.
 - AI evaluation scoring and acceptance thresholds.
 - Target-device/browser/network matrix.
@@ -272,6 +274,7 @@ Before pilot, evidence must cover all release blockers, high threats, architectu
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.7` | `2026-09-10` | Correct stale test-tooling and deployment-environment status during the SS-06 Source Scaffolding readiness audit | Codex |
 | `0.6` | `2026-09-09` | Establish configuration activation/failure tests and the Maven Failsafe/Testcontainers PostgreSQL 18.6 infrastructure smoke for JdbcClient and Flyway 13.5.0 with zero domain migrations | Codex |
 | `0.4` | `2026-09-08` | Add future Deployment Verification Suite concepts (health checks, reverse-proxy boundary, HTTPS, SSE, non-public database, secret absence, migration-blocking, immutable artifact identity, backup/restore, container recovery, log rotation, disk-pressure visibility, deployment smoke test) for the portable single-Linux-VPS MVP/pilot baseline (ADR-0019); no implementation exists yet | Claude |
 | `0.3` | `2026-09-07` | Add AI Generation Gateway Suite and model/route evaluation-gate requirements for the OpenRouter bounded-generation baseline (ADR-0017) | Claude |
