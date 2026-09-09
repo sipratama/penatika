@@ -44,9 +44,9 @@ The authoritative [`openapi/openapi.yaml`](./openapi/openapi.yaml) root
 references shared wire primitives and contains the RFC 9457 Problem Details
 foundation, the minimum authenticated Teacher/session-start and secure
 role-specific Pairing boundaries, and the first deterministic revision-aware
-classroom command.
-It also defines the participant-authorized authoritative Display snapshot and
-role-authorized Display SSE full-projection reconciliation boundary.
+classroom command. It also defines the minimal Controller-authorized current
+revision read, the participant-authorized authoritative Display snapshot, and
+the role-authorized Display SSE full-projection reconciliation boundary.
 
 Standalone schemas are active. [`schemas/wire-primitives.schema.json`](./schemas/wire-primitives.schema.json)
 canonically owns the cross-contract `ClassroomSessionId` and `Revision`

@@ -23,9 +23,9 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.23 |
+| Version | 0.24 |
 | Last Updated | 2026-09-09 |
-| Current Phase | Field-Level Contract Foundation — Active |
+| Current Phase | Field-Level Contract Foundation — Active / Handoff-Ready |
 | Implementation State | Pre-source / Pre-scaffolding |
 | Product Owner | sipratama |
 
@@ -61,7 +61,7 @@ Foundation handoff checkpoint was created.
 | Architecture / technology decisions | COMPLETE (unconditional) | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md); OAD-011 remains CONDITIONAL |
 | Architecture Foundation merge to `main` | COMPLETE | merge commit `7cd6a2d` |
 | Contract strategy | COMPLETE | [ADR-0010](./02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md) / [contracts](../contracts/README.md) |
-| Field-Level Contract Foundation | ACTIVE | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) |
+| Field-Level Contract Foundation | ACTIVE / HANDOFF-READY | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) |
 | First vertical slice contract scope | COMPLETE | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) |
 | Shared wire primitives / RFC 9457 HTTP problem foundation | COMPLETE | [Reusable schemas](../contracts/schemas/README.md) / [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Authenticated Teacher / session-start API | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
@@ -69,7 +69,8 @@ Foundation handoff checkpoint was created.
 | Command / revision contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Display projection contract | COMPLETE | [Display projection schema](../contracts/schemas/classroom-display-projection.schema.json) / [OpenAPI](../contracts/openapi/openapi.yaml) |
 | SSE / reconnect contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
-| Contract Foundation final audit | NEXT | Final Contract Foundation Consistency / Readiness Audit |
+| Contract Foundation final audit | COMPLETE | current canonical contract and validation evidence |
+| Final Contract Foundation checkpoint | NEXT | create the branch handoff checkpoint without merging |
 | Source scaffolding | PENDING | after required field-level contracts |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
@@ -204,10 +205,12 @@ and the base RFC 9457 HTTP problem contract remains in
 
 The authenticated Teacher boundary, minimum `LessonVersion` reference /
 Classroom Session start contract, secure role-specific Pairing boundary,
-deterministic revision-aware `DIRECT_ACTION: NEXT` command, authoritative
+deterministic revision-aware `DIRECT_ACTION: NEXT` command, minimal
+Controller-authorized current-revision reconciliation read, authoritative
 Display snapshot, and role-authorized Display SSE / `Last-Event-ID` full-state
-reconciliation contract are defined. The immediate next work is the Final
-Contract Foundation Consistency / Readiness Audit.
+reconciliation contract are defined. The final Contract Foundation consistency
+and readiness audit is complete. The immediate next work is to create the Final
+Contract Foundation Handoff Checkpoint.
 Source scaffolding remains PENDING until the required field-level contracts
 exist. `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before`
 rules.
@@ -259,9 +262,9 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 is the latest handoff checkpoint. It records the completed Architecture
 Foundation phase and its merge-readiness evidence.
 
-Contract Foundation is currently active on `feat/contract-foundation`. No
-Contract Foundation handoff checkpoint exists yet. Its first-slice scope and
-ongoing sequence live in the
+Contract Foundation is active and handoff-ready on `feat/contract-foundation`.
+No Contract Foundation handoff checkpoint exists yet. Its first-slice scope
+and sequence live in the
 [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md); a
 checkpoint will be created only when the phase or branch is ready for handoff
 or merge, or when the human explicitly requests one.

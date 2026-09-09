@@ -1,15 +1,15 @@
 openapi: 3.1.2
 info:
   title: Penatika HTTP API
-  version: 0.6.0
+  version: 0.7.0
   description: >-
     Authoritative HTTP contract root for Penatika. It defines shared HTTP wire
     primitives, the RFC 9457 Problem Details foundation, and the minimum
     authenticated Teacher, Classroom Session start, and secure role-specific
     Pairing boundaries plus the deterministic revision-aware DIRECT_ACTION:
-    NEXT command, classroom-safe authoritative Display snapshot, and
-    role-authorized Display SSE reconciliation required by the first classroom
-    vertical slice.
+    NEXT command, minimal Controller revision reconciliation, classroom-safe
+    authoritative Display snapshot, and role-authorized Display SSE
+    reconciliation required by the first classroom vertical slice.
 paths:
   /api/teacher-session:
     get:
@@ -287,6 +287,66 @@ paths:
           $ref: '#/components/responses/PairingGrantRejectedResponse'
         '409':
           $ref: '#/components/responses/ParticipantRoleAlreadyActiveResponse'
+  /api/classroom-sessions/{classroomSessionId}/controller-state:
+    get:
+      operationId: getClassroomControllerState
+      summary: Retrieve authoritative Controller reconciliation state
+      description: >-
+        Returns the minimal current backend-authoritative Classroom Session
+        state required by the first-slice Teacher Controller to reconcile its
+        revision context before creating another command. The request requires
+        both a current authenticated Teacher browser session and a current,
+        active, non-revoked TEACHER_CONTROLLER participant browser session
+        bound to the path Classroom Session. The backend also verifies current
+        Teacher authorization for that session. Either cookie alone, a
+        CLASSROOM_DISPLAY participant, a pairing credential, cached state, or
+        knowledge of the ClassroomSessionId is insufficient. No CSRF material
+        is required because this GET is safe and read-only.
+
+        After reconnect, after backend-authority loss, or after an unseen
+        command is rejected as STALE_REVISION, the Controller retrieves this
+        state and replaces its cached revision context before creating a new
+        CommandId. The returned revision is current backend authority at
+        response time; it does not authorize a later mutation or bypass the
+        command operation's current authentication, authorization, Display
+        delivery eligibility, session-state, identity, or revision checks.
+        An accepted command with uncertain acknowledgement is instead retried
+        using its existing CommandId and original logical request.
+
+        Scene position, classroom-safe Display content, Display connection or
+        synchronization status, participant identifiers, pairing state,
+        TeacherAccount identity, AI state, and private diagnostics are omitted
+        because this bounded reconciliation consumer requires only session
+        identity and authoritative revision. Richer Controller-private
+        projection remains outside this first contract slice.
+      security:
+        - TeacherBrowserSession: []
+          ParticipantBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+      responses:
+        '200':
+          description: >-
+            Minimal current authoritative revision state for the authorized
+            Teacher Controller and Classroom Session.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStoreCacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControllerReconciliationState'
+              example:
+                classroomSessionId: classroom_session_example_01
+                revision: 7
+        '400':
+          $ref: '#/components/responses/ControllerStateValidationResponse'
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/ControllerAuthorityRequiredResponse'
+        '404':
+          $ref: '#/components/responses/ClassroomSessionNotFoundResponse'
   /api/classroom-sessions/{classroomSessionId}/commands:
     post:
       operationId: submitClassroomSessionCommand
@@ -316,16 +376,24 @@ paths:
         outcome is disclosed. An equivalent retry of an already accepted
         command returns its original outcome without another mutation, even if
         the Classroom Session revision has since advanced or the Display later
-        became unavailable. Reusing an accepted CommandId for a different
-        expectedRevision, commandType, or action is a conflict. Clients must not
-        create or queue new commands while backend authority is unreachable;
-        only a command already sent with uncertain acknowledgement may be
-        retried using its existing identity. Only a command that crosses the
-        authorized boundary and is accepted reserves its command identity;
-        unauthenticated, unauthorized, CSRF-rejected, or structurally invalid
-        attempts do not reserve arbitrary CommandIds. For an accepted CommandId,
-        conflicting-reuse evaluation takes precedence over treating changed
-        logical command fields as a new unsupported command.
+        became unavailable. Reusing an accepted CommandId with a different
+        expectedRevision is the currently reachable conflicting-reuse case.
+        Logical equivalence also includes commandType and action so future
+        compatible command expansion cannot silently reinterpret an existing
+        identity. Under the current closed request schema, any commandType
+        other than DIRECT_ACTION or action other than NEXT is rejected as
+        structural validation and does not reach command-identity conflict
+        evaluation.
+
+        Clients must not create or queue new commands while backend authority
+        is unreachable; only a command already sent with uncertain
+        acknowledgement may be retried using its existing identity. Only a
+        command that crosses the authorized boundary and is accepted reserves
+        its command identity; unauthenticated, unauthorized, CSRF-rejected, or
+        structurally invalid attempts do not reserve arbitrary CommandIds. A
+        Controller reconciles the current revision through GET
+        /api/classroom-sessions/{classroomSessionId}/controller-state before
+        creating a new command after reconnect or STALE_REVISION.
       security:
         - TeacherBrowserSession: []
           ParticipantBrowserSession: []
@@ -474,14 +542,18 @@ paths:
         against the canonical standalone Classroom Display projection schema,
         and applying that event as a full replacement is the client
         synchronization barrier; EventSource open alone is not
-        synchronization. Server-side Display synchronization requires an
-        active authorized stream and successful dispatch of the current full
-        projection to that stream. A new student-facing mutation remains
-        ineligible until that server-side condition is restored, and clients
-        must not treat the Display as synchronized before their client-side
-        barrier completes. Dispatch does not prove that the browser has
-        rendered the projection, and this contract defines no application-level
-        Display acknowledgement endpoint.
+        synchronization. For backend mutation gating, the first-slice
+        server-observable Display delivery condition requires an active
+        authorized stream and successful dispatch of the current full
+        projection event to that stream. Successful dispatch means writing the
+        complete event to the active response without an observed transport
+        failure; it is more than TCP/HTTP establishment but does not prove
+        browser receipt, schema validation, local application, or visual
+        rendering. A new student-facing mutation remains ineligible until this
+        server-observable delivery condition is restored, and the Display
+        client must remain SYNCHRONIZING until its own receive, validate, and
+        full-replacement barrier completes. The contract does not require an
+        application-level Display acknowledgement endpoint.
 
         Each state-bearing event is named display-projection. Its SSE id is the
         base-10 decimal representation of data.revision, and its data is JSON
@@ -613,16 +685,18 @@ components:
       required: false
       description: >-
         Last successfully observed Display SSE event id for this Classroom
-        Session. The header serializes the canonical Revision as an unsigned
-        base-10 decimal value without a sign or leading zeroes except the value
-        0. Native EventSource reconnect may send this header automatically. It
-        is advisory reconciliation context only: it is not authentication,
-        authorization, mutation permission, expectedRevision, proof of client
-        ownership, or a request for historical state. A valid value that is
-        behind, equal to, or ahead of backend authority still yields the
-        current full authoritative projection. A malformed or out-of-range
-        value is rejected with REQUEST_VALIDATION_FAILED before stream
-        establishment.
+        Session, parsed using the canonical Revision schema. The backend emits
+        each SSE id in canonical unsigned base-10 decimal form, which native
+        EventSource reconnect may echo automatically. No additional lexical
+        identity rule is imposed on manually constructed header text beyond
+        successful parsing as a Revision; numeric Revision meaning, not textual
+        spelling, controls reconciliation. The value is advisory context only:
+        it is not authentication, authorization, mutation permission,
+        expectedRevision, proof of client ownership, or a request for
+        historical state. A valid value that is behind, equal to, or ahead of
+        backend authority still yields the current full authoritative
+        projection. A value that cannot be parsed within the Revision bounds is
+        rejected with REQUEST_VALIDATION_FAILED before stream establishment.
       schema:
         $ref: '#/components/schemas/Revision'
       example: 5
@@ -803,6 +877,23 @@ components:
           type: string
           const: CLASSROOM_DISPLAY
           description: Confirms the server-bound Classroom Display authority.
+    ControllerReconciliationState:
+      type: object
+      additionalProperties: false
+      required:
+        - classroomSessionId
+        - revision
+      properties:
+        classroomSessionId:
+          $ref: '#/components/schemas/ClassroomSessionId'
+        revision:
+          allOf:
+            - $ref: '#/components/schemas/Revision'
+          description: >-
+            Current backend-authoritative Classroom Session revision used to
+            replace the Controller's cached revision context before it creates
+            a new command. It is not mutation authorization, scene position,
+            Display synchronization proof, an event count, or a timestamp.
     DirectActionCommandRequest:
       type: object
       additionalProperties: false
@@ -1365,6 +1456,44 @@ components:
                 detail: An active participant already occupies the requested role.
                 code: PARTICIPANT_ROLE_ALREADY_ACTIVE
                 correlationId: corr_display_role_01
+    ControllerStateValidationResponse:
+      description: >-
+        The Controller reconciliation Classroom Session path identifier is
+        malformed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Bad Request
+            status: 400
+            detail: One or more request fields are invalid.
+            code: REQUEST_VALIDATION_FAILED
+            correlationId: corr_controller_state_validation_01
+            fieldErrors:
+              - field: classroomSessionId
+                code: INVALID_VALUE
+                message: The field value does not satisfy its contract.
+    ControllerAuthorityRequiredResponse:
+      description: >-
+        The authenticated Teacher request lacks a current active
+        TEACHER_CONTROLLER participant session bound to the path Classroom
+        Session. Missing, invalid, expired, revoked, replaced, wrong-role, or
+        wrong-session participant authority shares this non-disclosing
+        outcome. The response does not reveal another participant, role-slot
+        owner, Classroom Session, or Teacher.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Forbidden
+            status: 403
+            detail: Active Controller authority is required for this request.
+            code: CONTROLLER_AUTHORITY_REQUIRED
+            correlationId: corr_controller_state_authority_01
     ClassroomCommandValidationResponse:
       description: >-
         The Classroom Session command path or request body fails structural
@@ -1495,10 +1624,13 @@ components:
         Current authoritative command identity, revision, or mutation state
         conflicts with the request. No new mutation occurs. STALE_REVISION does
         not include currentRevision or a projection in Problem Details;
-        reconciliation uses an applicable authoritative state-retrieval
-        boundary before a new command is created. This contract does not grant
+        reconciliation uses the Controller-authorized controller-state read
+        before a new command is created. This contract does not grant
         Controller participants access to the classroom-safe Display snapshot
-        or Display SSE projection.
+        or Display SSE projection. Under the current closed command schema,
+        COMMAND_ID_REUSE_CONFLICT is reachable when an accepted CommandId is
+        reused with a different expectedRevision; unsupported commandType or
+        action values remain REQUEST_VALIDATION_FAILED.
       content:
         application/problem+json:
           schema:
@@ -1514,7 +1646,8 @@ components:
                 code: STALE_REVISION
                 correlationId: corr_command_stale_01
             commandIdReuseConflict:
-              summary: An accepted CommandId was reused for a different request
+              summary: >-
+                An accepted CommandId was reused with another expectedRevision
               value:
                 type: about:blank
                 title: Conflict

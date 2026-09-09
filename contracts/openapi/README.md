@@ -23,17 +23,17 @@ classroom-ready `LessonVersion`. It also defines role-bound PairingGrant
 issuance and revocation, separate Controller and Display redemption
 operations, the resulting participant browser-session boundary, and the first
 deterministic revision-aware classroom command: `DIRECT_ACTION: NEXT`.
-It now also defines the participant-authorized authoritative Display snapshot,
-whose classroom-safe response references the canonical standalone projection
-schema in [`../schemas/`](../schemas/README.md), plus the role-authorized
-Display SSE stream and `Last-Event-ID` authoritative full-projection
-reconciliation boundary.
+It also defines the minimal dual-authorized Controller revision-reconciliation
+read, the participant-authorized authoritative Display snapshot whose
+classroom-safe response references the canonical standalone projection schema
+in [`../schemas/`](../schemas/README.md), and the role-authorized Display SSE
+stream with `Last-Event-ID` authoritative full-projection reconciliation.
 
 ADR-0011 defines the conceptual identity, authentication, account,
 participant, and pairing model. ADR-0012 defines synchronous HTTP commands
-plus authorized SSE projection push and reconnect semantics. Later batches
-will define their operations and payloads without inventing a separate
-contract authority.
+plus authorized SSE projection push and reconnect semantics. Future contract
+extensions must preserve these authorities rather than inventing a separate
+contract source.
 
 ## Protected Security Baseline
 
@@ -55,6 +55,12 @@ role-bound PairingGrant without Teacher authentication. Controller classroom
 mutation requires both security schemes in one OpenAPI security-requirement
 object, the active `TEACHER_CONTROLLER` participant authorization for the path
 Classroom Session, and the existing CSRF header.
+
+The safe Controller reconciliation GET uses the same two security schemes in
+one requirement object and requires active same-session `TEACHER_CONTROLLER`
+authority, but no CSRF header. It returns only `classroomSessionId` and the
+current authoritative `revision`; it does not expose the Display projection,
+participant identity, pairing state, or future Controller-private projection.
 
 The safe Display snapshot and Display SSE GET operations require only the active
 `ParticipantBrowserSession` bound as `CLASSROOM_DISPLAY` to the path Classroom

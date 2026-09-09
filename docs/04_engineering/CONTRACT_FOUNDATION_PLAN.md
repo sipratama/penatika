@@ -122,8 +122,8 @@ types, and status mappings.
 | `NEXT` command / revision | COMPLETE |
 | Display projection / authoritative snapshot | COMPLETE |
 | SSE / reconnect | COMPLETE |
-| Final consistency and readiness audit | NEXT |
-| Final branch checkpoint | PENDING |
+| Final consistency and readiness audit | COMPLETE |
+| Final branch checkpoint | NEXT |
 | Merge to `main` | PENDING |
 
 A Contract Foundation checkpoint is created only when the phase or branch is
