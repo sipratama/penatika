@@ -125,8 +125,8 @@ types, and status mappings.
 | Display projection / authoritative snapshot | COMPLETE |
 | SSE / reconnect plus Display synchronization acknowledgement | COMPLETE |
 | Final consistency and readiness audit | COMPLETE |
-| Final branch checkpoint | NEXT |
-| Merge to `main` | PENDING |
+| Final branch checkpoint | COMPLETE |
+| Merge to `main` | NEXT |
 
 A Contract Foundation checkpoint is created only when the phase or branch is
 ready for deliberate handoff/merge, or when the human explicitly requests

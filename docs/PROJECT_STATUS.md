@@ -23,9 +23,9 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.25 |
+| Version | 0.26 |
 | Last Updated | 2026-09-09 |
-| Current Phase | Field-Level Contract Foundation — Active / Handoff-Ready |
+| Current Phase | Field-Level Contract Foundation — Complete / Merge-Ready |
 | Implementation State | Pre-source / Pre-scaffolding |
 | Product Owner | sipratama |
 
@@ -61,7 +61,7 @@ Foundation handoff checkpoint was created.
 | Architecture / technology decisions | COMPLETE (unconditional) | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md); OAD-011 remains CONDITIONAL |
 | Architecture Foundation merge to `main` | COMPLETE | merge commit `7cd6a2d` |
 | Contract strategy | COMPLETE | [ADR-0010](./02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md) / [contracts](../contracts/README.md) |
-| Field-Level Contract Foundation | ACTIVE / HANDOFF-READY | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) |
+| Field-Level Contract Foundation | COMPLETE / MERGE-READY | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) / [Contract Foundation Checkpoint](./checkpoints/2026-09-09-contract-foundation-complete.md) |
 | First vertical slice contract scope | COMPLETE | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) |
 | Shared wire primitives / RFC 9457 HTTP problem foundation | COMPLETE | [Reusable schemas](../contracts/schemas/README.md) / [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Authenticated Teacher / session-start API | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
@@ -70,7 +70,8 @@ Foundation handoff checkpoint was created.
 | Display projection contract | COMPLETE | [Display projection schema](../contracts/schemas/classroom-display-projection.schema.json) / [OpenAPI](../contracts/openapi/openapi.yaml) |
 | SSE / reconnect plus Display synchronization contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Contract Foundation final audit | COMPLETE | current canonical contract and validation evidence |
-| Final Contract Foundation checkpoint | NEXT | create the branch handoff checkpoint without merging |
+| Final Contract Foundation checkpoint | COMPLETE | [Contract Foundation Checkpoint](./checkpoints/2026-09-09-contract-foundation-complete.md) |
+| Contract Foundation merge to `main` | NEXT | deliberately merge `feat/contract-foundation` after review, commit, push, and remote reverification |
 | Source scaffolding | PENDING | after required field-level contracts |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
@@ -195,9 +196,9 @@ implementation exists yet.
 ## Immediate Next Step
 
 Architecture Foundation is complete and merged to `main` in `7cd6a2d`.
-Contract strategy is complete, and Field-Level Contract Foundation is now
-active. The [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md)
-maintains the first classroom vertical slice scope and sequencing. Shared wire
+Contract strategy and Field-Level Contract Foundation are complete. The
+[Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md)
+records the completed first classroom vertical slice sequence. Shared wire
 primitives are established in
 [`contracts/schemas/wire-primitives.schema.json`](../contracts/schemas/wire-primitives.schema.json),
 and the base RFC 9457 HTTP problem contract remains in
@@ -209,11 +210,13 @@ deterministic revision-aware `DIRECT_ACTION: NEXT` command, minimal
 Controller-authorized current-revision reconciliation read, authoritative
 Display snapshot, role-authorized Display SSE / `Last-Event-ID` full-state
 reconciliation contract, and explicit current-stream Display synchronization
-acknowledgement are defined. The final Contract Foundation consistency
-and readiness audit is complete. The immediate next work is to create the Final
-Contract Foundation Handoff Checkpoint.
-Source scaffolding remains PENDING until the required field-level contracts
-exist. `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before`
+acknowledgement are defined. The final Contract Foundation consistency and
+readiness audit and the
+[Final Contract Foundation Handoff Checkpoint](./checkpoints/2026-09-09-contract-foundation-complete.md)
+are complete. The immediate next work is to deliberately merge
+`feat/contract-foundation` into `main` after human review, commit, push, and
+remote reverification. Source scaffolding remains PENDING until that merge is
+complete. `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before`
 rules.
 
 ## Open Non-Product Follow-Ups
@@ -259,24 +262,21 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 ## Latest Handoff Checkpoint
 
-[Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md)
-is the latest handoff checkpoint. It records the completed Architecture
-Foundation phase and its merge-readiness evidence.
+[Contract Foundation Checkpoint — Complete](./checkpoints/2026-09-09-contract-foundation-complete.md)
+is the latest handoff checkpoint. It records the completed Field-Level
+Contract Foundation and the merge-readiness boundary for
+`feat/contract-foundation` without claiming that the branch is merged.
 
-Contract Foundation is active and handoff-ready on `feat/contract-foundation`.
-No Contract Foundation handoff checkpoint exists yet. Its first-slice scope
-and sequence live in the
-[Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md); a
-checkpoint will be created only when the phase or branch is ready for handoff
-or merge, or when the human explicitly requests one.
+The previous [Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md)
+remains immutable and historically correct for its phase handoff.
 
 The prior [Architecture Foundation Checkpoint — After OAD-004](./checkpoints/2026-09-07-architecture-foundation-after-oad004.md)
 remains historical and is retained unmodified. It predates ADR-0013 and
 ADR-0019; any Java 25 or "deployment not selected" reference in that
 checkpoint reflects the state at its own creation and is superseded by the
 current canonical architecture (ADR-0013: Java 21 LTS; ADR-0019: portable
-single-Linux-VPS deployment). Neither checkpoint document is modified after
-creation.
+single-Linux-VPS deployment). Historical checkpoint documents are not modified
+after creation except through an explicit correction task.
 
 ## AI / Contributor Reading Route
 
