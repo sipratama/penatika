@@ -126,8 +126,8 @@ types, and status mappings.
 | SSE / reconnect plus Display synchronization acknowledgement | COMPLETE |
 | Final consistency and readiness audit | COMPLETE |
 | Final branch checkpoint | COMPLETE |
-| Merge to `main` | NEXT |
+| Merge to `main` | COMPLETE |
 
-A Contract Foundation checkpoint is created only when the phase or branch is
-ready for deliberate handoff/merge, or when the human explicitly requests
-one. Intermediate work units use commits and `PROJECT_STATUS.md` for progress.
+Contract Foundation is closed. The next engineering phase is Source
+Scaffolding; its scope and sequence will be established separately rather than
+expanded in this completed Contract Foundation plan.
