@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "wire-primitives.schema.json",
+  "title": "Penatika Shared Wire Primitives",
+  "description": "Canonical reusable wire primitives shared by synchronous HTTP and classroom projection contracts.",
+  "$defs": {
+    "ClassroomSessionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^\\S+$",
+      "description": "Opaque identifier for one Classroom Session. It is not globally meaningful authority; the backend still validates authentication, ownership, participant authority, and session state."
+    },
+    "Revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "description": "Backend-authoritative revision that increases monotonically within one Classroom Session and is used for stale/conflict detection and synchronization. It is not globally unique, does not imply an initial value, and is not necessarily equal to an event count. The maximum preserves exact integer representation in browser JavaScript."
+    }
+  }
+}

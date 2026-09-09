@@ -14,15 +14,18 @@ contract between Teacher Web, Classroom Display Web, and the Penatika Backend.
   `application/problem+json`.
 
 [`openapi.yaml`](./openapi.yaml) is active as the authoritative contract root.
-It currently defines shared HTTP wire primitives and the RFC 9457 Problem
+It references the shared `ClassroomSessionId` and `Revision` wire primitives
+from [`../schemas/`](../schemas/README.md) and defines the RFC 9457 Problem
 Details foundation, an authenticated Teacher session bootstrap, and the
 minimum operation for starting a Classroom Session from an existing
 classroom-ready `LessonVersion`. It also defines role-bound PairingGrant
 issuance and revocation, separate Controller and Display redemption
 operations, the resulting participant browser-session boundary, and the first
 deterministic revision-aware classroom command: `DIRECT_ACTION: NEXT`.
-Classroom-safe projections, authoritative snapshots, and SSE remain for later
-contract slices.
+It now also defines the participant-authorized authoritative Display snapshot,
+whose classroom-safe response references the canonical standalone projection
+schema in [`../schemas/`](../schemas/README.md). Display SSE and reconnect
+framing remain for the next contract slice.
 
 ADR-0011 defines the conceptual identity, authentication, account,
 participant, and pairing model. ADR-0012 defines synchronous HTTP commands
@@ -50,6 +53,13 @@ role-bound PairingGrant without Teacher authentication. Controller classroom
 mutation requires both security schemes in one OpenAPI security-requirement
 object, the active `TEACHER_CONTROLLER` participant authorization for the path
 Classroom Session, and the existing CSRF header.
+
+The safe Display snapshot GET requires only the active
+`ParticipantBrowserSession` bound as `CLASSROOM_DISPLAY` to the path Classroom
+Session. It does not require `TeacherBrowserSession` or CSRF material and it
+returns `Cache-Control: no-store`. A Controller participant cannot use Display
+authority, and foreign/nonexistent Classroom Sessions share a non-disclosing
+not-found response.
 
 The cookie and CSRF token are distinct opaque values; neither is a business
 identifier or client-supplied authorization decision. OAuth/OIDC access,

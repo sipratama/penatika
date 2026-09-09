@@ -107,7 +107,7 @@ DTOs, status mappings, physical persistence, or implementation structure.
 Field-level details remain deferred until their owning contract slice,
 including later operation paths and methods, pairing credential
 representation beyond the current machine-level grant, participant replacement
-or handoff, post-session command-retention cleanup, scene/projection fields,
+or handoff, post-session command-retention cleanup, richer scene/content types,
 SSE event names and retry details, and later operation-level problem codes,
 types, and status mappings.
 
@@ -120,8 +120,8 @@ types, and status mappings.
 | Authenticated Teacher / minimum LessonVersion and session start | COMPLETE |
 | Pairing | COMPLETE |
 | `NEXT` command / revision | COMPLETE |
-| Display projection / authoritative snapshot | NEXT |
-| SSE / reconnect | PENDING |
+| Display projection / authoritative snapshot | COMPLETE |
+| SSE / reconnect | NEXT |
 | Final consistency and readiness audit | PENDING |
 | Final branch checkpoint | PENDING |
 | Merge to `main` | PENDING |

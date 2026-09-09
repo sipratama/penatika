@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Classroom Display Projection",
+  "description": "Complete classroom-safe backend-authoritative projection for one Classroom Session revision. Consumers replace their cached projection with this full state and adopt its revision; cached state never becomes authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "classroomSessionId",
+    "revision",
+    "scene"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Version of the complete Classroom Display projection shape, including its scene and block union. A new field, changed field meaning, or newly supported block type requires deliberate version evolution and consumer rollout because this safety boundary is closed."
+    },
+    "classroomSessionId": {
+      "$ref": "wire-primitives.schema.json#/$defs/ClassroomSessionId"
+    },
+    "revision": {
+      "allOf": [
+        {
+          "$ref": "wire-primitives.schema.json#/$defs/Revision"
+        }
+      ],
+      "description": "Current backend-authoritative Classroom Session revision represented by this complete projection. It is not a scene position, SSE sequence, command count, database row version, or timestamp."
+    },
+    "scene": {
+      "$ref": "#/$defs/ClassroomDisplayScene"
+    }
+  },
+  "$defs": {
+    "ClassroomDisplayScene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sceneId",
+        "position",
+        "blocks"
+      ],
+      "properties": {
+        "sceneId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^\\S+$",
+          "description": "Opaque stable identity of the current scene within the Classroom Session's immutable LessonVersion. Consumers must not infer database identity, ordering, authorization, or revision from it."
+        },
+        "position": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Zero-based ordinal of the current scene within the immutable LessonVersion selected for this Classroom Session. It is deterministic for that LessonVersion, is not a total-scene count, and is independent of the Classroom Session revision."
+        },
+        "blocks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "description": "Ordered allow-listed blocks required to render the current classroom scene. Unsupported block types fail validation rather than becoming executable or generic payloads.",
+          "items": {
+            "$ref": "#/$defs/PlainTextBlock"
+          }
+        }
+      }
+    },
+    "PlainTextBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "text"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "PLAIN_TEXT",
+          "description": "The only block type supported by projection schema version 1.0."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16384,
+          "description": "Classroom-facing plain text rendered as data with normal output encoding. It is not Markdown, HTML, a template, code, script, or another executable representation."
+        }
+      }
+    }
+  }
+}

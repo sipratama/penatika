@@ -1,13 +1,14 @@
 openapi: 3.1.2
 info:
   title: Penatika HTTP API
-  version: 0.4.0
+  version: 0.5.0
   description: >-
     Authoritative HTTP contract root for Penatika. It defines shared HTTP wire
     primitives, the RFC 9457 Problem Details foundation, and the minimum
     authenticated Teacher, Classroom Session start, and secure role-specific
     Pairing boundaries plus the deterministic revision-aware DIRECT_ACTION:
-    NEXT command required by the first classroom vertical slice.
+    NEXT command and classroom-safe authoritative Display snapshot required by
+    the first classroom vertical slice.
 paths:
   /api/teacher-session:
     get:
@@ -389,6 +390,64 @@ paths:
           $ref: '#/components/responses/ClassroomSessionNotFoundResponse'
         '409':
           $ref: '#/components/responses/ClassroomCommandConflictResponse'
+  /api/classroom-sessions/{classroomSessionId}/display-snapshot:
+    get:
+      operationId: getClassroomDisplaySnapshot
+      summary: Retrieve the authoritative Classroom Display snapshot
+      description: >-
+        Returns the complete current classroom-safe projection at one
+        backend-authoritative Classroom Session revision. The caller must hold
+        a currently active, non-revoked CLASSROOM_DISPLAY participant browser
+        session bound to the path Classroom Session. A TEACHER_CONTROLLER
+        participant, TeacherBrowserSession, pairing credential, cached state,
+        or knowledge of the ClassroomSessionId does not authorize this
+        operation. The backend validates current participant role, binding,
+        revocation/replacement state, and Classroom Session accessibility on
+        every request.
+
+        This response is a full state-replacement boundary. After validating
+        the canonical standalone schema, the Display replaces its cached
+        projection and adopts the returned revision. The snapshot always
+        represents current backend authority at response time; it does not
+        regress to the historical resultingRevision of an earlier command
+        replay. No CSRF material is required because this GET is safe and
+        read-only.
+      security:
+        - ParticipantBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+      responses:
+        '200':
+          description: >-
+            Complete current classroom-safe authoritative Display projection.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStoreCacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/classroom-display-projection.schema.json
+              examples:
+                currentScene:
+                  summary: Current authoritative classroom scene
+                  value:
+                    schemaVersion: '1.0'
+                    classroomSessionId: classroom_session_example_01
+                    revision: 5
+                    scene:
+                      sceneId: scene_example_02
+                      position: 1
+                      blocks:
+                        - type: PLAIN_TEXT
+                          text: Bandingkan 1/2 dan 3/4.
+        '400':
+          $ref: '#/components/responses/DisplaySnapshotValidationResponse'
+        '401':
+          $ref: '#/components/responses/DisplaySessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/DisplayAuthorityRequiredResponse'
+        '404':
+          $ref: '#/components/responses/DisplayClassroomSessionNotFoundResponse'
 components:
   securitySchemes:
     TeacherBrowserSession:
@@ -425,8 +484,9 @@ components:
       in: path
       required: true
       description: >-
-        Opaque Classroom Session identifier. The backend still verifies current
-        Teacher authorization and authoritative session state.
+        Opaque Classroom Session identifier. The backend still verifies the
+        operation's required Teacher or participant authorization and current
+        authoritative session state.
       schema:
         $ref: '#/components/schemas/ClassroomSessionId'
       example: classroom_session_example_01
@@ -464,14 +524,7 @@ components:
         infer storage technology, ordering, ownership, or authorization from
         its representation.
     ClassroomSessionId:
-      type: string
-      minLength: 1
-      maxLength: 128
-      pattern: '^\S+$'
-      description: >-
-        Opaque identifier for one Classroom Session. It is not globally
-        meaningful authority; the backend still validates authentication,
-        ownership, participant authority, and session state.
+      $ref: ../schemas/wire-primitives.schema.json#/$defs/ClassroomSessionId
     PairingGrantId:
       type: string
       minLength: 1
@@ -528,15 +581,7 @@ components:
         active/reconcilable lifetime of the owning Classroom Session; exact
         post-session persistence and cleanup remain deferred.
     Revision:
-      type: integer
-      minimum: 0
-      maximum: 9007199254740991
-      description: >-
-        Backend-authoritative revision that increases monotonically within one
-        Classroom Session and is used for stale/conflict detection and
-        synchronization. It is not globally unique, does not imply an initial
-        value, and is not necessarily equal to an event count. The maximum
-        preserves exact integer representation in browser JavaScript.
+      $ref: ../schemas/wire-primitives.schema.json#/$defs/Revision
     CorrelationId:
       type: string
       minLength: 1
@@ -1336,8 +1381,11 @@ components:
       description: >-
         Current authoritative command identity, revision, or mutation state
         conflicts with the request. No new mutation occurs. STALE_REVISION does
-        not include currentRevision because authoritative snapshot and
-        reconciliation state remain owned by the later snapshot contract.
+        not include currentRevision or a projection in Problem Details;
+        reconciliation uses the applicable authoritative snapshot boundary
+        before a new command is created. This contract currently defines the
+        classroom-safe Display snapshot only and does not grant Controller
+        participants access to that Display projection.
       content:
         application/problem+json:
           schema:
@@ -1370,3 +1418,69 @@ components:
                 detail: The classroom session does not currently permit mutation.
                 code: CLASSROOM_MUTATION_NOT_ALLOWED
                 correlationId: corr_command_state_01
+    DisplaySnapshotValidationResponse:
+      description: The Display snapshot path identifier is malformed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Bad Request
+            status: 400
+            detail: One or more request fields are invalid.
+            code: REQUEST_VALIDATION_FAILED
+            correlationId: corr_display_snapshot_validation_01
+            fieldErrors:
+              - field: classroomSessionId
+                code: INVALID_VALUE
+                message: The field value does not satisfy its contract.
+    DisplaySessionRequiredResponse:
+      description: >-
+        No usable participant browser session is available for Display access.
+        Missing, invalid, expired, revoked, replaced, or otherwise unusable
+        participant credentials share this non-disclosing outcome.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Unauthorized
+            status: 401
+            detail: An active Classroom Display participant session is required.
+            code: DISPLAY_SESSION_REQUIRED
+            correlationId: corr_display_session_01
+    DisplayAuthorityRequiredResponse:
+      description: >-
+        The participant browser session is valid but does not carry the
+        CLASSROOM_DISPLAY authority required by this operation. The response
+        does not reveal the participant identity, its actual role, another
+        Classroom Session, or another Teacher.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Forbidden
+            status: 403
+            detail: Active Classroom Display authority is required for this request.
+            code: DISPLAY_AUTHORITY_REQUIRED
+            correlationId: corr_display_authority_01
+    DisplayClassroomSessionNotFoundResponse:
+      description: >-
+        The requested Classroom Session does not exist or is not accessible to
+        the active Display participant. Foreign and nonexistent session
+        identifiers share this non-disclosing outcome.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Not Found
+            status: 404
+            detail: The requested classroom session was not found.
+            code: CLASSROOM_SESSION_NOT_FOUND
+            correlationId: corr_display_classroom_lookup_01

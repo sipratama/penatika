@@ -23,7 +23,7 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.21 |
+| Version | 0.22 |
 | Last Updated | 2026-09-09 |
 | Current Phase | Field-Level Contract Foundation — Active |
 | Implementation State | Pre-source / Pre-scaffolding |
@@ -63,12 +63,12 @@ Foundation handoff checkpoint was created.
 | Contract strategy | COMPLETE | [ADR-0010](./02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md) / [contracts](../contracts/README.md) |
 | Field-Level Contract Foundation | ACTIVE | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) |
 | First vertical slice contract scope | COMPLETE | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) |
-| Shared wire primitives / RFC 9457 HTTP problem foundation | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
+| Shared wire primitives / RFC 9457 HTTP problem foundation | COMPLETE | [Reusable schemas](../contracts/schemas/README.md) / [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Authenticated Teacher / session-start API | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Pairing contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Command / revision contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
-| Display projection contract | NEXT | Contract Foundation Batch 6 |
-| SSE / reconnect contract | PENDING | authorized projection push and authoritative reconciliation slice |
+| Display projection contract | COMPLETE | [Display projection schema](../contracts/schemas/classroom-display-projection.schema.json) / [OpenAPI](../contracts/openapi/openapi.yaml) |
+| SSE / reconnect contract | NEXT | Contract Foundation Batch 7 |
 | Source scaffolding | PENDING | after required field-level contracts |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
@@ -195,16 +195,19 @@ implementation exists yet.
 Architecture Foundation is complete and merged to `main` in `7cd6a2d`.
 Contract strategy is complete, and Field-Level Contract Foundation is now
 active. The [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md)
-maintains the first classroom vertical slice scope and sequencing. The shared
-wire primitives and base RFC 9457 HTTP problem contract are established in
+maintains the first classroom vertical slice scope and sequencing. Shared wire
+primitives are established in
+[`contracts/schemas/wire-primitives.schema.json`](../contracts/schemas/wire-primitives.schema.json),
+and the base RFC 9457 HTTP problem contract remains in
 [`contracts/openapi/openapi.yaml`](../contracts/openapi/openapi.yaml).
 
 The authenticated Teacher boundary, minimum `LessonVersion` reference /
 Classroom Session start contract, secure role-specific Pairing boundary, and
-deterministic revision-aware `DIRECT_ACTION: NEXT` command are now defined in
-the OpenAPI root. The immediate next work is Contract Foundation Batch 6:
-define the classroom-safe Display projection and authoritative snapshot
-contract. SSE operations remain later work.
+deterministic revision-aware `DIRECT_ACTION: NEXT` command are defined in the
+OpenAPI root. The standalone classroom-safe Display projection and its
+participant-authorized authoritative HTTP snapshot are also defined. The
+immediate next work is Contract Foundation Batch 7: define the Display SSE,
+`Last-Event-ID`, and authoritative reconnect contract.
 Source scaffolding remains PENDING until the required field-level contracts
 exist. `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before`
 rules.
