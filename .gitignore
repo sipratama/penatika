@@ -69,3 +69,6 @@ backend/.mvn/wrapper/maven-wrapper.jar
 node_modules/
 .vite/
 coverage/
+
+# Contract validation tooling
+scripts/contract-validation/.tmp/

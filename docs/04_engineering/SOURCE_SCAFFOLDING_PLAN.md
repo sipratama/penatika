@@ -12,14 +12,15 @@
 | Field | Value |
 |---|---|
 | Phase | Source Scaffolding |
-| Batch | SS-03 — Frontend Workspace + Teacher/Display Application Shells |
+| Batch | SS-04 — Test + Contract Validation Harness |
 | Date | `2026-09-09` |
 | Branch | `feat/source-scaffolding` |
 | Starting main SHA | `8b93c0415e913e194f93dcbabb264f4141fd65bd` |
-| Status | SS-01 complete; SS-02 complete; SS-03 complete; SS-04 next |
-| Implementation state | Backend and frontend application shells scaffolded (no product behavior) |
+| Status | SS-01 complete; SS-02 complete; SS-03 complete; SS-04 complete; SS-05 next; SS-06 pending |
+| Implementation state | Backend/frontend shells plus executable architecture, dependency, and contract safeguards scaffolded (no product behavior) |
 | SS-02 selected baseline | Java 21 LTS; Apache Maven 3.9.16; Maven Wrapper Plugin 3.3.4 (`only-script`, distribution SHA-256 pinned); Spring Boot 4.1.1 (GA) |
 | SS-03 selected baseline | Node.js 24.21.0 LTS (Krypton); npm 11.19.0; React / React DOM 19.2.8; Vite 8.2.2; TypeScript 7.0.2; Vitest 5.0.0; React Testing Library 16.3.3; jest-dom 7.0.1; jsdom 30.0.1 |
+| SS-04 selected baseline | ArchUnit 1.5.0; Redocly CLI 2.51.2; Ajv 8.17.1; openapi-typescript 7.13.0 accepted for deterministic role-scoped transport declarations |
 
 ## 1. Objective
 
@@ -140,7 +141,7 @@ directories.
 │       └── test/
 │           └── java/io/github/sipratama/penatika/
 │               ├── PenatikaApplicationTests.java CREATE IN SS-02
-│               └── architecture/                 CREATE IN SS-04
+│               └── architecture/                 CURRENT
 ├── web/                                          CURRENT
 │   ├── package.json                              CURRENT
 │   ├── package-lock.json                         CURRENT
@@ -149,14 +150,15 @@ directories.
 │   │   ├── teacher/                              CURRENT
 │   │   └── display/                              CURRENT
 │   └── packages/
-│       ├── transport-teacher/                    CREATE IN SS-04 IF GENERATOR SPIKE PASSES
-│       ├── transport-display/                    CREATE IN SS-04 IF GENERATOR SPIKE PASSES
+│       ├── transport-teacher/                    CURRENT; GENERATED TRANSPORT ONLY
+│       ├── transport-display/                    CURRENT; GENERATED TRANSPORT ONLY
 │       ├── scene-renderer/                       LATER, WHEN FIRST CONSUMED
 │       ├── design-tokens/                        LATER, WHEN FIRST CONSUMED
 │       └── ui/                                   LATER, DISPLAY-SAFE EXPORTS ONLY
 ├── contracts/                                    EXISTING; CANONICAL WIRE AUTHORITY
 ├── docs/                                         EXISTING; CANONICAL DOCS/PLANS
 └── scripts/                                      EXISTING; REPOSITORY VALIDATION TOOLING
+    └── contract-validation/                      CURRENT; CREATE IN SS-04
 ```
 
 Inside a materialized backend business module, the representative convention
@@ -260,10 +262,13 @@ is a consumer and must not create parallel contract definitions.
 - Repository-level contract validation remains independent of backend and
   frontend compilation.
 
-If the SS-04 generator spike cannot preserve external schema references,
-role separation, and reproducibility without patching generated output, use
-handwritten adapter types plus conformance tests instead. Hand-editing generated
-models is forbidden.
+The SS-04 spike accepted `openapi-typescript` `7.13.0`. A deterministic tooling
+script derives disposable Teacher and Display subsets from the dereferenced
+canonical OpenAPI document using explicit operation allowlists, generates each
+role twice with no byte difference, rejects opposite-role operation IDs, and
+checks the Display projection members resolved from the standalone schema.
+Generated declarations require no patching and remain transport-only under
+`web/packages/transport-teacher/` and `web/packages/transport-display/`.
 
 ## 9. Test and Architecture Fitness
 
@@ -296,18 +301,26 @@ models is forbidden.
 
 ### SS-04 Fitness and Contract Harness
 
-- ArchUnit rules enforce that domain/application packages do not depend on
-  adapters or Spring/persistence/provider types improperly.
-- Architecture tests reject cross-module adapter access and broad `common`
-  dumping-ground dependencies.
-- Workspace dependency checks reject Display dependencies on Teacher-private
-  packages.
-- Pinned OpenAPI lint and dereferenced-bundle validation run against
-  `contracts/openapi/openapi.yaml`.
-- Draft 2020-12 schemas compile, external references resolve, and representative
-  valid/invalid payloads are tested.
+- ArchUnit `1.5.0` rules enforce inward domain/application dependencies,
+  private `identity`/`lesson`/`classroom` domain and adapter internals, and the
+  absence of global technical-layer dumping-ground packages. Test-only invalid
+  fixtures prove the rules are non-vacuous while production matches may remain
+  empty during scaffolding.
+- A Node guard using the TypeScript `7.0.2` compiler API rejects Teacher/Display
+  cross-imports, sibling manifest dependencies, arbitrary shared paths, and
+  unapproved `@penatika/*` packages. Synthetic self-tests prove both directions
+  and private-package denial.
+- Redocly CLI `2.51.2` runs recommended OpenAPI lint with only
+  `no-empty-servers`, `info-license`, and `no-unused-components` disabled, then
+  produces an ignored dereferenced bundle from the canonical OpenAPI document.
+- Ajv `8.17.1` in Draft 2020-12 mode resolves the canonical primitive `$id`,
+  compiles the Display projection, and proves representative valid and invalid
+  closed-boundary fixtures.
+- `openapi-typescript` `7.13.0` is accepted for deterministic role-scoped,
+  runtime-free transport declarations. The frontend allowlist permits Teacher
+  only `transport-teacher` and Display only `transport-display`.
 - Playwright is reserved for selected cross-app browser journeys once a real
-  journey exists; do not create empty E2E ceremony in SS-03.
+  journey exists; no empty E2E ceremony is created in SS-04.
 
 ## 10. Persistence Boundary
 
@@ -392,8 +405,8 @@ Source Scaffolding                            ACTIVE
 SS-01 Plan + Repository Layout Freeze         COMPLETE
 SS-02 Backend Build + Module Skeleton         COMPLETE
 SS-03 Frontend Workspace + Teacher/Display    COMPLETE
-SS-04 Test + Contract Validation Harness      NEXT
-SS-05 Configuration + Persistence Baseline    PENDING
+SS-04 Test + Contract Validation Harness      COMPLETE
+SS-05 Configuration + Persistence Baseline    NEXT
 SS-06 Consistency / Readiness Audit            PENDING
 Application Implementation                    PENDING
 ```

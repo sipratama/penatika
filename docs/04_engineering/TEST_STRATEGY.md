@@ -1,6 +1,6 @@
 # Test Strategy — Penatika
 
-> Defines the evidence required to trust Penatika's product behavior, contracts, AI boundaries, session consistency, and classroom risks. Tooling will be selected with the implementation stack.
+> Defines the evidence required to trust Penatika's product behavior, contracts, AI boundaries, session consistency, and classroom risks. Deterministic scaffolding tooling is established; later test layers remain activated with implementation needs.
 
 ## Metadata
 
@@ -8,9 +8,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.4` |
-| Last Updated | `2026-09-08` |
-| Test Tooling | Open Architecture Decision |
+| Version | `0.5` |
+| Last Updated | `2026-09-09` |
+| Test Tooling | Deterministic scaffolding baseline established; implementation tooling remains incremental |
 
 ## 1. Testing Objectives
 
@@ -34,7 +34,24 @@ Minimum traceability targets:
 - active threat mitigations;
 - release blockers and NFR quality gates.
 
-## 3. Test Layers
+## 3. Established Tooling Baseline
+
+The executable Source Scaffolding baseline is:
+
+- backend: JUnit Jupiter, Spring Boot test support, and ArchUnit `1.5.0`;
+- frontend: Vitest `5.0.0`, React Testing Library `16.3.3`, and a Node/TypeScript
+  dependency-boundary guard;
+- contracts: Redocly CLI `2.51.2` for OpenAPI lint/dereferenced bundling and
+  Ajv `8.17.1` in Draft 2020-12 mode for canonical schema compilation and
+  representative payload validation.
+
+Still future or open are Playwright activation when a real cross-application
+journey exists, integration-database test tooling, formal coverage thresholds,
+the CI platform, AI evaluation tooling, the supported device/browser matrix,
+and numerical performance thresholds. This baseline does not claim complete
+product or pilot readiness.
+
+## 4. Test Layers
 
 ### Domain Unit Tests
 
@@ -60,7 +77,7 @@ Cover prepare → review → start → pair → teach → adapt → annotate →
 
 Use real or representative smartphones, laptops/PCs, classroom displays, mouse, touch, and stylus. Validate viewing distance, controller ergonomics, orientation, and network variation.
 
-## 4. Priority Regression Suites
+## 5. Priority Regression Suites
 
 ### Teacher-Control Suite
 
@@ -135,7 +152,7 @@ Once a real `PILOT` deployment exists, verification must cover:
 
 No implementation or test exists yet for this suite; it defines future evidence requirements only.
 
-## 5. AI Evaluation Strategy
+## 6. AI Evaluation Strategy
 
 AI behavior requires a versioned evaluation set separate from deterministic application tests.
 
@@ -155,7 +172,7 @@ Evaluation datasets must use sanitized or synthetic content unless an approved p
 
 Per ADR-0017, a model/profile/provider route is activated for pilot/production only after passing Penatika's versioned evaluation corpus; `ROUTER` additionally requires classification-accuracy evaluation for `SUPPORTED`/`OUT_OF_SCOPE`/`UNSUPPORTED_CAPABILITY`/`NEEDS_CLARIFICATION` outcomes.
 
-## 6. Security Testing
+## 7. Security Testing
 
 - authorization matrix and object-level access;
 - session and pairing credential guessing, replay, expiry, and role escalation;
@@ -166,7 +183,7 @@ Per ADR-0017, a model/profile/provider route is activated for pilot/production o
 - secret exposure in clients or build artifacts;
 - dependency and supply-chain scanning after stack selection.
 
-## 7. Accessibility Testing
+## 8. Accessibility Testing
 
 - automated accessibility checks for supported surfaces;
 - keyboard and focus-path tests;
@@ -178,7 +195,7 @@ Per ADR-0017, a model/profile/provider route is activated for pilot/production o
 
 Automated checks do not replace manual assistive-technology and classroom-context testing.
 
-## 8. Performance and Reliability Testing
+## 9. Performance and Reliability Testing
 
 After a measurable prototype exists:
 
@@ -192,7 +209,7 @@ After a measurable prototype exists:
 
 Do not set pass thresholds before workload and target environments are defined.
 
-## 9. Test Data
+## 10. Test Data
 
 - Prefer deterministic builders and synthetic teacher/lesson/session data.
 - Do not use production personal data.
@@ -200,7 +217,7 @@ Do not set pass thresholds before workload and target environments are defined.
 - Keep provider fixtures sanitized and free of secrets or raw audio.
 - Separate valid, invalid, unsupported, adversarial, and degradation datasets.
 
-## 10. Environments
+## 11. Environments
 
 Required test environments will include:
 
@@ -212,7 +229,7 @@ Required test environments will include:
 
 Environment and deployment technology remain open.
 
-## 11. Completion Evidence
+## 12. Completion Evidence
 
 For each implementation increment, report exact commands, test scope, results, skipped checks, and unresolved failures. No test is considered passed unless executed.
 

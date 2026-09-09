@@ -7,8 +7,29 @@ Saat ini tersedia:
 ```text
 scripts/
 ├── README.md
+├── contract-validation/
+│   ├── package.json
+│   └── package-lock.json
 └── validate_template.py
 ```
+
+## `contract-validation/`
+
+`contract-validation/` adalah package tooling privat untuk memvalidasi sumber
+kanonis di `contracts/openapi/` dan `contracts/schemas/`. Dari direktori
+tersebut jalankan:
+
+```bash
+npm ci
+npm test
+```
+
+Perintah agregat menjalankan lint dan dereferenced bundle OpenAPI, kompilasi
+JSON Schema Draft 2020-12, fixture valid/invalid, serta pemeriksaan deklarasi
+transport Teacher/Display yang role-scoped dan deterministik. Output `.tmp/`
+dan `node_modules/` diabaikan Git dan bukan contract authority. Detail serta
+perintah regenerasi berada di
+[`contract-validation/README.md`](./contract-validation/README.md).
 
 ---
 
