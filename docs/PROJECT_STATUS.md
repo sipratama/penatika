@@ -23,10 +23,10 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.30 |
+| Version | 0.31 |
 | Last Updated | 2026-09-09 |
-| Current Phase | Source Scaffolding — Active |
-| Implementation State | Backend and separate Teacher/Display frontend shells scaffolded; product implementation pending |
+| Current Phase | Source Scaffolding — Active; SS-03 recovery blocked |
+| Implementation State | Backend and separate Teacher/Display frontend shells scaffolded; SS-03 completion evidence remains provisional; product implementation pending |
 | Product Owner | sipratama |
 
 The final product-baseline consistency audit passed before the Architecture
@@ -39,6 +39,7 @@ Foundation handoff checkpoint was created.
 - `ACTIVE` — current phase of work.
 - `NEXT` — immediate planned decision/work.
 - `PENDING` — not started and dependent on prior work.
+- `BLOCKED` — required validation cannot complete without resolving a concrete issue.
 - `CONDITIONAL` — only activated when its trigger exists.
 - `EVIDENCE_REQUIRED` — decision/policy exists but real-world readiness still
   needs implementation or evidence.
@@ -75,8 +76,8 @@ Foundation handoff checkpoint was created.
 | Source scaffolding | ACTIVE | [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md) |
 | SS-01 plan / repository layout | COMPLETE | [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md) |
 | SS-02 backend build / module skeleton | COMPLETE | backend Maven wrapper/POM + Java 21 Spring Boot shell and module package boundaries |
-| SS-03 frontend workspace / teacher-display shells | COMPLETE | npm workspace/lockfile plus independently buildable and testable React/TypeScript/Vite Teacher and Display shells |
-| SS-04 test + contract validation harness | NEXT | execute after SS-03 validation and review |
+| SS-03 frontend workspace / teacher-display shells | BLOCKED | frontend install/build/test gates pass, but the required repository-root `./backend/mvnw test` recovery gate fails because Maven executes from the repository root rather than `backend/` |
+| SS-04 test + contract validation harness | PENDING | execute only after SS-03 recovery validation is resolved |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
@@ -227,8 +228,10 @@ backend now contains a reproducible Maven/Spring Boot shell with physical
 module package boundaries (`identity`, `lesson`, `classroom`). The frontend now
 contains one npm workspace with separately buildable and testable Teacher and
 Classroom Display React/TypeScript/Vite application shells. Neither shell
-implements product behavior. The immediate next work is SS-04 — Test + Contract
-Validation Harness. Application implementation remains PENDING.
+implements product behavior. SS-03 recovery remains blocked because the
+required repository-root `./backend/mvnw test` command does not select
+`backend/pom.xml`; the same suite passes when run from `backend/`. SS-04 remains
+PENDING until that recovery gate is resolved. Application implementation remains PENDING.
 `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
@@ -238,7 +241,8 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 ### Architecture / Implementation
 
 - OAD-011 as applicable (CONDITIONAL only);
-- test and contract validation harness (SS-04);
+- resolve the SS-03 repository-root backend regression invocation gate;
+- test and contract validation harness (SS-04, after SS-03 recovery);
 - physical persistence model/migrations;
 - identity implementation;
 - realtime/reconnect transport implementation;

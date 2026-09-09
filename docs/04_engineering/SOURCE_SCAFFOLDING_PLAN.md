@@ -16,8 +16,8 @@
 | Date | `2026-09-09` |
 | Branch | `feat/source-scaffolding` |
 | Starting main SHA | `8b93c0415e913e194f93dcbabb264f4141fd65bd` |
-| Status | SS-01 complete; SS-02 complete; SS-03 complete; SS-04 next |
-| Implementation state | Backend and frontend application shells scaffolded (no product behavior) |
+| Status | SS-01 complete; SS-02 complete; SS-03 recovery blocked; SS-04 pending |
+| Implementation state | Backend and frontend application shells scaffolded (no product behavior); SS-03 completion evidence remains provisional |
 | SS-02 selected baseline | Java 21 LTS; Apache Maven 3.9.16; Maven Wrapper Plugin 3.3.4 (`only-script`, distribution SHA-256 pinned); Spring Boot 4.1.1 (GA) |
 | SS-03 selected baseline | Node.js 24.21.0 LTS (Krypton); npm 11.19.0; React / React DOM 19.2.8; Vite 8.2.2; TypeScript 7.0.2; Vitest 5.0.0; React Testing Library 16.3.3; jest-dom 7.0.1; jsdom 30.0.1 |
 
@@ -287,6 +287,12 @@ models is forbidden.
 - The root workspace owns shared development tooling; each private application
   manifest owns only its React/React DOM runtime dependencies. No shared
   workspace package or monorepo orchestrator exists.
+- The `2026-09-09` macOS recovery proved clean npm installation plus independent
+  and aggregate frontend build/test gates. The required repository-root
+  `./backend/mvnw test` regression command still fails because Maven executes
+  from the repository root and does not select `backend/pom.xml`; the backend
+  suite passes when run from `backend/`. SS-03 completion therefore remains
+  provisional until that invocation gate is resolved.
 
 ### SS-04 Fitness and Contract Harness
 
@@ -385,8 +391,8 @@ Contract Foundation                           COMPLETE / MERGED
 Source Scaffolding                            ACTIVE
 SS-01 Plan + Repository Layout Freeze         COMPLETE
 SS-02 Backend Build + Module Skeleton         COMPLETE
-SS-03 Frontend Workspace + Teacher/Display    COMPLETE
-SS-04 Test + Contract Validation Harness      NEXT
+SS-03 Frontend Workspace + Teacher/Display    RECOVERY BLOCKED
+SS-04 Test + Contract Validation Harness      PENDING
 SS-05 Configuration + Persistence Baseline    PENDING
 SS-06 Consistency / Readiness Audit            PENDING
 Application Implementation                    PENDING
