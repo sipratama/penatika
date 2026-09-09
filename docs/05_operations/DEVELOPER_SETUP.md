@@ -21,6 +21,11 @@ Backend shell:
 - Maven 3.9.16 through the committed wrapper;
 - Spring Boot 4.1.1;
 - ArchUnit 1.5.0 architecture fitness checks;
+- typed `penatika.*` runtime configuration with persistence disabled by
+  default;
+- PostgreSQL 18.6 integration support through Testcontainers 2.0.5;
+- Spring JDBC/JdbcClient plus Flyway 13.5.0 infrastructure composition with
+  zero domain migrations;
 - one Maven project rooted at `backend/`;
 - no product endpoints or business implementation.
 
@@ -45,9 +50,9 @@ Contract validation tooling:
 - deterministic role-scoped transport declarations generated with
   `openapi-typescript` 7.13.0.
 
-The repository still has no physical database schema or migrations, product
-application behavior, OIDC implementation, persistence implementation, or
-deployment configuration.
+The repository still has no physical product database schema or versioned
+migration, module persistence adapter, product application behavior, OIDC
+implementation, or deployment configuration.
 
 ## 2. Current Prerequisites
 
@@ -56,12 +61,43 @@ deployment configuration.
 - Node.js 24.21.0;
 - npm 11.19.0;
 - Python 3;
-- access to the repository.
+- access to the repository;
+- a Docker-compatible container runtime for the full backend verification
+  command only.
 
-The project does not mandate a specific JDK vendor. PostgreSQL, containers, and
-cloud infrastructure are not required for SS-04 validation.
+The project does not mandate a specific JDK vendor. A separately installed or
+persistent developer PostgreSQL database is not required. Containers are not
+required for the fast backend test command; cloud infrastructure is not
+required for current Source Scaffolding validation.
 
 ## 3. Backend Setup and Validation
+
+### Safe Configuration
+
+Committed backend configuration contains no operational credentials.
+Persistence is disabled by default, so normal shell startup and fast tests do
+not require database values.
+
+The supported server environment-variable names are:
+
+- `PENATIKA_ENVIRONMENT` (`LOCAL`, `PILOT`, or `PROD`; default `LOCAL`);
+- `PENATIKA_PERSISTENCE_ENABLED`;
+- `PENATIKA_DB_URL`;
+- `PENATIKA_DB_USERNAME`;
+- `PENATIKA_DB_PASSWORD`;
+- `PENATIKA_MIGRATIONS_ENABLED`.
+
+When persistence is enabled, URL, username, and password are all required and
+startup fails clearly when one is blank. Secret values remain external and
+must not be committed, logged, or exposed to frontend builds.
+
+Application-integrated Flyway execution is currently a `LOCAL`/test mechanism
+and is disabled unless migrations are explicitly enabled. Pilot/production
+migration-principal and deployment orchestration remain deferred; the runtime
+application principal is not authorized by this setup to retain permanent DDL
+privileges.
+
+### Fast Backend Tests
 
 The backend Maven project is rooted at `backend/`. From the repository root,
 use the normal Unix/macOS invocation:
@@ -79,8 +115,9 @@ The equivalent repository-root command is:
 ```
 
 Both commands include the Spring context smoke test, production architecture
-fitness rules, and negative test-fixture proof that the rules detect invalid
-dependencies.
+fitness rules, typed configuration activation/failure tests, and negative
+test-fixture proof that the rules detect invalid dependencies. They do not
+start PostgreSQL or require a container runtime.
 
 Plain `./backend/mvnw test` from the repository root is not a supported project
 invocation. Running a wrapper script by path does not change Maven's working
@@ -92,6 +129,25 @@ To inspect the pinned toolchain from the repository root:
 ```bash
 ./backend/mvnw -f backend/pom.xml --version
 ```
+
+### Full Backend Verification
+
+From `backend/`, run:
+
+```bash
+./mvnw verify
+```
+
+This runs the fast suite and the Maven Failsafe integration suite. The
+integration smoke uses Testcontainers with the exact
+`postgres:18.6-bookworm` image to prove DataSource connectivity, JdbcClient
+query execution, and Flyway operation with zero versioned Penatika domain
+migrations.
+
+A usable Docker-compatible runtime is required. On macOS with Podman, the
+current shell may need to expose the active Podman machine's Docker-compatible
+socket to Testcontainers; do not commit a machine-specific socket path or
+`.testcontainers.properties` file.
 
 ## 4. Frontend Setup and Validation
 
@@ -206,15 +262,17 @@ authorize implementation. Material architecture decisions remain governed by
 
 ## 10. Open Work
 
-SS-05 is next and owns the configuration and persistence mechanism baseline.
-Physical product database schema/migrations, identity/session implementation,
-product behavior, deployment files, CI/CD, and backup implementation remain
-pending.
+SS-05 has established the configuration and persistence mechanism baseline.
+SS-06 consistency/readiness audit is next. Physical product database
+schema/migrations, module persistence adapters, identity/session
+implementation, product behavior, deployment files, CI/CD, and backup
+implementation remain pending.
 
 ## 11. Change Log
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-09` | Establish safe typed backend configuration, disabled-by-default persistence, fast test behavior, and full PostgreSQL 18.6 Testcontainers/Flyway/JdbcClient verification | Codex |
 | `2026-09-09` | Establish SS-04 backend architecture, frontend boundary, contract validation, and deterministic transport-generation commands | Codex |
 | `2026-09-09` | Synchronize setup with the Java/Maven backend shell, Node/npm Teacher and Display shells, Contract Foundation, and supported backend invocation semantics | Codex |
 | `2026-09-08` | Record portable single-Linux-VPS MVP/pilot deployment baseline (ADR-0019) without adding Dockerfile, Compose, Caddy, or CI/CD commands | Claude |

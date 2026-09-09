@@ -12,15 +12,16 @@
 | Field | Value |
 |---|---|
 | Phase | Source Scaffolding |
-| Batch | SS-04 — Test + Contract Validation Harness |
+| Batch | SS-05 — Configuration + Persistence Mechanism Baseline |
 | Date | `2026-09-09` |
 | Branch | `feat/source-scaffolding` |
 | Starting main SHA | `8b93c0415e913e194f93dcbabb264f4141fd65bd` |
-| Status | SS-01 complete; SS-02 complete; SS-03 complete; SS-04 complete; SS-05 next; SS-06 pending |
-| Implementation state | Backend/frontend shells plus executable architecture, dependency, and contract safeguards scaffolded (no product behavior) |
+| Status | SS-01 complete; SS-02 complete; SS-03 complete; SS-04 complete; SS-05 complete; SS-06 next |
+| Implementation state | Backend/frontend shells plus executable architecture, contract, typed configuration, and PostgreSQL persistence-mechanism safeguards scaffolded (no product behavior or product schema) |
 | SS-02 selected baseline | Java 21 LTS; Apache Maven 3.9.16; Maven Wrapper Plugin 3.3.4 (`only-script`, distribution SHA-256 pinned); Spring Boot 4.1.1 (GA) |
 | SS-03 selected baseline | Node.js 24.21.0 LTS (Krypton); npm 11.19.0; React / React DOM 19.2.8; Vite 8.2.2; TypeScript 7.0.2; Vitest 5.0.0; React Testing Library 16.3.3; jest-dom 7.0.1; jsdom 30.0.1 |
 | SS-04 selected baseline | ArchUnit 1.5.0; Redocly CLI 2.51.2; Ajv 8.17.1; openapi-typescript 7.13.0 accepted for deterministic role-scoped transport declarations |
+| SS-05 selected baseline | PostgreSQL image `postgres:18.6-bookworm`; PostgreSQL JDBC 42.7.13; Flyway 13.5.0; Testcontainers 2.0.5; Maven Failsafe 3.5.6; Spring JDBC/JdbcClient through Boot-managed Spring Framework 7.0.9 |
 
 ## 1. Objective
 
@@ -131,13 +132,15 @@ directories.
 │       ├── main/
 │       │   ├── java/io/github/sipratama/penatika/
 │       │   │   ├── PenatikaApplication.java      CREATE IN SS-02
-│       │   │   ├── bootstrap/                    CREATE WHEN COMPOSITION EXISTS
+│       │   │   ├── bootstrap/                    CURRENT
+│       │   │   │   ├── configuration/            CURRENT; TYPED SAFE CONFIG
+│       │   │   │   └── persistence/              CURRENT; OPTIONAL COMPOSITION
 │       │   │   ├── identity/                     CREATE IN SS-02
 │       │   │   ├── lesson/                       CREATE IN SS-02
 │       │   │   └── classroom/                    CREATE IN SS-02
 │       │   └── resources/
-│       │       ├── application.yaml              CREATE IN SS-05
-│       │       └── db/migration/                  LATER; FIRST REAL MIGRATION ONLY
+│       │       ├── application.yaml              CURRENT
+│       │       └── db/migration/                  CURRENT LOCATION; ZERO VERSIONED MIGRATIONS
 │       └── test/
 │           └── java/io/github/sipratama/penatika/
 │               ├── PenatikaApplicationTests.java CREATE IN SS-02
@@ -322,16 +325,40 @@ Generated declarations require no patching and remain transport-only under
 - Playwright is reserved for selected cross-app browser journeys once a real
   journey exists; no empty E2E ceremony is created in SS-04.
 
+### SS-05 Configuration and Persistence Mechanism
+
+- One typed `PenatikaProperties` boundary owns `PenatikaEnvironment`
+  (`LOCAL`, `PILOT`, `PROD`) and `PenatikaPersistenceProperties`; the default
+  environment is `LOCAL` and unknown values fail binding.
+- The canonical runtime namespace is `penatika.*`, mapped from
+  `PENATIKA_ENVIRONMENT`, `PENATIKA_PERSISTENCE_ENABLED`, `PENATIKA_DB_URL`,
+  `PENATIKA_DB_USERNAME`, `PENATIKA_DB_PASSWORD`, and
+  `PENATIKA_MIGRATIONS_ENABLED`.
+- Persistence and migrations are disabled by default. Enabling persistence
+  requires a non-blank JDBC URL, username, and password before the conditional
+  DataSource is created.
+- Spring Boot consumes the conditional DataSource to provide Spring
+  JDBC/JdbcClient support. Flyway 13.5.0 is composed explicitly and runs only
+  when migrations are separately enabled.
+- Maven Surefire keeps the 16-test fast suite database-free; Maven Failsafe
+  runs the one-test Testcontainers smoke against
+  `postgres:18.6-bookworm`, proving PostgreSQL major 18, JdbcClient `SELECT 1`,
+  Flyway validation/migration with zero versioned migrations, and no product
+  tables.
+- ArchUnit now explicitly rejects JDBC, DataSource, Flyway, PostgreSQL driver,
+  and connection-pool dependencies from `domain`/`application`, with a
+  deliberately invalid test fixture proving the rule is non-vacuous.
+
 ## 10. Persistence Boundary
 
-SS-05 may scaffold only the selected mechanism:
+SS-05 established only the selected mechanism:
 
 - PostgreSQL `18.x` compatibility;
 - Flyway `13.x` dependency/configuration boundary;
 - Spring JDBC/JdbcClient access boundary;
-- module-owned output ports and persistence adapters when a real use case
-  needs them;
-- integration-test support against real PostgreSQL behavior where practical.
+- no module-owned output port or persistence adapter yet, because no real use
+  case owns one;
+- Testcontainers integration support against exact PostgreSQL 18.6 behavior.
 
 No domain migration is authorized by SS-01. Do not add placeholder migration
 files, ORM schema generation, JPA/Hibernate, Redis, cache, or vector database.
@@ -406,7 +433,7 @@ SS-01 Plan + Repository Layout Freeze         COMPLETE
 SS-02 Backend Build + Module Skeleton         COMPLETE
 SS-03 Frontend Workspace + Teacher/Display    COMPLETE
 SS-04 Test + Contract Validation Harness      COMPLETE
-SS-05 Configuration + Persistence Baseline    NEXT
-SS-06 Consistency / Readiness Audit            PENDING
+SS-05 Configuration + Persistence Baseline    COMPLETE
+SS-06 Consistency / Readiness Audit            NEXT
 Application Implementation                    PENDING
 ```

@@ -23,10 +23,10 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.33 |
+| Version | 0.34 |
 | Last Updated | 2026-09-09 |
 | Current Phase | Source Scaffolding — Active |
-| Implementation State | Backend/frontend shells plus executable architecture and contract harnesses scaffolded; product implementation pending |
+| Implementation State | Backend/frontend shells, executable contract/architecture harnesses, and optional configuration/PostgreSQL persistence mechanisms scaffolded; no product persistence or business behavior exists |
 | Product Owner | sipratama |
 
 The final product-baseline consistency audit passed before the Architecture
@@ -77,8 +77,8 @@ Foundation handoff checkpoint was created.
 | SS-02 backend build / module skeleton | COMPLETE | backend Maven wrapper/POM + Java 21 Spring Boot shell and module package boundaries |
 | SS-03 frontend workspace / teacher-display shells | COMPLETE | npm workspace/lockfile plus independently buildable and testable React/TypeScript/Vite Teacher and Display shells |
 | SS-04 test + contract validation harness | COMPLETE | ArchUnit fitness rules, frontend boundary guard, Redocly/Ajv contract harness, and accepted role-scoped generation proof |
-| SS-05 configuration + persistence mechanism baseline | NEXT | execute after SS-04 review |
-| SS-06 consistency / readiness audit | PENDING | execute after SS-05 |
+| SS-05 configuration + persistence mechanism baseline | COMPLETE | typed safe configuration, disabled-by-default persistence, PostgreSQL 18.6/Testcontainers, Spring JDBC/JdbcClient, and Flyway 13.5.0 empty-baseline evidence |
+| SS-06 consistency / readiness audit | NEXT | execute after SS-05 review |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
@@ -232,8 +232,12 @@ Classroom Display React/TypeScript/Vite application shells. Neither shell
 implements product behavior. SS-04 is complete with executable backend
 architecture rules, Teacher/Display dependency checks, pinned OpenAPI/JSON
 Schema validation, and deterministic role-scoped frontend transport
-declarations. The immediate next work is SS-05 — Configuration + Persistence
-Mechanism Baseline. Application implementation remains PENDING.
+declarations. SS-05 is complete with typed `penatika.*` configuration,
+disabled-by-default persistence, conditional PostgreSQL DataSource composition,
+Boot-provided JdbcClient support, Flyway 13.5.0 with zero versioned migrations,
+and a PostgreSQL 18.6 Testcontainers integration smoke. The immediate next work
+is SS-06 — Source Scaffolding Consistency / Readiness Audit. Application
+implementation remains PENDING.
 `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
@@ -243,7 +247,6 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 ### Architecture / Implementation
 
 - OAD-011 as applicable (CONDITIONAL only);
-- configuration and persistence mechanism baseline (SS-05);
 - physical product persistence model/migrations;
 - identity implementation;
 - realtime/reconnect transport implementation;

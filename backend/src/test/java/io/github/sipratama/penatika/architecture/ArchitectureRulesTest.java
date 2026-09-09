@@ -9,10 +9,12 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.sipratama.penatika.architecture.fixtures.adapter.InvalidAdapterDependency;
 import io.github.sipratama.penatika.architecture.fixtures.application.InvalidApplicationDependency;
+import io.github.sipratama.penatika.architecture.fixtures.application.InvalidPersistenceDependency;
 import io.github.sipratama.penatika.architecture.fixtures.classroom.application.InvalidCrossModuleDependency;
 import io.github.sipratama.penatika.architecture.fixtures.controller.GlobalController;
 import io.github.sipratama.penatika.architecture.fixtures.domain.InvalidDomainDependency;
 import io.github.sipratama.penatika.architecture.fixtures.identity.domain.InternalIdentityType;
+import io.github.sipratama.penatika.architecture.fixtures.persistence.GlobalPersistence;
 import org.junit.jupiter.api.Test;
 
 class ArchitectureRulesTest {
@@ -35,6 +37,11 @@ class ArchitectureRulesTest {
     }
 
     @Test
+    void businessCoreDoesNotDependOnPersistenceTechnology() {
+        persistenceTechnologyRule(PRODUCTION_ROOT).check(PRODUCTION_CLASSES);
+    }
+
+    @Test
     void businessModuleInternalsRemainPrivate() {
         moduleInternalRules(PRODUCTION_ROOT).forEach(rule -> rule.check(PRODUCTION_CLASSES));
     }
@@ -49,13 +56,16 @@ class ArchitectureRulesTest {
         JavaClasses fixtures = new ClassFileImporter().importClasses(
                 InvalidDomainDependency.class,
                 InvalidApplicationDependency.class,
+                InvalidPersistenceDependency.class,
                 InvalidAdapterDependency.class,
                 InvalidCrossModuleDependency.class,
                 InternalIdentityType.class,
-                GlobalController.class);
+                GlobalController.class,
+                GlobalPersistence.class);
 
         assertThat(domainRule(FIXTURE_ROOT).evaluate(fixtures).hasViolation()).isTrue();
         assertThat(applicationRule(FIXTURE_ROOT).evaluate(fixtures).hasViolation()).isTrue();
+        assertThat(persistenceTechnologyRule(FIXTURE_ROOT).evaluate(fixtures).hasViolation()).isTrue();
         assertThat(moduleInternalRules(FIXTURE_ROOT))
                 .anySatisfy(rule -> assertThat(rule.evaluate(fixtures).hasViolation()).isTrue());
         assertThat(globalTechnicalLayerRule(FIXTURE_ROOT).evaluate(fixtures).hasViolation()).isTrue();
@@ -82,6 +92,21 @@ class ArchitectureRulesTest {
                 .allowEmptyShould(true);
     }
 
+    private static ArchRule persistenceTechnologyRule(String rootPackage) {
+        return noClasses()
+                .that().resideInAnyPackage(
+                        rootPackage + "..domain..",
+                        rootPackage + "..application..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "java.sql..",
+                        "javax.sql..",
+                        "org.springframework.jdbc..",
+                        "org.flywaydb..",
+                        "org.postgresql..",
+                        "com.zaxxer.hikari..")
+                .allowEmptyShould(true);
+    }
+
     private static java.util.List<ArchRule> moduleInternalRules(String rootPackage) {
         return java.util.List.of("identity", "lesson", "classroom").stream()
                 .map(module -> noClasses()
@@ -100,7 +125,8 @@ class ArchitectureRulesTest {
                         rootPackage + ".service..",
                         rootPackage + ".repository..",
                         rootPackage + ".entity..",
-                        rootPackage + ".common..")
+                        rootPackage + ".common..",
+                        rootPackage + ".persistence..")
                 .allowEmptyShould(true);
     }
 }

@@ -8,9 +8,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.5` |
+| Version | `0.6` |
 | Last Updated | `2026-09-09` |
-| Test Tooling | Deterministic scaffolding baseline established; implementation tooling remains incremental |
+| Test Tooling | Deterministic scaffolding plus PostgreSQL infrastructure mechanism baseline established; implementation tooling remains incremental |
 
 ## 1. Testing Objectives
 
@@ -39,17 +39,26 @@ Minimum traceability targets:
 The executable Source Scaffolding baseline is:
 
 - backend: JUnit Jupiter, Spring Boot test support, and ArchUnit `1.5.0`;
+- backend infrastructure: Maven Failsafe `3.5.6` plus Testcontainers `2.0.5`
+  running an exact PostgreSQL `18.6` (`postgres:18.6-bookworm`) integration
+  smoke;
 - frontend: Vitest `5.0.0`, React Testing Library `16.3.3`, and a Node/TypeScript
   dependency-boundary guard;
 - contracts: Redocly CLI `2.51.2` for OpenAPI lint/dereferenced bundling and
   Ajv `8.17.1` in Draft 2020-12 mode for canonical schema compilation and
   representative payload validation.
 
+The backend fast suite now proves disabled-by-default persistence and typed
+configuration activation/failure semantics without a database. The Failsafe
+integration suite proves PostgreSQL 18 connectivity, Spring JdbcClient query
+execution, and Flyway 13.5.0 validation/migration with zero versioned domain
+migrations. It does not yet prove module persistence behavior, transaction or
+concurrency correctness, or migration-upgrade compatibility.
+
 Still future or open are Playwright activation when a real cross-application
-journey exists, integration-database test tooling, formal coverage thresholds,
-the CI platform, AI evaluation tooling, the supported device/browser matrix,
-and numerical performance thresholds. This baseline does not claim complete
-product or pilot readiness.
+journey exists, formal coverage thresholds, the CI platform, AI evaluation
+tooling, the supported device/browser matrix, and numerical performance
+thresholds. This baseline does not claim complete product or pilot readiness.
 
 ## 4. Test Layers
 
@@ -64,6 +73,10 @@ Cover structured lesson/scene models, commands, projections, AI proposal envelop
 ### Integration Tests
 
 Cover persistence transactions, identity/authorization integration, realtime adapter behavior, AI/speech adapters using controlled fakes or recorded sanitized fixtures, curriculum retrieval, and validation engine integration.
+
+The current SS-05 infrastructure smoke is intentionally narrower: it verifies
+the selected PostgreSQL/Flyway/JdbcClient mechanism against disposable real
+PostgreSQL without introducing a product schema or persistence adapter.
 
 ### Frontend Component Tests
 
@@ -259,6 +272,7 @@ Before pilot, evidence must cover all release blockers, high threats, architectu
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.6` | `2026-09-09` | Establish configuration activation/failure tests and the Maven Failsafe/Testcontainers PostgreSQL 18.6 infrastructure smoke for JdbcClient and Flyway 13.5.0 with zero domain migrations | Codex |
 | `0.4` | `2026-09-08` | Add future Deployment Verification Suite concepts (health checks, reverse-proxy boundary, HTTPS, SSE, non-public database, secret absence, migration-blocking, immutable artifact identity, backup/restore, container recovery, log rotation, disk-pressure visibility, deployment smoke test) for the portable single-Linux-VPS MVP/pilot baseline (ADR-0019); no implementation exists yet | Claude |
 | `0.3` | `2026-09-07` | Add AI Generation Gateway Suite and model/route evaluation-gate requirements for the OpenRouter bounded-generation baseline (ADR-0017) | Claude |
 | `0.2` | `2026-09-07` | Expand Mathematics Assurance Suite with exact-arithmetic properties, Grade 5/7 corpora, resource-bound adversarial cases, and validator-version reproducibility (ADR-0016) | Claude |
