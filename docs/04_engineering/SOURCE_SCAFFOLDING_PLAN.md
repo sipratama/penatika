@@ -12,12 +12,13 @@
 | Field | Value |
 |---|---|
 | Phase | Source Scaffolding |
-| Batch | SS-01 — Source Scaffolding Plan + Repository Layout Freeze |
+| Batch | SS-02 — Backend Build + Module Skeleton |
 | Date | `2026-09-09` |
 | Branch | `feat/source-scaffolding` |
 | Starting main SHA | `8b93c0415e913e194f93dcbabb264f4141fd65bd` |
-| Status | SS-01 complete; SS-02 next |
-| Implementation state | Pre-source / Pre-scaffolding |
+| Status | SS-01 complete; SS-02 complete; SS-03 next |
+| Implementation state | Backend shell scaffolded (no product behavior) |
+| SS-02 selected baseline | Java 21 LTS; Apache Maven 3.9.16; Maven Wrapper Plugin 3.3.4 (`only-script`, distribution SHA-256 pinned); Spring Boot 4.1.1 (GA) |
 
 ## 1. Objective
 
@@ -374,6 +375,7 @@ Architecture Foundation                       COMPLETE / MERGED
 Contract Foundation                           COMPLETE / MERGED
 Source Scaffolding                            ACTIVE
 SS-01 Plan + Repository Layout Freeze         COMPLETE
-SS-02 Backend Build + Module Skeleton         NEXT
+SS-02 Backend Build + Module Skeleton         COMPLETE
+SS-03 Frontend Workspace + Teacher/Display    NEXT
 Application Implementation                    PENDING
 ```

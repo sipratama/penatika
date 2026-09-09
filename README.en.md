@@ -78,13 +78,13 @@ Material decisions are recorded in [`docs/02_architecture/adr/`](./docs/02_archi
 
 Product Discovery is complete. The initialized Q-01–Q-07 / OPD-001–OPD-007 product baseline is resolved; no unresolved product decisions remain from that set.
 
-The repository does not yet contain application source code, package manifests, database migrations, contract schemas, or deployment configuration. The next major phase is architecture/technology decision-making and contract definition before source scaffolding.
+The repository now contains an initial backend source shell (`backend/`) with Java 21 Maven wrapper/POM, a minimal Spring Boot executable shell, and a context smoke test; contract schemas are also already present in `contracts/`. Database migrations, frontend source, and deployment configuration are not present yet. The next major phase is SS-03 frontend source scaffolding (Teacher/Display application shells).
 
 ## Documentation Map
 
 ### Project Status
 
-- [Project Status](./docs/PROJECT_STATUS.md) — current project phase, completed milestones, and pending architecture work.
+- [Project Status](./docs/PROJECT_STATUS.md) — current project phase, completed milestones, source-scaffolding status, and pending implementation work.
 
 ### Architecture Handoff Checkpoint
 
@@ -154,7 +154,6 @@ This validator checks local Markdown links and unresolved core metadata placehol
 - Curriculum corpus data/import artifact does not exist yet (architecture is selected: controlled versioned corpus, see ADR-0015); the Official Guidance licensing review remains pending.
 - Physical persistence schema and migrations (technology is selected: PostgreSQL + Flyway).
 - Concrete OIDC provider, physical session schema/representation, and expiry/index implementation.
-- Field-level contract definitions.
 - Deployment implementation evidence: VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, backup (architecture is selected: see ADR-0019).
 - Evidence-driven device/accessibility/performance targets where relevant.
 

@@ -23,10 +23,10 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.28 |
+| Version | 0.29 |
 | Last Updated | 2026-09-09 |
 | Current Phase | Source Scaffolding — Active |
-| Implementation State | Pre-source / Pre-scaffolding |
+| Implementation State | Backend shell scaffolded; frontend and product implementation pending |
 | Product Owner | sipratama |
 
 The final product-baseline consistency audit passed before the Architecture
@@ -74,7 +74,8 @@ Foundation handoff checkpoint was created.
 | Contract Foundation merge to `main` | COMPLETE | merge commit `7995290b07c755425020b939fb669f9c4a0b2ce0` |
 | Source scaffolding | ACTIVE | [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md) |
 | SS-01 plan / repository layout | COMPLETE | [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md) |
-| SS-02 backend build / module skeleton | NEXT | execute only after SS-01 review and commit |
+| SS-02 backend build / module skeleton | COMPLETE | backend Maven wrapper/POM + Java 21 Spring Boot shell and module package boundaries |
+| SS-03 frontend workspace / teacher-display shells | NEXT | execute after SS-02 validation and review |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
@@ -219,11 +220,14 @@ readiness audit and the
 [Final Contract Foundation Handoff Checkpoint](./checkpoints/2026-09-09-contract-foundation-complete.md)
 are complete. Source Scaffolding is now active on
 `feat/source-scaffolding`. SS-01 — Source Scaffolding Plan + Repository Layout
-Freeze is complete in the
+Freeze and SS-02 — Backend Build + Module Skeleton are complete in the
 [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md). The
-immediate next work is SS-02 — Backend Build + Module Skeleton. Application
-implementation remains PENDING. `SYSTEM_ARCHITECTURE.md` remains authoritative
-for `Needed Before` rules.
+backend now contains a reproducible Maven/Spring Boot shell with physical
+module package boundaries (`identity`, `lesson`, `classroom`) and no product
+behavior implementation. The immediate next work is SS-03 — Frontend Workspace +
+Teacher/Display Application Shells. Application implementation remains
+PENDING. `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before`
+rules.
 
 ## Open Non-Product Follow-Ups
 
@@ -232,7 +236,7 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 ### Architecture / Implementation
 
 - OAD-011 as applicable (CONDITIONAL only);
-- field-level structured contracts;
+- frontend workspace scaffolding (SS-03);
 - physical persistence model/migrations;
 - identity implementation;
 - realtime/reconnect transport implementation;

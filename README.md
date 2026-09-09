@@ -78,13 +78,13 @@ Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architect
 
 Project Discovery sudah selesai. Inisialisasi product baseline Q-01–Q-07 / OPD-001–OPD-007 sudah selesai; tidak ada unresolved product decision dari set awal.
 
-Repository belum memiliki application source code, package manifest, database migration, contract schema, atau deployment configuration. Fase utama berikutnya adalah architecture/technology decision-making dan contract definition sebelum source scaffolding.
+Repository kini sudah memiliki source backend awal (`backend/`) dengan Maven wrapper/POM Java 21, shell Spring Boot minimal, dan smoke test context; contract schema juga sudah tersedia di `contracts/`. Database migration, source frontend, dan deployment configuration belum ada. Fase utama berikutnya adalah SS-03 source scaffolding frontend (Teacher/Display application shells).
 
 ## Documentation Map
 
 ### Project Status
 
-- [Project Status](./docs/PROJECT_STATUS.md) — fase proyek saat ini, milestone yang selesai, dan pekerjaan arsitektur yang tertunda.
+- [Project Status](./docs/PROJECT_STATUS.md) — fase proyek saat ini, milestone yang selesai, status source scaffolding, dan pekerjaan implementasi yang tertunda.
 
 ### Architecture Handoff Checkpoint
 
@@ -154,7 +154,6 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 - Curriculum corpus data/import artifact belum dibuat (arsitektur sudah dipilih: controlled versioned corpus, lihat ADR-0015); licensing review untuk official guidance masih tertunda.
 - Physical persistence schema dan migrations (teknologi sudah dipilih: PostgreSQL + Flyway).
 - Concrete OIDC provider, physical session schema/representation, dan expiry/index implementation.
-- Field-level contract definitions.
 - Deployment implementation evidence: VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, backup (arsitektur sudah dipilih: lihat ADR-0019).
 - Evidence-driven device/accessibility/performance targets bila relevan.
 
