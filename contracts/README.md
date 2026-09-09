@@ -22,16 +22,41 @@ schema version change, and a consumer rollout plan.
 
 ## Contract Families
 
-- `openapi/` — synchronous HTTPS/JSON application API using OpenAPI 3.1.x;
-  current baseline OpenAPI 3.1.2.
+- `openapi/` — HTTP application API using OpenAPI 3.1.x, including synchronous
+  HTTPS/JSON operations and authorized Display SSE; current baseline OpenAPI
+  3.1.2.
 - `schemas/` — justified reusable structured JSON wire schemas using JSON
   Schema Draft 2020-12.
-- `asyncapi/` — not active. AsyncAPI 3.1.x is conditional on OAD-005 selecting
-  a realtime/message transport for which AsyncAPI provides useful semantics.
+- `asyncapi/` — inactive. ADR-0012 selects synchronous HTTP commands plus SSE
+  projection push and keeps the SSE contract in OpenAPI/JSON Schema rather
+  than activating AsyncAPI.
 
-Field-level contracts are intentionally not created yet. Identity semantics
-are selected by ADR-0011, while realtime and other dependent semantics still
-require architecture decisions before coherent field definitions are created.
+Identity semantics are selected by ADR-0011. Realtime transport, credential
+carriage, and reconnect semantics are selected by ADR-0012: state-changing
+commands remain synchronous HTTPS/JSON and authoritative role-specific
+projection push uses SSE with `Last-Event-ID` as the resynchronization entry
+point.
+
+Field-level definitions are active under Contract Foundation. The first
+vertical slice scope is maintained in the
+[Contract Foundation working plan](../docs/04_engineering/CONTRACT_FOUNDATION_PLAN.md).
+The authoritative [`openapi/openapi.yaml`](./openapi/openapi.yaml) root
+references shared wire primitives and contains the RFC 9457 Problem Details
+foundation, the minimum authenticated Teacher/session-start and secure
+role-specific Pairing boundaries, and the first deterministic revision-aware
+classroom command. It also defines the minimal Controller-authorized current
+revision read, the participant-authorized authoritative Display snapshot, the
+role-authorized Display SSE full-projection reconciliation boundary, and the
+idempotent Display synchronization acknowledgement required before a new
+student-facing mutation becomes eligible.
+
+Standalone schemas are active. [`schemas/wire-primitives.schema.json`](./schemas/wire-primitives.schema.json)
+canonically owns the cross-contract `ClassroomSessionId` and `Revision`
+definitions, while
+[`schemas/classroom-display-projection.schema.json`](./schemas/classroom-display-projection.schema.json)
+canonically owns the closed classroom-safe Display projection. OpenAPI
+references those owners for both the HTTP snapshot and Display SSE event data
+rather than redefining the projection.
 
 ## Ownership
 
@@ -46,6 +71,7 @@ Each wire structure has one canonical schema owner:
 
 - [ADR-0010 — Use Contract-First OpenAPI and JSON Schema Boundaries](../docs/02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md)
 - [ADR-0011 — Use OIDC with Backend-Managed Browser Sessions and Scoped Pairing](../docs/02_architecture/adr/ADR-0011-oidc-backend-managed-browser-sessions.md)
+- [ADR-0012 — Use Server-Sent Events for Realtime Push with Existing HTTP Commands](../docs/02_architecture/adr/ADR-0012-sse-realtime-push-with-existing-http-commands.md)
 - [System Architecture](../docs/02_architecture/SYSTEM_ARCHITECTURE.md)
 - [API and Integration Standard](../docs/standards/06_API_INTEGRATION_STANDARD.md)
 - [Project Status](../docs/PROJECT_STATUS.md)

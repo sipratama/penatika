@@ -23,14 +23,14 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.15 |
-| Last Updated | 2026-09-08 |
-| Current Phase | Architecture Foundation Complete — Merge Ready |
+| Version | 0.26 |
+| Last Updated | 2026-09-09 |
+| Current Phase | Field-Level Contract Foundation — Complete / Merge-Ready |
 | Implementation State | Pre-source / Pre-scaffolding |
 | Product Owner | sipratama |
 
-The final product-baseline consistency audit passed before this checkpoint was
-created.
+The final product-baseline consistency audit passed before the Architecture
+Foundation handoff checkpoint was created.
 
 ## Status Legend
 
@@ -59,9 +59,20 @@ created.
 | Pendago legacy review | COMPLETE | [PENDAGO_MIGRATION_REVIEW.md](./06_delivery/PENDAGO_MIGRATION_REVIEW.md) |
 | Initial architecture principles | ESTABLISHED | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md) + Accepted ADR register |
 | Architecture / technology decisions | COMPLETE (unconditional) | [SYSTEM_ARCHITECTURE.md](./02_architecture/SYSTEM_ARCHITECTURE.md); OAD-011 remains CONDITIONAL |
+| Architecture Foundation merge to `main` | COMPLETE | merge commit `7cd6a2d` |
 | Contract strategy | COMPLETE | [ADR-0010](./02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md) / [contracts](../contracts/README.md) |
-| Field-level contracts | PENDING | identity and realtime transport semantics are now selected (ADR-0011, ADR-0012); field-level OpenAPI/JSON Schema work has not started |
-| Source scaffolding | PENDING | after blocking OADs/contracts |
+| Field-Level Contract Foundation | COMPLETE / MERGE-READY | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) / [Contract Foundation Checkpoint](./checkpoints/2026-09-09-contract-foundation-complete.md) |
+| First vertical slice contract scope | COMPLETE | [Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) |
+| Shared wire primitives / RFC 9457 HTTP problem foundation | COMPLETE | [Reusable schemas](../contracts/schemas/README.md) / [OpenAPI](../contracts/openapi/openapi.yaml) |
+| Authenticated Teacher / session-start API | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
+| Pairing contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
+| Command / revision contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
+| Display projection contract | COMPLETE | [Display projection schema](../contracts/schemas/classroom-display-projection.schema.json) / [OpenAPI](../contracts/openapi/openapi.yaml) |
+| SSE / reconnect plus Display synchronization contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
+| Contract Foundation final audit | COMPLETE | current canonical contract and validation evidence |
+| Final Contract Foundation checkpoint | COMPLETE | [Contract Foundation Checkpoint](./checkpoints/2026-09-09-contract-foundation-complete.md) |
+| Contract Foundation merge to `main` | NEXT | deliberately merge `feat/contract-foundation` after review, commit, push, and remote reverification |
+| Source scaffolding | PENDING | after required field-level contracts |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
@@ -184,20 +195,29 @@ implementation exists yet.
 
 ## Immediate Next Step
 
-All unconditional architecture decisions (OAD-001 through OAD-010, and
-OAD-012) are COMPLETE; OAD-011 remains CONDITIONAL and is not activated
-merely because deployment orchestration exists. The Architecture Foundation
-Checkpoint + Merge Readiness Audit has passed — see
-[Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md).
-The immediate next work is:
+Architecture Foundation is complete and merged to `main` in `7cd6a2d`.
+Contract strategy and Field-Level Contract Foundation are complete. The
+[Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md)
+records the completed first classroom vertical slice sequence. Shared wire
+primitives are established in
+[`contracts/schemas/wire-primitives.schema.json`](../contracts/schemas/wire-primitives.schema.json),
+and the base RFC 9457 HTTP problem contract remains in
+[`contracts/openapi/openapi.yaml`](../contracts/openapi/openapi.yaml).
 
-1. Merge `feat/architecture-foundation` into `main`.
-
-This is a deliberate, human-reviewed merge action; it is not performed
-automatically by the checkpoint/audit task itself. Field-level contracts and
-source scaffolding remain PENDING until after that merge. After the merge,
-the next phase is Field-Level Contract Foundation — NOT source scaffolding.
-`SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
+The authenticated Teacher boundary, minimum `LessonVersion` reference /
+Classroom Session start contract, secure role-specific Pairing boundary,
+deterministic revision-aware `DIRECT_ACTION: NEXT` command, minimal
+Controller-authorized current-revision reconciliation read, authoritative
+Display snapshot, role-authorized Display SSE / `Last-Event-ID` full-state
+reconciliation contract, and explicit current-stream Display synchronization
+acknowledgement are defined. The final Contract Foundation consistency and
+readiness audit and the
+[Final Contract Foundation Handoff Checkpoint](./checkpoints/2026-09-09-contract-foundation-complete.md)
+are complete. The immediate next work is to deliberately merge
+`feat/contract-foundation` into `main` after human review, commit, push, and
+remote reverification. Source scaffolding remains PENDING until that merge is
+complete. `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before`
+rules.
 
 ## Open Non-Product Follow-Ups
 
@@ -206,7 +226,6 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 ### Architecture / Implementation
 
 - OAD-011 as applicable (CONDITIONAL only);
-- Architecture Foundation Checkpoint + Merge Readiness Audit;
 - field-level structured contracts;
 - physical persistence model/migrations;
 - identity implementation;
@@ -243,21 +262,21 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 ## Latest Handoff Checkpoint
 
-[Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md)
-records the final state of the Architecture Foundation phase: every
-unconditional OAD resolved, the ADR register audited, the template validator
-closed out, and branch ancestry/merge-conflict-free status confirmed against
-`origin/main`. It is a non-authoritative handoff snapshot and does not
-replace the canonical project, product, architecture, ADR, contract, or
-policy documents.
+[Contract Foundation Checkpoint — Complete](./checkpoints/2026-09-09-contract-foundation-complete.md)
+is the latest handoff checkpoint. It records the completed Field-Level
+Contract Foundation and the merge-readiness boundary for
+`feat/contract-foundation` without claiming that the branch is merged.
+
+The previous [Architecture Foundation Checkpoint — Complete](./checkpoints/2026-09-08-architecture-foundation-complete.md)
+remains immutable and historically correct for its phase handoff.
 
 The prior [Architecture Foundation Checkpoint — After OAD-004](./checkpoints/2026-09-07-architecture-foundation-after-oad004.md)
 remains historical and is retained unmodified. It predates ADR-0013 and
 ADR-0019; any Java 25 or "deployment not selected" reference in that
 checkpoint reflects the state at its own creation and is superseded by the
 current canonical architecture (ADR-0013: Java 21 LTS; ADR-0019: portable
-single-Linux-VPS deployment). Neither checkpoint document is modified after
-creation.
+single-Linux-VPS deployment). Historical checkpoint documents are not modified
+after creation except through an explicit correction task.
 
 ## AI / Contributor Reading Route
 

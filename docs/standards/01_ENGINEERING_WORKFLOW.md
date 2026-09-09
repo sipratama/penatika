@@ -369,7 +369,44 @@ Detailed agent behavior belongs in `14_AI_ASSISTED_DEVELOPMENT.md`.
 
 ---
 
-## 21. Exceptions
+## 21. Checkpoint and Handoff Policy
+
+A normal work unit follows:
+
+```text
+implement
+-> validate
+-> update routing/status when material
+-> commit
+-> push/review
+-> continue
+```
+
+It does not require a checkpoint document.
+
+A checkpoint is justified only when at least one condition applies:
+
+- a major phase is complete;
+- a branch is ready for deliberate merge or handoff;
+- a long-running workstream needs an explicit durable handoff boundary; or
+- the human explicitly requests one.
+
+A checkpoint is not justified merely because a batch finished, one contract
+file or ADR was added, validation passed, or a commit is about to be created.
+
+A checkpoint may summarize completed scope, authoritative sources, relevant
+final decisions by reference, validation evidence, unresolved or deferred
+work, and merge or handoff readiness. It remains non-authoritative and must
+not become a competing product, architecture, contract, or status source.
+
+Once a checkpoint represents a real historical handoff, do not keep editing it
+to represent future state. Current canonical documents and
+`PROJECT_STATUS.md` move forward instead. Change a historical checkpoint only
+through an explicit correction task.
+
+---
+
+## 22. Exceptions
 
 Workflow exceptions SHOULD be documented when they materially increase delivery or operational risk.
 

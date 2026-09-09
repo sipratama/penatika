@@ -1,7 +1,7 @@
 # Penatika OpenAPI Contract
 
-This directory will own the authoritative synchronous Penatika HTTP API
-contract between Teacher Web, Classroom Display Web, and the Penatika Backend.
+This directory owns the authoritative Penatika HTTP API contract between
+Teacher Web, Classroom Display Web, and the Penatika Backend.
 
 ## Baseline
 
@@ -9,39 +9,96 @@ contract between Teacher Web, Classroom Display Web, and the Penatika Backend.
 - Current baseline: OpenAPI 3.1.2.
 - Preferred authoring format: YAML 1.2.
 - Preferred entry file: `openapi.yaml`.
-- Default transport/media: HTTPS + JSON.
+- Default transport/media: HTTPS + JSON; authorized Display projection push
+  uses `text/event-stream`.
 - HTTP error baseline: RFC 9457 Problem Details using
   `application/problem+json`.
 
-No OpenAPI document exists yet because field-level endpoints and realtime
-semantics remain incomplete. OAD-004 now defines the conceptual identity,
-authentication, account, participant, and pairing model, but this task does not
-invent endpoint paths, security-scheme names, cookie names, CSRF header names,
-or field schemas.
+[`openapi.yaml`](./openapi.yaml) is active as the authoritative contract root.
+It references the shared `ClassroomSessionId` and `Revision` wire primitives
+from [`../schemas/`](../schemas/README.md) and defines the RFC 9457 Problem
+Details foundation, an authenticated Teacher session bootstrap, and the
+minimum operation for starting a Classroom Session from an existing
+classroom-ready `LessonVersion`. It also defines role-bound PairingGrant
+issuance and revocation, separate Controller and Display redemption
+operations, the resulting participant browser-session boundary, and the first
+deterministic revision-aware classroom command: `DIRECT_ACTION: NEXT`.
+It also defines the minimal dual-authorized Controller revision-reconciliation
+read, the participant-authorized authoritative Display snapshot whose
+classroom-safe response references the canonical standalone projection schema
+in [`../schemas/`](../schemas/README.md), and the role-authorized Display SSE
+stream with `Last-Event-ID` authoritative full-projection reconciliation.
+The contract also defines explicit Display synchronization acknowledgement for
+the current projection revision on the current active stream.
+
+ADR-0011 defines the conceptual identity, authentication, account,
+participant, and pairing model. ADR-0012 defines synchronous HTTP commands
+plus authorized SSE projection push and reconnect semantics. Future contract
+extensions must preserve these authorities rather than inventing a separate
+contract source.
 
 ## Protected Security Baseline
 
-Future teacher-protected HTTP operations use:
+Teacher-protected HTTP operations use:
 
-- a backend-managed opaque teacher browser session cookie;
-- explicit CSRF protection for state-changing operations;
+- the `TeacherBrowserSession` OpenAPI security scheme with the host-only
+  `__Host-penatika-session` opaque backend-session cookie;
+- the session-bound `X-Penatika-CSRF` header for state-changing operations,
+  with CSRF material obtained from the authenticated
+  `GET /api/teacher-session` bootstrap operation;
 - backend object, ownership, classroom-session, participant, and revision
   authorization as applicable.
 
 Classroom Display operations use a distinct session-scoped display participant
-session and receive no teacher-account privilege. Controller classroom
-mutation requires both an authenticated teacher browser session and the active
-`TEACHER_CONTROLLER` participant authorization for the classroom session.
+session and receive no teacher-account privilege. Establishing a Controller
+participant requires both the authenticated Teacher boundary and a valid
+role-bound PairingGrant; establishing a Display participant requires its valid
+role-bound PairingGrant without Teacher authentication. Controller classroom
+mutation requires both security schemes in one OpenAPI security-requirement
+object, the active `TEACHER_CONTROLLER` participant authorization for the path
+Classroom Session, and the existing CSRF header.
 
-Future OpenAPI contracts must document the applicable cookie security scheme
-and mutation anti-CSRF requirement without exposing OAuth/OIDC access, refresh,
-or ID tokens to browser clients. Exact cookie names, CSRF header names, and
-endpoint paths remain deferred to field-level contract creation. The concrete
-OIDC provider is not an OpenAPI concern.
+The safe Controller reconciliation GET uses the same two security schemes in
+one requirement object and requires active same-session `TEACHER_CONTROLLER`
+authority, but no CSRF header. It returns only `classroomSessionId` and the
+current authoritative `revision`; it does not expose the Display projection,
+participant identity, pairing state, or future Controller-private projection.
+
+The safe Display snapshot and Display SSE GET operations require only the active
+`ParticipantBrowserSession` bound as `CLASSROOM_DISPLAY` to the path Classroom
+Session. It does not require `TeacherBrowserSession` or CSRF material and it
+returns `Cache-Control: no-store`. A Controller participant cannot use Display
+authority, and foreign/nonexistent Classroom Sessions share a non-disclosing
+not-found response. The SSE stream emits `display-projection` events whose
+`id` equals the projection `revision`; each `data` value reuses the standalone
+Display projection schema. Initial connection and reconnect both deliver the
+current full authoritative projection. `Last-Event-ID` is advisory resync
+context, not authority or a historical replay request. Heartbeats are
+comment-only, while exact heartbeat and retry timing remain uncontracted.
+
+The state-changing Display synchronization PUT requires only active same-session
+`CLASSROOM_DISPLAY` participant authority, never Teacher authority. It uses the
+fixed `X-Penatika-Display-Intent: synchronize` custom header with strict
+trusted-origin/CORS validation as its Display-specific CSRF guard. Its closed
+request body contains only canonical `revision`. Success is retry-safe `204 No
+Content`; it does not advance Classroom Session revision. The backend accepts
+only the current revision dispatched on that participant's current active SSE
+stream. Snapshot retrieval, EventSource open, and server dispatch alone do not
+restore mutation eligibility: the Display must receive, schema-validate, apply
+as full replacement, and acknowledge the revision. Stream termination or
+authority loss invalidates synchronization, and reconnect requires a fresh
+acknowledgement. This proves application-level reconciliation, not pixel
+rendering.
+
+The cookie and CSRF token are distinct opaque values; neither is a business
+identifier or client-supplied authorization decision. OAuth/OIDC access,
+refresh, and ID tokens remain outside browser-visible application contracts.
+The concrete OIDC provider is not an OpenAPI concern.
 
 If later decomposition is justified, `openapi.yaml` remains the contract entry
 point. Small contracts should not be fragmented preemptively.
 
 See [ADR-0010](../../docs/02_architecture/adr/ADR-0010-contract-first-openapi-json-schema.md),
 [ADR-0011](../../docs/02_architecture/adr/ADR-0011-oidc-backend-managed-browser-sessions.md),
+[ADR-0012](../../docs/02_architecture/adr/ADR-0012-sse-realtime-push-with-existing-http-commands.md),
 and the [contract index](../README.md).

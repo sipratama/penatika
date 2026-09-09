@@ -1,0 +1,1969 @@
+openapi: 3.1.2
+info:
+  title: Penatika HTTP API
+  version: 0.8.0
+  description: >-
+    Authoritative HTTP contract root for Penatika. It defines shared HTTP wire
+    primitives, the RFC 9457 Problem Details foundation, and the minimum
+    authenticated Teacher, Classroom Session start, and secure role-specific
+    Pairing boundaries plus the deterministic revision-aware DIRECT_ACTION:
+    NEXT command, minimal Controller revision reconciliation, classroom-safe
+    authoritative Display snapshot, role-authorized Display SSE reconciliation,
+    and explicit Display synchronization acknowledgement required by the first
+    classroom vertical slice.
+paths:
+  /api/teacher-session:
+    get:
+      operationId: getAuthenticatedTeacherSession
+      summary: Bootstrap the authenticated Teacher browser session
+      description: >-
+        Confirms that the opaque backend-managed browser session currently
+        resolves to an active authorized TeacherAccount and returns the CSRF
+        material required for state-changing Teacher requests. The response
+        intentionally exposes no TeacherAccount identifier, OIDC identity,
+        provider token, profile, institution, or account-lifecycle detail.
+      security:
+        - TeacherBrowserSession: []
+      responses:
+        '200':
+          description: >-
+            The Teacher browser session is authenticated and currently usable.
+          headers:
+            Cache-Control:
+              description: Prevents storage of the session-bound CSRF material.
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticatedTeacherSession'
+              examples:
+                authenticatedSession:
+                  summary: Authenticated session bootstrap
+                  value:
+                    csrfToken: csrf_example_token_01
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+  /api/classroom-sessions:
+    post:
+      operationId: startClassroomSession
+      summary: Start a Classroom Session
+      description: >-
+        Creates backend-authoritative Classroom Session state from an existing
+        immutable classroom-ready LessonVersion. The authenticated Teacher must
+        be authorized for the referenced LessonVersion; possession of its
+        identifier does not prove ownership, authorization, or readiness.
+        Nonexistent and unauthorized LessonVersion references share the same
+        non-disclosing response. No Location header is defined because this
+        contract does not yet define a Classroom Session read operation.
+      security:
+        - TeacherBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/TeacherCsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartClassroomSessionRequest'
+            examples:
+              startSession:
+                summary: Start from an existing classroom-ready lesson version
+                value:
+                  lessonVersionId: lesson_version_example_01
+      responses:
+        '201':
+          description: Classroom Session created with authoritative revision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartClassroomSessionResponse'
+              examples:
+                sessionStarted:
+                  summary: Classroom Session started
+                  value:
+                    classroomSessionId: classroom_session_example_01
+                    lessonVersionId: lesson_version_example_01
+                    revision: 3
+        '400':
+          $ref: '#/components/responses/RequestValidationResponse'
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/CsrfRejectedResponse'
+        '404':
+          $ref: '#/components/responses/LessonVersionNotFoundResponse'
+        '409':
+          $ref: '#/components/responses/LessonVersionNotReadyResponse'
+  /api/classroom-sessions/{classroomSessionId}/pairing-grants:
+    post:
+      operationId: createPairingGrant
+      summary: Create a role-bound PairingGrant
+      description: >-
+        Creates an opaque, single-use, revocable PairingGrant bound to the
+        authorized Classroom Session and requested participant role. The grant
+        expires exactly five minutes after backend issuance. The backend owns
+        expiry, consumption, revocation, session-state, and role-slot checks.
+        Controller and Display grants may be issued and redeemed in either
+        order; neither role depends on the other already existing.
+      security:
+        - TeacherBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+        - $ref: '#/components/parameters/TeacherCsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePairingGrantRequest'
+            examples:
+              controllerGrant:
+                summary: Request a Teacher Controller grant
+                value:
+                  participantRole: TEACHER_CONTROLLER
+              displayGrant:
+                summary: Request a Classroom Display grant
+                value:
+                  participantRole: CLASSROOM_DISPLAY
+      responses:
+        '201':
+          description: >-
+            PairingGrant created. The pairingToken is the one-time secret and
+            expires at expiresAt, exactly five minutes after issuance.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStoreCacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePairingGrantResponse'
+              examples:
+                controllerGrant:
+                  summary: Teacher Controller PairingGrant
+                  value:
+                    pairingGrantId: pairing_grant_controller_example_01
+                    pairingToken: pairing_token_controller_example_not_a_secret
+                    participantRole: TEACHER_CONTROLLER
+                    expiresAt: '2026-09-08T10:05:00Z'
+                displayGrant:
+                  summary: Classroom Display PairingGrant
+                  value:
+                    pairingGrantId: pairing_grant_display_example_01
+                    pairingToken: pairing_token_display_example_not_a_secret
+                    participantRole: CLASSROOM_DISPLAY
+                    expiresAt: '2026-09-08T10:05:00Z'
+        '400':
+          $ref: '#/components/responses/PairingGrantRequestValidationResponse'
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/CsrfRejectedResponse'
+        '404':
+          $ref: '#/components/responses/ClassroomSessionNotFoundResponse'
+        '409':
+          $ref: '#/components/responses/PairingGrantIssuanceConflictResponse'
+  /api/classroom-sessions/{classroomSessionId}/pairing-grants/{pairingGrantId}:
+    delete:
+      operationId: revokePairingGrant
+      summary: Revoke a PairingGrant
+      description: >-
+        Makes the identified PairingGrant unusable. After authorization for the
+        parent Classroom Session succeeds, revocation is retry-safe and returns
+        the same result when the grant is already absent, expired, consumed, or
+        revoked. This prevents the non-secret PairingGrantId from becoming an
+        existence oracle. The pairingToken is never accepted in a URL.
+      security:
+        - TeacherBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+        - $ref: '#/components/parameters/PairingGrantIdPath'
+        - $ref: '#/components/parameters/TeacherCsrfToken'
+      responses:
+        '204':
+          description: PairingGrant is unusable; no response body is returned.
+        '400':
+          $ref: '#/components/responses/PairingGrantRevocationValidationResponse'
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/CsrfRejectedResponse'
+        '404':
+          $ref: '#/components/responses/ClassroomSessionNotFoundResponse'
+  /api/teacher-controller-participants:
+    post:
+      operationId: establishTeacherControllerParticipant
+      summary: Establish a Teacher Controller participant session
+      description: >-
+        Redeems a valid TEACHER_CONTROLLER PairingGrant and creates a distinct
+        role-bound participant browser session. The active authenticated Teacher
+        must also be authorized for the Classroom Session bound to the grant.
+        The PairingGrant alone never authenticates the Teacher. An existing
+        active Controller is not silently replaced.
+      security:
+        - TeacherBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/TeacherCsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedeemPairingGrantRequest'
+            examples:
+              controllerRedemption:
+                summary: Redeem a Teacher Controller grant
+                value:
+                  pairingToken: pairing_token_controller_example_not_a_secret
+      responses:
+        '201':
+          description: >-
+            Teacher Controller participant session established. No participant
+            resource read operation or Location header is defined.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/ParticipantSessionSetCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherControllerParticipantSession'
+              examples:
+                controllerEstablished:
+                  summary: Teacher Controller participant established
+                  value:
+                    classroomSessionId: classroom_session_example_01
+                    participantRole: TEACHER_CONTROLLER
+        '400':
+          $ref: '#/components/responses/PairingRedemptionValidationResponse'
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/ControllerPairingForbiddenResponse'
+        '409':
+          $ref: '#/components/responses/ParticipantRoleAlreadyActiveResponse'
+  /api/classroom-display-participants:
+    post:
+      operationId: establishClassroomDisplayParticipant
+      summary: Establish a Classroom Display participant session
+      description: >-
+        Redeems a valid CLASSROOM_DISPLAY PairingGrant and creates a distinct
+        role-bound participant browser session. Teacher authentication and CSRF
+        material are not required because the grant authorizes only the bounded
+        Display participant establishment; it never grants Teacher authority.
+        An existing active Display is not silently replaced.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedeemPairingGrantRequest'
+            examples:
+              displayRedemption:
+                summary: Redeem a Classroom Display grant
+                value:
+                  pairingToken: pairing_token_display_example_not_a_secret
+      responses:
+        '201':
+          description: >-
+            Classroom Display participant session established. No participant
+            resource read operation or Location header is defined.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/ParticipantSessionSetCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassroomDisplayParticipantSession'
+              examples:
+                displayEstablished:
+                  summary: Classroom Display participant established
+                  value:
+                    classroomSessionId: classroom_session_example_01
+                    participantRole: CLASSROOM_DISPLAY
+        '400':
+          $ref: '#/components/responses/PairingRedemptionValidationResponse'
+        '403':
+          $ref: '#/components/responses/PairingGrantRejectedResponse'
+        '409':
+          $ref: '#/components/responses/ParticipantRoleAlreadyActiveResponse'
+  /api/classroom-sessions/{classroomSessionId}/controller-state:
+    get:
+      operationId: getClassroomControllerState
+      summary: Retrieve authoritative Controller reconciliation state
+      description: >-
+        Returns the minimal current backend-authoritative Classroom Session
+        state required by the first-slice Teacher Controller to reconcile its
+        revision context before creating another command. The request requires
+        both a current authenticated Teacher browser session and a current,
+        active, non-revoked TEACHER_CONTROLLER participant browser session
+        bound to the path Classroom Session. The backend also verifies current
+        Teacher authorization for that session. Either cookie alone, a
+        CLASSROOM_DISPLAY participant, a pairing credential, cached state, or
+        knowledge of the ClassroomSessionId is insufficient. No CSRF material
+        is required because this GET is safe and read-only.
+
+        After reconnect, after backend-authority loss, or after an unseen
+        command is rejected as STALE_REVISION, the Controller retrieves this
+        state and replaces its cached revision context before creating a new
+        CommandId. The returned revision is current backend authority at
+        response time; it does not authorize a later mutation or bypass the
+        command operation's current authentication, authorization, Display
+        delivery eligibility, session-state, identity, or revision checks.
+        An accepted command with uncertain acknowledgement is instead retried
+        using its existing CommandId and original logical request.
+
+        Scene position, classroom-safe Display content, Display connection or
+        synchronization status, participant identifiers, pairing state,
+        TeacherAccount identity, AI state, and private diagnostics are omitted
+        because this bounded reconciliation consumer requires only session
+        identity and authoritative revision. Richer Controller-private
+        projection remains outside this first contract slice.
+      security:
+        - TeacherBrowserSession: []
+          ParticipantBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+      responses:
+        '200':
+          description: >-
+            Minimal current authoritative revision state for the authorized
+            Teacher Controller and Classroom Session.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStoreCacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControllerReconciliationState'
+              example:
+                classroomSessionId: classroom_session_example_01
+                revision: 7
+        '400':
+          $ref: '#/components/responses/ControllerStateValidationResponse'
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/ControllerAuthorityRequiredResponse'
+        '404':
+          $ref: '#/components/responses/ClassroomSessionNotFoundResponse'
+  /api/classroom-sessions/{classroomSessionId}/commands:
+    post:
+      operationId: submitClassroomSessionCommand
+      summary: Submit a deterministic Classroom Session command
+      description: >-
+        Submits the first supported deterministic, non-generative classroom
+        command: DIRECT_ACTION with action NEXT. The request requires current
+        authenticated Teacher authority, active TEACHER_CONTROLLER participant
+        authority bound to the path Classroom Session, current Teacher
+        authorization for that session, and valid CSRF material. A
+        CLASSROOM_DISPLAY participant cannot authorize this operation.
+
+        Command identity is scoped by (ClassroomSessionId, CommandId). For an
+        unseen CommandId, the backend validates current mutation eligibility
+        and requires expectedRevision to equal the current authoritative
+        revision before applying at most one authoritative mutation effect. A
+        new student-facing mutation is rejected unless an active authorized
+        Display SSE stream exists and that Display has an accepted
+        acknowledgement for the current authoritative Display projection
+        revision. Session lifecycle and backend authority must also permit
+        mutation. Logical request equivalence consists only of the path
+        ClassroomSessionId plus commandId, expectedRevision, commandType, and
+        action. Browser-session cookies, CSRF material, correlation identifiers,
+        and other transport metadata are evaluated separately and are not part
+        of command equivalence.
+
+        Current authentication, session authorization, Controller authority,
+        and CSRF are evaluated on every request before an accepted command
+        outcome is disclosed. An equivalent retry of an already accepted
+        command returns its original outcome without another mutation, even if
+        the Classroom Session revision has since advanced or the Display later
+        became unavailable. Reusing an accepted CommandId with a different
+        expectedRevision is the currently reachable conflicting-reuse case.
+        Logical equivalence also includes commandType and action so future
+        compatible command expansion cannot silently reinterpret an existing
+        identity. Under the current closed request schema, any commandType
+        other than DIRECT_ACTION or action other than NEXT is rejected as
+        structural validation and does not reach command-identity conflict
+        evaluation.
+
+        Clients must not create or queue new commands while backend authority
+        is unreachable; only a command already sent with uncertain
+        acknowledgement may be retried using its existing identity. Only a
+        command that crosses the authorized boundary and is accepted reserves
+        its command identity; unauthenticated, unauthorized, CSRF-rejected, or
+        structurally invalid attempts do not reserve arbitrary CommandIds. A
+        Controller reconciles the current revision through GET
+        /api/classroom-sessions/{classroomSessionId}/controller-state before
+        creating a new command after reconnect or STALE_REVISION.
+      security:
+        - TeacherBrowserSession: []
+          ParticipantBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+        - $ref: '#/components/parameters/TeacherCsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectActionCommandRequest'
+            examples:
+              firstAcceptedNext:
+                summary: First submission of one logical NEXT command
+                value:
+                  commandId: command_example_01
+                  expectedRevision: 4
+                  commandType: DIRECT_ACTION
+                  action: NEXT
+              equivalentReplay:
+                summary: >-
+                  Equivalent retry after an uncertain acknowledgement
+                value:
+                  commandId: command_example_01
+                  expectedRevision: 4
+                  commandType: DIRECT_ACTION
+                  action: NEXT
+      responses:
+        '200':
+          description: >-
+            Command accepted or an equivalent previously accepted command
+            replayed. Both cases return that command's original authoritative
+            outcome. resultingRevision is the revision immediately resulting
+            from the accepted command and might no longer be the Classroom
+            Session's latest revision when an older command is replayed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectActionCommandResponse'
+              examples:
+                firstAcceptedNext:
+                  summary: NEXT accepted with one authoritative mutation effect
+                  value:
+                    classroomSessionId: classroom_session_example_01
+                    commandId: command_example_01
+                    resultingRevision: 5
+                equivalentReplay:
+                  summary: >-
+                    Equivalent replay returns the original outcome without a
+                    second mutation
+                  value:
+                    classroomSessionId: classroom_session_example_01
+                    commandId: command_example_01
+                    resultingRevision: 5
+        '400':
+          $ref: '#/components/responses/ClassroomCommandValidationResponse'
+        '401':
+          $ref: '#/components/responses/TeacherSessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/ClassroomCommandForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/ClassroomSessionNotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ClassroomCommandConflictResponse'
+  /api/classroom-sessions/{classroomSessionId}/display-snapshot:
+    get:
+      operationId: getClassroomDisplaySnapshot
+      summary: Retrieve the authoritative Classroom Display snapshot
+      description: >-
+        Returns the complete current classroom-safe projection at one
+        backend-authoritative Classroom Session revision. The caller must hold
+        a currently active, non-revoked CLASSROOM_DISPLAY participant browser
+        session bound to the path Classroom Session. A TEACHER_CONTROLLER
+        participant, TeacherBrowserSession, pairing credential, cached state,
+        or knowledge of the ClassroomSessionId does not authorize this
+        operation. The backend validates current participant role, binding,
+        revocation/replacement state, and Classroom Session accessibility on
+        every request.
+
+        This response is a full state-replacement boundary. After validating
+        the canonical standalone schema, the Display replaces its cached
+        projection and adopts the returned revision. The snapshot always
+        represents current backend authority at response time; it does not
+        regress to the historical resultingRevision of an earlier command
+        replay. Retrieving the snapshot alone does not restore student-facing
+        mutation eligibility. When used for reconciliation with an active
+        authorized SSE stream, the Display must validate and apply it as full
+        replacement, then acknowledge its revision through the
+        display-synchronization operation. No CSRF material is required because
+        this GET is safe and read-only.
+      security:
+        - ParticipantBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+      responses:
+        '200':
+          description: >-
+            Complete current classroom-safe authoritative Display projection.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStoreCacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/classroom-display-projection.schema.json
+              examples:
+                currentScene:
+                  summary: Current authoritative classroom scene
+                  value:
+                    schemaVersion: '1.0'
+                    classroomSessionId: classroom_session_example_01
+                    revision: 5
+                    scene:
+                      sceneId: scene_example_02
+                      position: 1
+                      blocks:
+                        - type: PLAIN_TEXT
+                          text: Bandingkan 1/2 dan 3/4.
+        '400':
+          $ref: '#/components/responses/DisplaySnapshotValidationResponse'
+        '401':
+          $ref: '#/components/responses/DisplaySessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/DisplayAuthorityRequiredResponse'
+        '404':
+          $ref: '#/components/responses/DisplayClassroomSessionNotFoundResponse'
+  /api/classroom-sessions/{classroomSessionId}/display-events:
+    get:
+      operationId: streamClassroomDisplayEvents
+      summary: Stream authoritative Classroom Display projections
+      description: >-
+        Establishes the one-way Classroom Display Server-Sent Events stream.
+        The caller must hold a currently active, non-revoked, non-replaced
+        CLASSROOM_DISPLAY participant browser session bound to the path
+        Classroom Session. A TEACHER_CONTROLLER participant,
+        TeacherBrowserSession, pairing credential, cached state, Last-Event-ID,
+        or knowledge of the ClassroomSessionId does not authorize this
+        operation. The backend validates current participant role, binding,
+        revocation/replacement state, and Classroom Session accessibility
+        before establishing the stream. No CSRF material is required because
+        this GET is safe and read-only.
+
+        On every successful initial or reconnecting request, the first
+        state-bearing event is the complete current backend-authoritative
+        Display projection. This applies when Last-Event-ID is absent, behind,
+        equal to, or ahead of the current backend revision. The backend never
+        trusts the client-supplied value over current authority, replays
+        historical events, or promises delta catch-up. Receiving, validating
+        against the canonical standalone Classroom Display projection schema,
+        and applying that event as a full replacement is the client
+        reconciliation barrier. EventSource open alone is not synchronization,
+        and successful server dispatch alone does not prove browser receipt,
+        schema validation, or local application. After receiving, validating,
+        and applying the complete projection, the Display explicitly
+        acknowledges that revision through PUT
+        /api/classroom-sessions/{classroomSessionId}/display-synchronization.
+        The backend restores eligibility for a new student-facing mutation only
+        after accepting that acknowledgement for the current revision on the
+        participant's current active authorized stream. The acknowledgement is
+        application-level reconciliation evidence, not proof that pixels were
+        rendered.
+
+        Each state-bearing event is named display-projection. Its SSE id is the
+        base-10 decimal representation of data.revision, and its data is JSON
+        that validates against
+        ../schemas/classroom-display-projection.schema.json. Within one active
+        stream, later state-bearing events follow authoritative session order
+        and must not carry a lower revision; duplicate same-revision full
+        projections are safe and idempotent. Revision values may be skipped
+        because not every future authoritative revision must change the
+        Display projection. Accepted commands remain synchronous HTTP
+        operations, and this stream carries resulting projections only.
+
+        Heartbeats, when emitted, are comment-only SSE frames such as
+        ": keep-alive". They have no event name, id, projection, revision, or
+        synchronization meaning and do not update Last-Event-ID. No SSE retry
+        field or heartbeat interval is contracted. After a successful stream
+        response begins, Problem Details are never sent as SSE data. If
+        participant authority becomes invalid or the stream cannot continue
+        safely, the backend stops emitting state and terminates the stream; a
+        later reconnect request is authorized again through the normal HTTP
+        boundary. Stream termination invalidates the accepted synchronization
+        state, so the reconnected Display must receive, validate, apply, and
+        acknowledge the current full projection again.
+      security:
+        - ParticipantBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+        - $ref: '#/components/parameters/LastEventId'
+      responses:
+        '200':
+          description: >-
+            Authorized Server-Sent Events stream. OpenAPI represents the stream
+            entity truthfully as text rather than as one JSON response object.
+            Each display-projection event's data field is independently a JSON
+            Classroom Display projection governed by
+            ../schemas/classroom-display-projection.schema.json, and the event
+            id must equal that projection's revision in decimal form.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStoreCacheControl'
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: >-
+                  SSE framing containing display-projection state events and
+                  optional comment-only heartbeats. The event-data JSON schema
+                  is owned by
+                  ../schemas/classroom-display-projection.schema.json.
+              example: |+
+                id: 5
+                event: display-projection
+                data: {"schemaVersion":"1.0","classroomSessionId":"classroom_session_example_01","revision":5,"scene":{"sceneId":"scene_example_02","position":1,"blocks":[{"type":"PLAIN_TEXT","text":"Bandingkan 1/2 dan 3/4."}]}}
+
+        '400':
+          $ref: '#/components/responses/DisplayEventsValidationResponse'
+        '401':
+          $ref: '#/components/responses/DisplaySessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/DisplayAuthorityRequiredResponse'
+        '404':
+          $ref: '#/components/responses/DisplayClassroomSessionNotFoundResponse'
+  /api/classroom-sessions/{classroomSessionId}/display-synchronization:
+    put:
+      operationId: acknowledgeClassroomDisplaySynchronization
+      summary: Acknowledge current Classroom Display synchronization
+      description: >-
+        Updates the current Display participant's synchronization state after
+        the Display has received a complete authoritative projection, validated
+        it against the canonical ClassroomDisplayProjection schema, and applied
+        it as full replacement. The request requires only an active,
+        non-revoked, non-replaced CLASSROOM_DISPLAY ParticipantBrowserSession
+        bound to the path Classroom Session. It does not require or confer
+        TeacherBrowserSession, TeacherAccountId, PairingGrantToken, command
+        authority, or Teacher privilege. A TEACHER_CONTROLLER participant does
+        not authorize this operation.
+
+        The acknowledgement is accepted only when the supplied revision equals
+        the current authoritative Display projection revision, an active
+        authorized Display SSE stream exists for the same participant, and that
+        exact complete projection revision was successfully dispatched on that
+        participant's current active stream. After authentication,
+        authorization, CSRF, and Classroom Session accessibility checks pass,
+        stale, ahead, undispatched, or post-termination acknowledgements cannot
+        restore synchronization and share one non-disclosing conflict response.
+        Revoked or replaced participant credentials fail the normal participant
+        session or authority checks instead. An equivalent retry of an already
+        acknowledged current revision is idempotent and returns the same
+        success without another classroom mutation.
+
+        Acceptance restores the Display synchronization gate for the current
+        revision and active stream only. It does not advance the Classroom
+        Session revision or mutate lesson/content state. The acknowledgement no
+        longer satisfies the gate when a new authoritative student-facing
+        mutation advances the Display projection revision, the SSE stream
+        terminates, the participant is revoked or replaced, the Classroom
+        Session ends, or current participant authority is otherwise lost. A
+        reconnect requires a fresh acknowledgement after the current full
+        projection is received, validated, and applied. Acceptance proves
+        application-level reconciliation of the revision, not visual pixel
+        rendering.
+      security:
+        - ParticipantBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+        - $ref: '#/components/parameters/DisplayMutationGuard'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisplaySynchronizationAcknowledgement'
+            example:
+              revision: 5
+      responses:
+        '204':
+          description: >-
+            Synchronization acknowledged for the current authoritative Display
+            projection revision on the participant's current active SSE stream.
+            No Classroom Session revision or lesson/content state is changed.
+        '400':
+          $ref: '#/components/responses/DisplaySynchronizationValidationResponse'
+        '401':
+          $ref: '#/components/responses/DisplaySessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/DisplaySynchronizationForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/DisplayClassroomSessionNotFoundResponse'
+        '409':
+          $ref: '#/components/responses/DisplaySynchronizationConflictResponse'
+components:
+  securitySchemes:
+    TeacherBrowserSession:
+      type: apiKey
+      in: cookie
+      name: __Host-penatika-session
+      description: >-
+        Opaque revocable Penatika browser-session reference for an authenticated
+        active TeacherAccount. It is not an OIDC access token, ID token, refresh
+        token, browser-supplied JWT, or TeacherAccountId. The runtime cookie must
+        use Secure, HttpOnly, Path=/, no Domain attribute, an appropriate
+        SameSite policy with Strict preferred when compatible, bounded
+        lifetimes, rotation after authentication, and server-side revocation.
+        Protected JSON API calls return Problem Details rather than redirecting
+        to an OIDC login page.
+    ParticipantBrowserSession:
+      type: apiKey
+      in: cookie
+      name: __Host-penatika-participant
+      description: >-
+        Opaque revocable participant-session reference created after successful
+        PairingGrant redemption. The backend binds it to exactly one Classroom
+        Session and one participant role. It is not a PairingGrantToken,
+        TeacherBrowserSession, Teacher authentication, or OAuth/OIDC credential.
+        The runtime cookie must use Secure, HttpOnly, Path=/, no Domain
+        attribute, an appropriate SameSite policy with Strict preferred, and
+        server-side revocation. Participant authority becomes invalid when the
+        Classroom Session ends or another canonical revocation condition
+        applies even if a stale cookie remains in the browser. Exact participant
+        session lifetime remains an implementation decision.
+  parameters:
+    ClassroomSessionIdPath:
+      name: classroomSessionId
+      in: path
+      required: true
+      description: >-
+        Opaque Classroom Session identifier. The backend still verifies the
+        operation's required Teacher or participant authorization and current
+        authoritative session state.
+      schema:
+        $ref: '#/components/schemas/ClassroomSessionId'
+      example: classroom_session_example_01
+    PairingGrantIdPath:
+      name: pairingGrantId
+      in: path
+      required: true
+      description: >-
+        Non-secret PairingGrant resource identifier used only for authorized
+        revocation. It is not the one-time pairingToken.
+      schema:
+        $ref: '#/components/schemas/PairingGrantId'
+      example: pairing_grant_example_01
+    TeacherCsrfToken:
+      name: X-Penatika-CSRF
+      in: header
+      required: true
+      description: >-
+        Opaque synchronizer token obtained from GET /api/teacher-session and
+        bound to the same authenticated Teacher browser session. The backend
+        validates it together with strict trusted-origin/CORS policy. It must
+        not be placed in a URL, logged, treated as authentication or
+        authorization, or reused as a session, correlation, or command value.
+        Missing or invalid material is rejected with CSRF_REJECTED.
+      schema:
+        $ref: '#/components/schemas/CsrfToken'
+    DisplayMutationGuard:
+      name: X-Penatika-Display-Intent
+      in: header
+      required: true
+      description: >-
+        Fixed non-secret custom-header guard for this cookie-authenticated
+        Display state-changing request. The backend validates the value together
+        with strict trusted-origin/CORS policy to prevent ordinary ambient
+        cross-site form submission. It is not authentication, authorization, a
+        session credential, a pairing secret, command authority, or revision
+        authority. Missing or invalid material is rejected with CSRF_REJECTED.
+      schema:
+        type: string
+        const: synchronize
+    LastEventId:
+      name: Last-Event-ID
+      in: header
+      required: false
+      description: >-
+        Last successfully observed Display SSE event id for this Classroom
+        Session, parsed using the canonical Revision schema. The backend emits
+        each SSE id in canonical unsigned base-10 decimal form, which native
+        EventSource reconnect may echo automatically. No additional lexical
+        identity rule is imposed on manually constructed header text beyond
+        successful parsing as a Revision; numeric Revision meaning, not textual
+        spelling, controls reconciliation. The value is advisory context only:
+        it is not authentication, authorization, mutation permission,
+        expectedRevision, proof of client ownership, or a request for
+        historical state. A valid value that is behind, equal to, or ahead of
+        backend authority still yields the current full authoritative
+        projection. A value that cannot be parsed within the Revision bounds is
+        rejected with REQUEST_VALIDATION_FAILED before stream establishment.
+      schema:
+        $ref: '#/components/schemas/Revision'
+      example: 5
+  schemas:
+    LessonVersionId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^\S+$'
+      description: >-
+        Opaque identifier for one immutable lesson version. Consumers must not
+        infer storage technology, ordering, ownership, or authorization from
+        its representation.
+    ClassroomSessionId:
+      $ref: ../schemas/wire-primitives.schema.json#/$defs/ClassroomSessionId
+    PairingGrantId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^\S+$'
+      description: >-
+        Opaque non-secret identifier for one PairingGrant resource. It exposes
+        no database, ordering, authorization, token, or credential semantics.
+    PairingGrantToken:
+      type: string
+      minLength: 1
+      maxLength: 512
+      pattern: '^\S+$'
+      description: >-
+        Opaque high-entropy one-time PairingGrant secret generated by the
+        backend. Clients must not parse, log, place in URLs or query strings,
+        capture in analytics, retain in ordinary history, include in
+        projections or diagnostics, or reuse it after redemption. It is not
+        Teacher authentication or a permanent participant credential.
+    ParticipantRole:
+      type: string
+      enum:
+        - TEACHER_CONTROLLER
+        - CLASSROOM_DISPLAY
+      description: >-
+        Role and purpose to which a PairingGrant or established participant
+        session is bound. The two values have distinct trust boundaries and
+        cannot be interchanged during redemption.
+    UtcTimestamp:
+      type: string
+      format: date-time
+      minLength: 20
+      maxLength: 64
+      pattern: 'Z$'
+      description: >-
+        RFC 3339 backend machine timestamp normalized to UTC and encoded with a
+        trailing Z. It carries no local-timezone business semantics.
+    CommandId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^\S+$'
+      description: >-
+        Caller-supplied opaque identity created before the first attempt of one
+        logical state-changing command. Clients should generate
+        collision-resistant values without relying on a UUID or other
+        client-parseable format. Idempotency is scoped by (ClassroomSessionId,
+        CommandId), and the same textual value in a different Classroom Session
+        has no semantic relationship. The value remains stable only for an
+        equivalent retry or uncertain-acknowledgement reconciliation. It is not
+        globally unique authority, a correlation identifier, authentication,
+        authorization, or a credential. Accepted command identity and its
+        original outcome remain reconcilable for at least the
+        active/reconcilable lifetime of the owning Classroom Session; exact
+        post-session persistence and cleanup remain deferred.
+    Revision:
+      $ref: ../schemas/wire-primitives.schema.json#/$defs/Revision
+    CorrelationId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^\S+$'
+      description: >-
+        Privacy-safe operational reference used to correlate a request or
+        cross-boundary workflow. It is not a business identifier, CommandId,
+        session credential, authorization input, or idempotency guarantee.
+    CsrfToken:
+      type: string
+      minLength: 1
+      maxLength: 256
+      pattern: '^\S+$'
+      description: >-
+        Opaque session-bound CSRF material safe for delivery to authenticated
+        Teacher Web JavaScript. It is submitted only in the X-Penatika-CSRF
+        request header and has no authentication or authorization meaning by
+        itself.
+    AuthenticatedTeacherSession:
+      type: object
+      additionalProperties: false
+      required:
+        - csrfToken
+      properties:
+        csrfToken:
+          $ref: '#/components/schemas/CsrfToken'
+    StartClassroomSessionRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lessonVersionId
+      properties:
+        lessonVersionId:
+          $ref: '#/components/schemas/LessonVersionId'
+    StartClassroomSessionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - classroomSessionId
+        - lessonVersionId
+        - revision
+      properties:
+        classroomSessionId:
+          $ref: '#/components/schemas/ClassroomSessionId'
+        lessonVersionId:
+          $ref: '#/components/schemas/LessonVersionId'
+        revision:
+          $ref: '#/components/schemas/Revision'
+    CreatePairingGrantRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - participantRole
+      properties:
+        participantRole:
+          $ref: '#/components/schemas/ParticipantRole'
+    CreatePairingGrantResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - pairingGrantId
+        - pairingToken
+        - participantRole
+        - expiresAt
+      properties:
+        pairingGrantId:
+          $ref: '#/components/schemas/PairingGrantId'
+        pairingToken:
+          $ref: '#/components/schemas/PairingGrantToken'
+        participantRole:
+          $ref: '#/components/schemas/ParticipantRole'
+        expiresAt:
+          $ref: '#/components/schemas/UtcTimestamp'
+    RedeemPairingGrantRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - pairingToken
+      properties:
+        pairingToken:
+          $ref: '#/components/schemas/PairingGrantToken'
+    TeacherControllerParticipantSession:
+      type: object
+      additionalProperties: false
+      required:
+        - classroomSessionId
+        - participantRole
+      properties:
+        classroomSessionId:
+          $ref: '#/components/schemas/ClassroomSessionId'
+        participantRole:
+          type: string
+          const: TEACHER_CONTROLLER
+          description: Confirms the server-bound Teacher Controller authority.
+    ClassroomDisplayParticipantSession:
+      type: object
+      additionalProperties: false
+      required:
+        - classroomSessionId
+        - participantRole
+      properties:
+        classroomSessionId:
+          $ref: '#/components/schemas/ClassroomSessionId'
+        participantRole:
+          type: string
+          const: CLASSROOM_DISPLAY
+          description: Confirms the server-bound Classroom Display authority.
+    ControllerReconciliationState:
+      type: object
+      additionalProperties: false
+      required:
+        - classroomSessionId
+        - revision
+      properties:
+        classroomSessionId:
+          $ref: '#/components/schemas/ClassroomSessionId'
+        revision:
+          allOf:
+            - $ref: '#/components/schemas/Revision'
+          description: >-
+            Current backend-authoritative Classroom Session revision used to
+            replace the Controller's cached revision context before it creates
+            a new command. It is not mutation authorization, scene position,
+            Display synchronization proof, an event count, or a timestamp.
+    DisplaySynchronizationAcknowledgement:
+      type: object
+      additionalProperties: false
+      required:
+        - revision
+      properties:
+        revision:
+          allOf:
+            - $ref: '#/components/schemas/Revision'
+          description: >-
+            Current authoritative Display projection revision that this Display
+            received, schema-validated, and applied as full replacement on its
+            current active SSE stream. It is not expectedRevision, command
+            authority, Last-Event-ID history authority, event identity beyond
+            this acknowledgement check, or proof of rendered pixels.
+    DirectActionCommandRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - commandId
+        - expectedRevision
+        - commandType
+        - action
+      properties:
+        commandId:
+          $ref: '#/components/schemas/CommandId'
+        expectedRevision:
+          allOf:
+            - $ref: '#/components/schemas/Revision'
+          description: >-
+            Authoritative Classroom Session revision the Controller believes it
+            is acting against. For an unseen command it must equal the current
+            backend-authoritative revision. For an equivalent replay of an
+            accepted command it remains the original value used to establish
+            logical request equivalence.
+        commandType:
+          type: string
+          const: DIRECT_ACTION
+          description: >-
+            Explicitly selects the deterministic, non-generative direct-action
+            command class. It does not enter AI generation or publication.
+        action:
+          type: string
+          const: NEXT
+          description: >-
+            Advances the authoritative lesson or scene position using the only
+            direct action supported by this contract slice.
+    DirectActionCommandResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - classroomSessionId
+        - commandId
+        - resultingRevision
+      properties:
+        classroomSessionId:
+          $ref: '#/components/schemas/ClassroomSessionId'
+        commandId:
+          $ref: '#/components/schemas/CommandId'
+        resultingRevision:
+          allOf:
+            - $ref: '#/components/schemas/Revision'
+          description: >-
+            Authoritative Classroom Session revision immediately resulting from
+            this accepted command. It is greater than the command's
+            expectedRevision for a newly accepted command, but is not guaranteed
+            to equal expectedRevision plus one. Equivalent replay returns this
+            original value even if the session later advanced further.
+    FieldError:
+      type: object
+      additionalProperties: false
+      required:
+        - field
+        - code
+        - message
+      properties:
+        field:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: >-
+            Client-visible request field name or field path. It must not contain
+            a rejected value, credential, or raw request content.
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: '^\S+$'
+          description: >-
+            Machine-stable validation discriminator. Allowed values are defined
+            by the operation contracts that use this structure; clients must
+            not parse message for logic.
+        message:
+          type: string
+          minLength: 1
+          maxLength: 512
+          description: >-
+            Safe human-readable validation explanation. It must not expose raw
+            values, stack traces, exception names, SQL, provider payloads,
+            credentials, or private diagnostics.
+    ProblemDetails:
+      type: object
+      additionalProperties: true
+      required:
+        - type
+        - title
+        - status
+        - code
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          minLength: 1
+          maxLength: 2048
+          description: >-
+            RFC 9457 problem type URI reference. Use about:blank when no more
+            specific registered problem type applies.
+        title:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: >-
+            Short human-readable summary for the problem type. Clients must not
+            parse this value for application logic.
+        status:
+          type: integer
+          minimum: 100
+          maximum: 599
+          description: >-
+            HTTP status code generated for this occurrence. It mirrors the HTTP
+            response status and does not replace it.
+        detail:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: >-
+            Optional safe human-readable explanation specific to this
+            occurrence. It must not expose internal or sensitive diagnostics.
+        instance:
+          type: string
+          format: uri-reference
+          minLength: 1
+          maxLength: 2048
+          description: >-
+            Optional RFC 9457 URI reference identifying this problem occurrence.
+            It is not an authorization or resource-ownership guarantee.
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: '^\S+$'
+          description: >-
+            Required machine-stable Penatika error discriminator. Values are
+            introduced by later operation contracts; clients must not parse
+            title or detail for logic.
+        correlationId:
+          $ref: '#/components/schemas/CorrelationId'
+        fieldErrors:
+          type: array
+          minItems: 1
+          maxItems: 20
+          description: >-
+            Optional bounded request-validation details. A server may report a
+            safe subset when more than 20 fields fail; entries never contain
+            rejected values or internal diagnostics.
+          items:
+            $ref: '#/components/schemas/FieldError'
+  headers:
+    NoStoreCacheControl:
+      description: Prevents storage of security-sensitive response material.
+      schema:
+        type: string
+        const: no-store
+    ParticipantSessionSetCookie:
+      description: >-
+        Sets the opaque __Host-penatika-participant cookie. The runtime value is
+        generated by the backend and must use Path=/, Secure, HttpOnly, no
+        Domain attribute, and an appropriate SameSite policy with Strict
+        preferred. Browser JavaScript must not read or parse this header.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 1024
+      example: >-
+        __Host-penatika-participant=participant_session_example_not_a_secret;
+        Path=/; Secure; HttpOnly; SameSite=Strict
+  responses:
+    ProblemResponse:
+      description: RFC 9457 Problem Details response.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            genericProblem:
+              summary: Generic non-validation problem
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: The request could not be processed.
+                code: REQUEST_REJECTED
+                correlationId: corr_example_01
+            validationProblem:
+              summary: Request-validation problem
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_example_02
+                fieldErrors:
+                  - field: exampleField
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+    TeacherSessionRequiredResponse:
+      description: >-
+        No valid authenticated Teacher browser session is available. Missing,
+        expired, revoked, or otherwise invalid sessions and sessions whose
+        TeacherAccount is no longer active use the same non-disclosing outcome.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Unauthorized
+            status: 401
+            detail: An authenticated Teacher session is required.
+            code: TEACHER_SESSION_REQUIRED
+            correlationId: corr_teacher_session_01
+    RequestValidationResponse:
+      description: The request body is malformed or fails structural validation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            missingLessonVersionId:
+              summary: Required lessonVersionId is missing
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_validation_01
+                fieldErrors:
+                  - field: lessonVersionId
+                    code: REQUIRED
+                    message: The field is required.
+            invalidLessonVersionId:
+              summary: lessonVersionId does not satisfy its wire contract
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_validation_02
+                fieldErrors:
+                  - field: lessonVersionId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+    CsrfRejectedResponse:
+      description: >-
+        The authenticated request is missing valid session-bound CSRF material.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Forbidden
+            status: 403
+            detail: The request did not include valid CSRF protection.
+            code: CSRF_REJECTED
+            correlationId: corr_csrf_01
+    LessonVersionNotFoundResponse:
+      description: >-
+        The LessonVersion does not exist or the authenticated Teacher is not
+        authorized to know it exists. The response deliberately does not
+        distinguish those cases.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Not Found
+            status: 404
+            detail: The requested lesson version was not found.
+            code: LESSON_VERSION_NOT_FOUND
+            correlationId: corr_lesson_lookup_01
+    LessonVersionNotReadyResponse:
+      description: >-
+        The authorized LessonVersion exists but is not classroom-ready and
+        therefore cannot start a Classroom Session.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Conflict
+            status: 409
+            detail: The lesson version is not ready for classroom use.
+            code: LESSON_VERSION_NOT_READY
+            correlationId: corr_lesson_readiness_01
+    PairingGrantRequestValidationResponse:
+      description: >-
+        The PairingGrant creation path or request body fails structural
+        validation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidClassroomSessionId:
+              summary: Classroom Session identifier is structurally invalid
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_pairing_validation_01
+                fieldErrors:
+                  - field: classroomSessionId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+            missingParticipantRole:
+              summary: participantRole is missing
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_pairing_validation_02
+                fieldErrors:
+                  - field: participantRole
+                    code: REQUIRED
+                    message: The field is required.
+            invalidParticipantRole:
+              summary: participantRole is unsupported
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_pairing_validation_03
+                fieldErrors:
+                  - field: participantRole
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+    PairingGrantRevocationValidationResponse:
+      description: A PairingGrant revocation path identifier is malformed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidClassroomSessionId:
+              summary: Classroom Session identifier is structurally invalid
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_revoke_validation_01
+                fieldErrors:
+                  - field: classroomSessionId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+            invalidPairingGrantId:
+              summary: PairingGrant identifier is structurally invalid
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_revoke_validation_02
+                fieldErrors:
+                  - field: pairingGrantId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+    PairingRedemptionValidationResponse:
+      description: The PairingGrant redemption body fails structural validation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            missingPairingToken:
+              summary: pairingToken is missing
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_redemption_validation_01
+                fieldErrors:
+                  - field: pairingToken
+                    code: REQUIRED
+                    message: The field is required.
+            invalidPairingToken:
+              summary: pairingToken is structurally invalid
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_redemption_validation_02
+                fieldErrors:
+                  - field: pairingToken
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+    ClassroomSessionNotFoundResponse:
+      description: >-
+        The Classroom Session does not exist or the authenticated Teacher is
+        not authorized to know it exists. The response deliberately does not
+        distinguish those cases.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Not Found
+            status: 404
+            detail: The requested classroom session was not found.
+            code: CLASSROOM_SESSION_NOT_FOUND
+            correlationId: corr_classroom_lookup_01
+    PairingGrantIssuanceConflictResponse:
+      description: >-
+        Current authoritative Classroom Session state prevents grant issuance,
+        or an active participant already occupies the requested role. Existing
+        participants are never silently replaced.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            sessionNotPairable:
+              summary: Current Classroom Session state does not permit pairing
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: The classroom session does not currently permit pairing.
+                code: CLASSROOM_SESSION_NOT_PAIRABLE
+                correlationId: corr_pairing_state_01
+            controllerAlreadyActive:
+              summary: Teacher Controller role is already occupied
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: An active participant already occupies the requested role.
+                code: PARTICIPANT_ROLE_ALREADY_ACTIVE
+                correlationId: corr_pairing_role_01
+            displayAlreadyActive:
+              summary: Classroom Display role is already occupied
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: An active participant already occupies the requested role.
+                code: PARTICIPANT_ROLE_ALREADY_ACTIVE
+                correlationId: corr_pairing_role_02
+    PairingGrantRejectedResponse:
+      description: >-
+        The supplied PairingGrant cannot establish the requested participant.
+        Unknown, expired, consumed, revoked, replayed, wrong-role, ended-session,
+        and otherwise invalid grants share this non-disclosing outcome.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidGrant:
+              summary: Unknown or otherwise invalid grant
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The pairing grant cannot authorize this request.
+                code: PAIRING_GRANT_REJECTED
+                correlationId: corr_pairing_rejected_01
+            expiredGrant:
+              summary: Expired grant uses the same non-disclosing outcome
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The pairing grant cannot authorize this request.
+                code: PAIRING_GRANT_REJECTED
+                correlationId: corr_pairing_rejected_02
+            replayedGrant:
+              summary: Consumed or replayed grant uses the same outcome
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The pairing grant cannot authorize this request.
+                code: PAIRING_GRANT_REJECTED
+                correlationId: corr_pairing_rejected_03
+            wrongRoleGrant:
+              summary: Wrong-role grant uses the same non-disclosing outcome
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The pairing grant cannot authorize this request.
+                code: PAIRING_GRANT_REJECTED
+                correlationId: corr_pairing_rejected_04
+    ControllerPairingForbiddenResponse:
+      description: >-
+        The authenticated Controller redemption lacks valid CSRF material or
+        the PairingGrant cannot authorize this Teacher and requested role.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            csrfRejected:
+              summary: Missing or invalid CSRF material
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The request did not include valid CSRF protection.
+                code: CSRF_REJECTED
+                correlationId: corr_controller_csrf_01
+            pairingGrantRejected:
+              summary: Invalid, wrong-role, or cross-Teacher grant
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The pairing grant cannot authorize this request.
+                code: PAIRING_GRANT_REJECTED
+                correlationId: corr_controller_pairing_01
+    ParticipantRoleAlreadyActiveResponse:
+      description: >-
+        An active participant already occupies the requested role. The existing
+        participant remains authoritative and is not silently replaced.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            controllerAlreadyActive:
+              summary: Teacher Controller role is already occupied
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: An active participant already occupies the requested role.
+                code: PARTICIPANT_ROLE_ALREADY_ACTIVE
+                correlationId: corr_controller_role_01
+            displayAlreadyActive:
+              summary: Classroom Display role is already occupied
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: An active participant already occupies the requested role.
+                code: PARTICIPANT_ROLE_ALREADY_ACTIVE
+                correlationId: corr_display_role_01
+    ControllerStateValidationResponse:
+      description: >-
+        The Controller reconciliation Classroom Session path identifier is
+        malformed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Bad Request
+            status: 400
+            detail: One or more request fields are invalid.
+            code: REQUEST_VALIDATION_FAILED
+            correlationId: corr_controller_state_validation_01
+            fieldErrors:
+              - field: classroomSessionId
+                code: INVALID_VALUE
+                message: The field value does not satisfy its contract.
+    ControllerAuthorityRequiredResponse:
+      description: >-
+        The authenticated Teacher request lacks a current active
+        TEACHER_CONTROLLER participant session bound to the path Classroom
+        Session. Missing, invalid, expired, revoked, replaced, wrong-role, or
+        wrong-session participant authority shares this non-disclosing
+        outcome. The response does not reveal another participant, role-slot
+        owner, Classroom Session, or Teacher.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Forbidden
+            status: 403
+            detail: Active Controller authority is required for this request.
+            code: CONTROLLER_AUTHORITY_REQUIRED
+            correlationId: corr_controller_state_authority_01
+    ClassroomCommandValidationResponse:
+      description: >-
+        The Classroom Session command path or request body fails structural
+        validation. Only DIRECT_ACTION with action NEXT is supported.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidClassroomSessionId:
+              summary: Classroom Session identifier is structurally invalid
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_command_validation_01
+                fieldErrors:
+                  - field: classroomSessionId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+            missingCommandId:
+              summary: commandId is missing
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_command_validation_02
+                fieldErrors:
+                  - field: commandId
+                    code: REQUIRED
+                    message: The field is required.
+            missingExpectedRevision:
+              summary: expectedRevision is missing
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_command_validation_03
+                fieldErrors:
+                  - field: expectedRevision
+                    code: REQUIRED
+                    message: The field is required.
+            invalidExpectedRevision:
+              summary: expectedRevision is structurally invalid
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_command_validation_04
+                fieldErrors:
+                  - field: expectedRevision
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+            unsupportedCommandType:
+              summary: Only the DIRECT_ACTION command class is supported
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_command_validation_05
+                fieldErrors:
+                  - field: commandType
+                    code: UNSUPPORTED_VALUE
+                    message: The field value is not supported by this contract.
+            unsupportedAction:
+              summary: Only the NEXT direct action is supported
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_command_validation_06
+                fieldErrors:
+                  - field: action
+                    code: UNSUPPORTED_VALUE
+                    message: The field value is not supported by this contract.
+    ClassroomCommandForbiddenResponse:
+      description: >-
+        The request lacks valid CSRF material or active TEACHER_CONTROLLER
+        participant authority for the path Classroom Session. The response does
+        not disclose participant identity, role-slot ownership, another
+        Classroom Session, or another Teacher.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            csrfRejected:
+              summary: Missing or invalid CSRF material
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The request did not include valid CSRF protection.
+                code: CSRF_REJECTED
+                correlationId: corr_command_csrf_01
+            controllerAuthorityRequired:
+              summary: Controller participant authority is missing or invalid
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Active Controller authority is required for this request.
+                code: CONTROLLER_AUTHORITY_REQUIRED
+                correlationId: corr_command_authority_01
+            displayParticipantRejected:
+              summary: A Display participant cannot issue Teacher commands
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Active Controller authority is required for this request.
+                code: CONTROLLER_AUTHORITY_REQUIRED
+                correlationId: corr_command_authority_02
+    ClassroomCommandConflictResponse:
+      description: >-
+        Current authoritative command identity, revision, or mutation state
+        conflicts with the request. No new mutation occurs. STALE_REVISION does
+        not include currentRevision or a projection in Problem Details;
+        reconciliation uses the Controller-authorized controller-state read
+        before a new command is created. This contract does not grant
+        Controller participants access to the classroom-safe Display snapshot
+        or Display SSE projection. Under the current closed command schema,
+        COMMAND_ID_REUSE_CONFLICT is reachable when an accepted CommandId is
+        reused with a different expectedRevision; unsupported commandType or
+        action values remain REQUEST_VALIDATION_FAILED.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            staleRevision:
+              summary: An unseen command was based on a stale revision
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: The command revision does not match authoritative state.
+                code: STALE_REVISION
+                correlationId: corr_command_stale_01
+            commandIdReuseConflict:
+              summary: >-
+                An accepted CommandId was reused with another expectedRevision
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: The command identity was reused for a different command.
+                code: COMMAND_ID_REUSE_CONFLICT
+                correlationId: corr_command_reuse_01
+            classroomMutationNotAllowed:
+              summary: Current authoritative state does not permit a new NEXT
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: The classroom session does not currently permit mutation.
+                code: CLASSROOM_MUTATION_NOT_ALLOWED
+                correlationId: corr_command_state_01
+    DisplaySnapshotValidationResponse:
+      description: The Display snapshot path identifier is malformed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Bad Request
+            status: 400
+            detail: One or more request fields are invalid.
+            code: REQUEST_VALIDATION_FAILED
+            correlationId: corr_display_snapshot_validation_01
+            fieldErrors:
+              - field: classroomSessionId
+                code: INVALID_VALUE
+                message: The field value does not satisfy its contract.
+    DisplayEventsValidationResponse:
+      description: >-
+        The Display events path identifier or Last-Event-ID header is
+        malformed or outside its contract bounds. Validation fails before an
+        SSE stream is established.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidClassroomSessionId:
+              summary: The Classroom Session path identifier is malformed
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_display_events_path_validation_01
+                fieldErrors:
+                  - field: classroomSessionId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+            invalidLastEventId:
+              summary: Last-Event-ID is not a valid Revision representation
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_display_events_header_validation_01
+                fieldErrors:
+                  - field: Last-Event-ID
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+    DisplaySynchronizationValidationResponse:
+      description: >-
+        The Display synchronization path or request body fails structural
+        validation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidClassroomSessionId:
+              summary: The Classroom Session path identifier is malformed
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_display_sync_path_validation_01
+                fieldErrors:
+                  - field: classroomSessionId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+            missingRevision:
+              summary: revision is missing
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_display_sync_revision_validation_01
+                fieldErrors:
+                  - field: revision
+                    code: REQUIRED
+                    message: The field is required.
+            invalidRevision:
+              summary: revision is outside canonical Revision bounds
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_display_sync_revision_validation_02
+                fieldErrors:
+                  - field: revision
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+    DisplaySessionRequiredResponse:
+      description: >-
+        No usable participant browser session is available for Display access.
+        Missing, invalid, expired, revoked, replaced, or otherwise unusable
+        participant credentials share this non-disclosing outcome.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Unauthorized
+            status: 401
+            detail: An active Classroom Display participant session is required.
+            code: DISPLAY_SESSION_REQUIRED
+            correlationId: corr_display_session_01
+    DisplayAuthorityRequiredResponse:
+      description: >-
+        The participant browser session is valid but does not carry the
+        CLASSROOM_DISPLAY authority required by this operation. The response
+        does not reveal the participant identity, its actual role, another
+        Classroom Session, or another Teacher.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Forbidden
+            status: 403
+            detail: Active Classroom Display authority is required for this request.
+            code: DISPLAY_AUTHORITY_REQUIRED
+            correlationId: corr_display_authority_01
+    DisplaySynchronizationForbiddenResponse:
+      description: >-
+        The request lacks the required Display custom-header CSRF guard or the
+        valid participant browser session does not carry active same-session
+        CLASSROOM_DISPLAY authority. The response does not disclose the actual
+        participant role, participant identity, another Classroom Session, or
+        another Teacher.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            csrfRejected:
+              summary: Missing or invalid Display request-intent guard
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The request did not include valid CSRF protection.
+                code: CSRF_REJECTED
+                correlationId: corr_display_sync_csrf_01
+            displayAuthorityRequired:
+              summary: Active Classroom Display authority is required
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Active Classroom Display authority is required for this request.
+                code: DISPLAY_AUTHORITY_REQUIRED
+                correlationId: corr_display_sync_authority_01
+    DisplayClassroomSessionNotFoundResponse:
+      description: >-
+        The requested Classroom Session does not exist or is not accessible to
+        the active Display participant. Foreign and nonexistent session
+        identifiers share this non-disclosing outcome.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Not Found
+            status: 404
+            detail: The requested classroom session was not found.
+            code: CLASSROOM_SESSION_NOT_FOUND
+            correlationId: corr_display_classroom_lookup_01
+    DisplaySynchronizationConflictResponse:
+      description: >-
+        The acknowledgement does not match the current authorized Display
+        stream and projection state. Stale, ahead, non-current, undispatched,
+        post-termination, wrong-session, or otherwise mismatched
+        acknowledgements share this non-disclosing response. The response does
+        not expose the current revision, participant identity, actual role, or
+        stream internals, and synchronization is not restored.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Conflict
+            status: 409
+            detail: The Display synchronization acknowledgement is not valid for current state.
+            code: DISPLAY_SYNCHRONIZATION_CONFLICT
+            correlationId: corr_display_sync_conflict_01
