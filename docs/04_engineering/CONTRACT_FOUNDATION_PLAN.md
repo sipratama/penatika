@@ -47,6 +47,8 @@ Authenticated Teacher with an active backend-managed browser session
 -> advance the authoritative lesson/scene position exactly once
 -> return the authoritative HTTP command outcome
 -> push the classroom-safe Display projection over SSE
+-> receive, validate, then apply the full projection as replacement
+-> acknowledge the current revision on the active Display stream
 -> reconcile with backend authority after reconnect before mutation resumes
 ```
 
@@ -64,7 +66,7 @@ DTOs, status mappings, physical persistence, or implementation structure.
 | Direct command | Only deterministic `DIRECT_ACTION: NEXT`; active Teacher and Controller authority; command identity; expected revision; stale/unsupported rejection; exactly-once mutation outcome |
 | Display projection | Positive allow-list containing only student-facing render data and required session/revision synchronization context |
 | Transport | State-changing commands use synchronous HTTPS/JSON; authorized projection push uses SSE |
-| Recovery | `Last-Event-ID` or last-observed revision initiates authoritative reconciliation; full snapshot resync is the minimum baseline; cached state never becomes authority |
+| Recovery | `Last-Event-ID` or last-observed revision initiates authoritative reconciliation; full snapshot resync is the minimum baseline; current active-stream acknowledgement is required before new student-facing mutation; cached state never becomes authority |
 | Errors | RFC 9457 `application/problem+json`; operation-specific codes, problem types, and status mappings are defined with their operations |
 
 ## Binding Invariants
@@ -121,7 +123,7 @@ types, and status mappings.
 | Pairing | COMPLETE |
 | `NEXT` command / revision | COMPLETE |
 | Display projection / authoritative snapshot | COMPLETE |
-| SSE / reconnect | COMPLETE |
+| SSE / reconnect plus Display synchronization acknowledgement | COMPLETE |
 | Final consistency and readiness audit | COMPLETE |
 | Final branch checkpoint | NEXT |
 | Merge to `main` | PENDING |

@@ -23,7 +23,7 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.24 |
+| Version | 0.25 |
 | Last Updated | 2026-09-09 |
 | Current Phase | Field-Level Contract Foundation — Active / Handoff-Ready |
 | Implementation State | Pre-source / Pre-scaffolding |
@@ -68,7 +68,7 @@ Foundation handoff checkpoint was created.
 | Pairing contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Command / revision contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Display projection contract | COMPLETE | [Display projection schema](../contracts/schemas/classroom-display-projection.schema.json) / [OpenAPI](../contracts/openapi/openapi.yaml) |
-| SSE / reconnect contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
+| SSE / reconnect plus Display synchronization contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Contract Foundation final audit | COMPLETE | current canonical contract and validation evidence |
 | Final Contract Foundation checkpoint | NEXT | create the branch handoff checkpoint without merging |
 | Source scaffolding | PENDING | after required field-level contracts |
@@ -207,8 +207,9 @@ The authenticated Teacher boundary, minimum `LessonVersion` reference /
 Classroom Session start contract, secure role-specific Pairing boundary,
 deterministic revision-aware `DIRECT_ACTION: NEXT` command, minimal
 Controller-authorized current-revision reconciliation read, authoritative
-Display snapshot, and role-authorized Display SSE / `Last-Event-ID` full-state
-reconciliation contract are defined. The final Contract Foundation consistency
+Display snapshot, role-authorized Display SSE / `Last-Event-ID` full-state
+reconciliation contract, and explicit current-stream Display synchronization
+acknowledgement are defined. The final Contract Foundation consistency
 and readiness audit is complete. The immediate next work is to create the Final
 Contract Foundation Handoff Checkpoint.
 Source scaffolding remains PENDING until the required field-level contracts

@@ -1,15 +1,16 @@
 openapi: 3.1.2
 info:
   title: Penatika HTTP API
-  version: 0.7.0
+  version: 0.8.0
   description: >-
     Authoritative HTTP contract root for Penatika. It defines shared HTTP wire
     primitives, the RFC 9457 Problem Details foundation, and the minimum
     authenticated Teacher, Classroom Session start, and secure role-specific
     Pairing boundaries plus the deterministic revision-aware DIRECT_ACTION:
     NEXT command, minimal Controller revision reconciliation, classroom-safe
-    authoritative Display snapshot, and role-authorized Display SSE
-    reconciliation required by the first classroom vertical slice.
+    authoritative Display snapshot, role-authorized Display SSE reconciliation,
+    and explicit Display synchronization acknowledgement required by the first
+    classroom vertical slice.
 paths:
   /api/teacher-session:
     get:
@@ -363,9 +364,11 @@ paths:
         unseen CommandId, the backend validates current mutation eligibility
         and requires expectedRevision to equal the current authoritative
         revision before applying at most one authoritative mutation effect. A
-        new student-facing mutation is rejected while the session lifecycle,
-        backend authority, or active Display synchronization state does not
-        permit mutation. Logical request equivalence consists only of the path
+        new student-facing mutation is rejected unless an active authorized
+        Display SSE stream exists and that Display has an accepted
+        acknowledgement for the current authoritative Display projection
+        revision. Session lifecycle and backend authority must also permit
+        mutation. Logical request equivalence consists only of the path
         ClassroomSessionId plus commandId, expectedRevision, commandType, and
         action. Browser-session cookies, CSRF material, correlation identifiers,
         and other transport metadata are evaluated separately and are not part
@@ -479,8 +482,12 @@ paths:
         projection and adopts the returned revision. The snapshot always
         represents current backend authority at response time; it does not
         regress to the historical resultingRevision of an earlier command
-        replay. No CSRF material is required because this GET is safe and
-        read-only.
+        replay. Retrieving the snapshot alone does not restore student-facing
+        mutation eligibility. When used for reconciliation with an active
+        authorized SSE stream, the Display must validate and apply it as full
+        replacement, then acknowledge its revision through the
+        display-synchronization operation. No CSRF material is required because
+        this GET is safe and read-only.
       security:
         - ParticipantBrowserSession: []
       parameters:
@@ -541,19 +548,17 @@ paths:
         historical events, or promises delta catch-up. Receiving, validating
         against the canonical standalone Classroom Display projection schema,
         and applying that event as a full replacement is the client
-        synchronization barrier; EventSource open alone is not
-        synchronization. For backend mutation gating, the first-slice
-        server-observable Display delivery condition requires an active
-        authorized stream and successful dispatch of the current full
-        projection event to that stream. Successful dispatch means writing the
-        complete event to the active response without an observed transport
-        failure; it is more than TCP/HTTP establishment but does not prove
-        browser receipt, schema validation, local application, or visual
-        rendering. A new student-facing mutation remains ineligible until this
-        server-observable delivery condition is restored, and the Display
-        client must remain SYNCHRONIZING until its own receive, validate, and
-        full-replacement barrier completes. The contract does not require an
-        application-level Display acknowledgement endpoint.
+        reconciliation barrier. EventSource open alone is not synchronization,
+        and successful server dispatch alone does not prove browser receipt,
+        schema validation, or local application. After receiving, validating,
+        and applying the complete projection, the Display explicitly
+        acknowledges that revision through PUT
+        /api/classroom-sessions/{classroomSessionId}/display-synchronization.
+        The backend restores eligibility for a new student-facing mutation only
+        after accepting that acknowledgement for the current revision on the
+        participant's current active authorized stream. The acknowledgement is
+        application-level reconciliation evidence, not proof that pixels were
+        rendered.
 
         Each state-bearing event is named display-projection. Its SSE id is the
         base-10 decimal representation of data.revision, and its data is JSON
@@ -574,7 +579,9 @@ paths:
         participant authority becomes invalid or the stream cannot continue
         safely, the backend stops emitting state and terminates the stream; a
         later reconnect request is authorized again through the normal HTTP
-        boundary.
+        boundary. Stream termination invalidates the accepted synchronization
+        state, so the reconnected Display must receive, validate, apply, and
+        acknowledge the current full projection again.
       security:
         - ParticipantBrowserSession: []
       parameters:
@@ -614,6 +621,74 @@ paths:
           $ref: '#/components/responses/DisplayAuthorityRequiredResponse'
         '404':
           $ref: '#/components/responses/DisplayClassroomSessionNotFoundResponse'
+  /api/classroom-sessions/{classroomSessionId}/display-synchronization:
+    put:
+      operationId: acknowledgeClassroomDisplaySynchronization
+      summary: Acknowledge current Classroom Display synchronization
+      description: >-
+        Updates the current Display participant's synchronization state after
+        the Display has received a complete authoritative projection, validated
+        it against the canonical ClassroomDisplayProjection schema, and applied
+        it as full replacement. The request requires only an active,
+        non-revoked, non-replaced CLASSROOM_DISPLAY ParticipantBrowserSession
+        bound to the path Classroom Session. It does not require or confer
+        TeacherBrowserSession, TeacherAccountId, PairingGrantToken, command
+        authority, or Teacher privilege. A TEACHER_CONTROLLER participant does
+        not authorize this operation.
+
+        The acknowledgement is accepted only when the supplied revision equals
+        the current authoritative Display projection revision, an active
+        authorized Display SSE stream exists for the same participant, and that
+        exact complete projection revision was successfully dispatched on that
+        participant's current active stream. After authentication,
+        authorization, CSRF, and Classroom Session accessibility checks pass,
+        stale, ahead, undispatched, or post-termination acknowledgements cannot
+        restore synchronization and share one non-disclosing conflict response.
+        Revoked or replaced participant credentials fail the normal participant
+        session or authority checks instead. An equivalent retry of an already
+        acknowledged current revision is idempotent and returns the same
+        success without another classroom mutation.
+
+        Acceptance restores the Display synchronization gate for the current
+        revision and active stream only. It does not advance the Classroom
+        Session revision or mutate lesson/content state. The acknowledgement no
+        longer satisfies the gate when a new authoritative student-facing
+        mutation advances the Display projection revision, the SSE stream
+        terminates, the participant is revoked or replaced, the Classroom
+        Session ends, or current participant authority is otherwise lost. A
+        reconnect requires a fresh acknowledgement after the current full
+        projection is received, validated, and applied. Acceptance proves
+        application-level reconciliation of the revision, not visual pixel
+        rendering.
+      security:
+        - ParticipantBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+        - $ref: '#/components/parameters/DisplayMutationGuard'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisplaySynchronizationAcknowledgement'
+            example:
+              revision: 5
+      responses:
+        '204':
+          description: >-
+            Synchronization acknowledged for the current authoritative Display
+            projection revision on the participant's current active SSE stream.
+            No Classroom Session revision or lesson/content state is changed.
+        '400':
+          $ref: '#/components/responses/DisplaySynchronizationValidationResponse'
+        '401':
+          $ref: '#/components/responses/DisplaySessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/DisplaySynchronizationForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/DisplayClassroomSessionNotFoundResponse'
+        '409':
+          $ref: '#/components/responses/DisplaySynchronizationConflictResponse'
 components:
   securitySchemes:
     TeacherBrowserSession:
@@ -679,6 +754,20 @@ components:
         Missing or invalid material is rejected with CSRF_REJECTED.
       schema:
         $ref: '#/components/schemas/CsrfToken'
+    DisplayMutationGuard:
+      name: X-Penatika-Display-Intent
+      in: header
+      required: true
+      description: >-
+        Fixed non-secret custom-header guard for this cookie-authenticated
+        Display state-changing request. The backend validates the value together
+        with strict trusted-origin/CORS policy to prevent ordinary ambient
+        cross-site form submission. It is not authentication, authorization, a
+        session credential, a pairing secret, command authority, or revision
+        authority. Missing or invalid material is rejected with CSRF_REJECTED.
+      schema:
+        type: string
+        const: synchronize
     LastEventId:
       name: Last-Event-ID
       in: header
@@ -894,6 +983,21 @@ components:
             replace the Controller's cached revision context before it creates
             a new command. It is not mutation authorization, scene position,
             Display synchronization proof, an event count, or a timestamp.
+    DisplaySynchronizationAcknowledgement:
+      type: object
+      additionalProperties: false
+      required:
+        - revision
+      properties:
+        revision:
+          allOf:
+            - $ref: '#/components/schemas/Revision'
+          description: >-
+            Current authoritative Display projection revision that this Display
+            received, schema-validated, and applied as full replacement on its
+            current active SSE stream. It is not expectedRevision, command
+            authority, Last-Event-ID history authority, event identity beyond
+            this acknowledgement check, or proof of rendered pixels.
     DirectActionCommandRequest:
       type: object
       additionalProperties: false
@@ -1717,6 +1821,54 @@ components:
                   - field: Last-Event-ID
                     code: INVALID_VALUE
                     message: The field value does not satisfy its contract.
+    DisplaySynchronizationValidationResponse:
+      description: >-
+        The Display synchronization path or request body fails structural
+        validation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidClassroomSessionId:
+              summary: The Classroom Session path identifier is malformed
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_display_sync_path_validation_01
+                fieldErrors:
+                  - field: classroomSessionId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+            missingRevision:
+              summary: revision is missing
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_display_sync_revision_validation_01
+                fieldErrors:
+                  - field: revision
+                    code: REQUIRED
+                    message: The field is required.
+            invalidRevision:
+              summary: revision is outside canonical Revision bounds
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_display_sync_revision_validation_02
+                fieldErrors:
+                  - field: revision
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
     DisplaySessionRequiredResponse:
       description: >-
         No usable participant browser session is available for Display access.
@@ -1750,6 +1902,36 @@ components:
             detail: Active Classroom Display authority is required for this request.
             code: DISPLAY_AUTHORITY_REQUIRED
             correlationId: corr_display_authority_01
+    DisplaySynchronizationForbiddenResponse:
+      description: >-
+        The request lacks the required Display custom-header CSRF guard or the
+        valid participant browser session does not carry active same-session
+        CLASSROOM_DISPLAY authority. The response does not disclose the actual
+        participant role, participant identity, another Classroom Session, or
+        another Teacher.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            csrfRejected:
+              summary: Missing or invalid Display request-intent guard
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: The request did not include valid CSRF protection.
+                code: CSRF_REJECTED
+                correlationId: corr_display_sync_csrf_01
+            displayAuthorityRequired:
+              summary: Active Classroom Display authority is required
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Active Classroom Display authority is required for this request.
+                code: DISPLAY_AUTHORITY_REQUIRED
+                correlationId: corr_display_sync_authority_01
     DisplayClassroomSessionNotFoundResponse:
       description: >-
         The requested Classroom Session does not exist or is not accessible to
@@ -1766,3 +1948,22 @@ components:
             detail: The requested classroom session was not found.
             code: CLASSROOM_SESSION_NOT_FOUND
             correlationId: corr_display_classroom_lookup_01
+    DisplaySynchronizationConflictResponse:
+      description: >-
+        The acknowledgement does not match the current authorized Display
+        stream and projection state. Stale, ahead, non-current, undispatched,
+        post-termination, wrong-session, or otherwise mismatched
+        acknowledgements share this non-disclosing response. The response does
+        not expose the current revision, participant identity, actual role, or
+        stream internals, and synchronization is not restored.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Conflict
+            status: 409
+            detail: The Display synchronization acknowledgement is not valid for current state.
+            code: DISPLAY_SYNCHRONIZATION_CONFLICT
+            correlationId: corr_display_sync_conflict_01

@@ -28,6 +28,8 @@ read, the participant-authorized authoritative Display snapshot whose
 classroom-safe response references the canonical standalone projection schema
 in [`../schemas/`](../schemas/README.md), and the role-authorized Display SSE
 stream with `Last-Event-ID` authoritative full-projection reconciliation.
+The contract also defines explicit Display synchronization acknowledgement for
+the current projection revision on the current active stream.
 
 ADR-0011 defines the conceptual identity, authentication, account,
 participant, and pairing model. ADR-0012 defines synchronous HTTP commands
@@ -73,6 +75,20 @@ Display projection schema. Initial connection and reconnect both deliver the
 current full authoritative projection. `Last-Event-ID` is advisory resync
 context, not authority or a historical replay request. Heartbeats are
 comment-only, while exact heartbeat and retry timing remain uncontracted.
+
+The state-changing Display synchronization PUT requires only active same-session
+`CLASSROOM_DISPLAY` participant authority, never Teacher authority. It uses the
+fixed `X-Penatika-Display-Intent: synchronize` custom header with strict
+trusted-origin/CORS validation as its Display-specific CSRF guard. Its closed
+request body contains only canonical `revision`. Success is retry-safe `204 No
+Content`; it does not advance Classroom Session revision. The backend accepts
+only the current revision dispatched on that participant's current active SSE
+stream. Snapshot retrieval, EventSource open, and server dispatch alone do not
+restore mutation eligibility: the Display must receive, schema-validate, apply
+as full replacement, and acknowledge the revision. Stream termination or
+authority loss invalidates synchronization, and reconnect requires a fresh
+acknowledgement. This proves application-level reconciliation, not pixel
+rendering.
 
 The cookie and CSRF token are distinct opaque values; neither is a business
 identifier or client-supplied authorization decision. OAuth/OIDC access,
