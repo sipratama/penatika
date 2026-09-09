@@ -23,7 +23,7 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.22 |
+| Version | 0.23 |
 | Last Updated | 2026-09-09 |
 | Current Phase | Field-Level Contract Foundation — Active |
 | Implementation State | Pre-source / Pre-scaffolding |
@@ -68,7 +68,8 @@ Foundation handoff checkpoint was created.
 | Pairing contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Command / revision contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
 | Display projection contract | COMPLETE | [Display projection schema](../contracts/schemas/classroom-display-projection.schema.json) / [OpenAPI](../contracts/openapi/openapi.yaml) |
-| SSE / reconnect contract | NEXT | Contract Foundation Batch 7 |
+| SSE / reconnect contract | COMPLETE | [OpenAPI](../contracts/openapi/openapi.yaml) |
+| Contract Foundation final audit | NEXT | Final Contract Foundation Consistency / Readiness Audit |
 | Source scaffolding | PENDING | after required field-level contracts |
 | Application implementation | PENDING | after source scaffolding |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
@@ -202,12 +203,11 @@ and the base RFC 9457 HTTP problem contract remains in
 [`contracts/openapi/openapi.yaml`](../contracts/openapi/openapi.yaml).
 
 The authenticated Teacher boundary, minimum `LessonVersion` reference /
-Classroom Session start contract, secure role-specific Pairing boundary, and
-deterministic revision-aware `DIRECT_ACTION: NEXT` command are defined in the
-OpenAPI root. The standalone classroom-safe Display projection and its
-participant-authorized authoritative HTTP snapshot are also defined. The
-immediate next work is Contract Foundation Batch 7: define the Display SSE,
-`Last-Event-ID`, and authoritative reconnect contract.
+Classroom Session start contract, secure role-specific Pairing boundary,
+deterministic revision-aware `DIRECT_ACTION: NEXT` command, authoritative
+Display snapshot, and role-authorized Display SSE / `Last-Event-ID` full-state
+reconciliation contract are defined. The immediate next work is the Final
+Contract Foundation Consistency / Readiness Audit.
 Source scaffolding remains PENDING until the required field-level contracts
 exist. `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before`
 rules.

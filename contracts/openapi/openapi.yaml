@@ -1,14 +1,15 @@
 openapi: 3.1.2
 info:
   title: Penatika HTTP API
-  version: 0.5.0
+  version: 0.6.0
   description: >-
     Authoritative HTTP contract root for Penatika. It defines shared HTTP wire
     primitives, the RFC 9457 Problem Details foundation, and the minimum
     authenticated Teacher, Classroom Session start, and secure role-specific
     Pairing boundaries plus the deterministic revision-aware DIRECT_ACTION:
-    NEXT command and classroom-safe authoritative Display snapshot required by
-    the first classroom vertical slice.
+    NEXT command, classroom-safe authoritative Display snapshot, and
+    role-authorized Display SSE reconciliation required by the first classroom
+    vertical slice.
 paths:
   /api/teacher-session:
     get:
@@ -448,6 +449,99 @@ paths:
           $ref: '#/components/responses/DisplayAuthorityRequiredResponse'
         '404':
           $ref: '#/components/responses/DisplayClassroomSessionNotFoundResponse'
+  /api/classroom-sessions/{classroomSessionId}/display-events:
+    get:
+      operationId: streamClassroomDisplayEvents
+      summary: Stream authoritative Classroom Display projections
+      description: >-
+        Establishes the one-way Classroom Display Server-Sent Events stream.
+        The caller must hold a currently active, non-revoked, non-replaced
+        CLASSROOM_DISPLAY participant browser session bound to the path
+        Classroom Session. A TEACHER_CONTROLLER participant,
+        TeacherBrowserSession, pairing credential, cached state, Last-Event-ID,
+        or knowledge of the ClassroomSessionId does not authorize this
+        operation. The backend validates current participant role, binding,
+        revocation/replacement state, and Classroom Session accessibility
+        before establishing the stream. No CSRF material is required because
+        this GET is safe and read-only.
+
+        On every successful initial or reconnecting request, the first
+        state-bearing event is the complete current backend-authoritative
+        Display projection. This applies when Last-Event-ID is absent, behind,
+        equal to, or ahead of the current backend revision. The backend never
+        trusts the client-supplied value over current authority, replays
+        historical events, or promises delta catch-up. Receiving, validating
+        against the canonical standalone Classroom Display projection schema,
+        and applying that event as a full replacement is the client
+        synchronization barrier; EventSource open alone is not
+        synchronization. Server-side Display synchronization requires an
+        active authorized stream and successful dispatch of the current full
+        projection to that stream. A new student-facing mutation remains
+        ineligible until that server-side condition is restored, and clients
+        must not treat the Display as synchronized before their client-side
+        barrier completes. Dispatch does not prove that the browser has
+        rendered the projection, and this contract defines no application-level
+        Display acknowledgement endpoint.
+
+        Each state-bearing event is named display-projection. Its SSE id is the
+        base-10 decimal representation of data.revision, and its data is JSON
+        that validates against
+        ../schemas/classroom-display-projection.schema.json. Within one active
+        stream, later state-bearing events follow authoritative session order
+        and must not carry a lower revision; duplicate same-revision full
+        projections are safe and idempotent. Revision values may be skipped
+        because not every future authoritative revision must change the
+        Display projection. Accepted commands remain synchronous HTTP
+        operations, and this stream carries resulting projections only.
+
+        Heartbeats, when emitted, are comment-only SSE frames such as
+        ": keep-alive". They have no event name, id, projection, revision, or
+        synchronization meaning and do not update Last-Event-ID. No SSE retry
+        field or heartbeat interval is contracted. After a successful stream
+        response begins, Problem Details are never sent as SSE data. If
+        participant authority becomes invalid or the stream cannot continue
+        safely, the backend stops emitting state and terminates the stream; a
+        later reconnect request is authorized again through the normal HTTP
+        boundary.
+      security:
+        - ParticipantBrowserSession: []
+      parameters:
+        - $ref: '#/components/parameters/ClassroomSessionIdPath'
+        - $ref: '#/components/parameters/LastEventId'
+      responses:
+        '200':
+          description: >-
+            Authorized Server-Sent Events stream. OpenAPI represents the stream
+            entity truthfully as text rather than as one JSON response object.
+            Each display-projection event's data field is independently a JSON
+            Classroom Display projection governed by
+            ../schemas/classroom-display-projection.schema.json, and the event
+            id must equal that projection's revision in decimal form.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStoreCacheControl'
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: >-
+                  SSE framing containing display-projection state events and
+                  optional comment-only heartbeats. The event-data JSON schema
+                  is owned by
+                  ../schemas/classroom-display-projection.schema.json.
+              example: |+
+                id: 5
+                event: display-projection
+                data: {"schemaVersion":"1.0","classroomSessionId":"classroom_session_example_01","revision":5,"scene":{"sceneId":"scene_example_02","position":1,"blocks":[{"type":"PLAIN_TEXT","text":"Bandingkan 1/2 dan 3/4."}]}}
+
+        '400':
+          $ref: '#/components/responses/DisplayEventsValidationResponse'
+        '401':
+          $ref: '#/components/responses/DisplaySessionRequiredResponse'
+        '403':
+          $ref: '#/components/responses/DisplayAuthorityRequiredResponse'
+        '404':
+          $ref: '#/components/responses/DisplayClassroomSessionNotFoundResponse'
 components:
   securitySchemes:
     TeacherBrowserSession:
@@ -513,6 +607,25 @@ components:
         Missing or invalid material is rejected with CSRF_REJECTED.
       schema:
         $ref: '#/components/schemas/CsrfToken'
+    LastEventId:
+      name: Last-Event-ID
+      in: header
+      required: false
+      description: >-
+        Last successfully observed Display SSE event id for this Classroom
+        Session. The header serializes the canonical Revision as an unsigned
+        base-10 decimal value without a sign or leading zeroes except the value
+        0. Native EventSource reconnect may send this header automatically. It
+        is advisory reconciliation context only: it is not authentication,
+        authorization, mutation permission, expectedRevision, proof of client
+        ownership, or a request for historical state. A valid value that is
+        behind, equal to, or ahead of backend authority still yields the
+        current full authoritative projection. A malformed or out-of-range
+        value is rejected with REQUEST_VALIDATION_FAILED before stream
+        establishment.
+      schema:
+        $ref: '#/components/schemas/Revision'
+      example: 5
   schemas:
     LessonVersionId:
       type: string
@@ -1382,10 +1495,10 @@ components:
         Current authoritative command identity, revision, or mutation state
         conflicts with the request. No new mutation occurs. STALE_REVISION does
         not include currentRevision or a projection in Problem Details;
-        reconciliation uses the applicable authoritative snapshot boundary
-        before a new command is created. This contract currently defines the
-        classroom-safe Display snapshot only and does not grant Controller
-        participants access to that Display projection.
+        reconciliation uses an applicable authoritative state-retrieval
+        boundary before a new command is created. This contract does not grant
+        Controller participants access to the classroom-safe Display snapshot
+        or Display SSE projection.
       content:
         application/problem+json:
           schema:
@@ -1435,6 +1548,42 @@ components:
               - field: classroomSessionId
                 code: INVALID_VALUE
                 message: The field value does not satisfy its contract.
+    DisplayEventsValidationResponse:
+      description: >-
+        The Display events path identifier or Last-Event-ID header is
+        malformed or outside its contract bounds. Validation fails before an
+        SSE stream is established.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidClassroomSessionId:
+              summary: The Classroom Session path identifier is malformed
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_display_events_path_validation_01
+                fieldErrors:
+                  - field: classroomSessionId
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
+            invalidLastEventId:
+              summary: Last-Event-ID is not a valid Revision representation
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: One or more request fields are invalid.
+                code: REQUEST_VALIDATION_FAILED
+                correlationId: corr_display_events_header_validation_01
+                fieldErrors:
+                  - field: Last-Event-ID
+                    code: INVALID_VALUE
+                    message: The field value does not satisfy its contract.
     DisplaySessionRequiredResponse:
       description: >-
         No usable participant browser session is available for Display access.

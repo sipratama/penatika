@@ -22,8 +22,9 @@ schema version change, and a consumer rollout plan.
 
 ## Contract Families
 
-- `openapi/` — synchronous HTTPS/JSON application API using OpenAPI 3.1.x;
-  current baseline OpenAPI 3.1.2.
+- `openapi/` — HTTP application API using OpenAPI 3.1.x, including synchronous
+  HTTPS/JSON operations and authorized Display SSE; current baseline OpenAPI
+  3.1.2.
 - `schemas/` — justified reusable structured JSON wire schemas using JSON
   Schema Draft 2020-12.
 - `asyncapi/` — inactive. ADR-0012 selects synchronous HTTP commands plus SSE
@@ -44,15 +45,16 @@ references shared wire primitives and contains the RFC 9457 Problem Details
 foundation, the minimum authenticated Teacher/session-start and secure
 role-specific Pairing boundaries, and the first deterministic revision-aware
 classroom command.
-It also defines the participant-authorized authoritative Display snapshot.
+It also defines the participant-authorized authoritative Display snapshot and
+role-authorized Display SSE full-projection reconciliation boundary.
 
 Standalone schemas are active. [`schemas/wire-primitives.schema.json`](./schemas/wire-primitives.schema.json)
 canonically owns the cross-contract `ClassroomSessionId` and `Revision`
 definitions, while
 [`schemas/classroom-display-projection.schema.json`](./schemas/classroom-display-projection.schema.json)
 canonically owns the closed classroom-safe Display projection. OpenAPI
-references those owners; the future Display SSE contract must reuse the same
-projection rather than redefine it.
+references those owners for both the HTTP snapshot and Display SSE event data
+rather than redefining the projection.
 
 ## Ownership
 

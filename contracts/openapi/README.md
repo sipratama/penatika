@@ -1,7 +1,7 @@
 # Penatika OpenAPI Contract
 
-This directory owns the authoritative synchronous Penatika HTTP API
-contract between Teacher Web, Classroom Display Web, and the Penatika Backend.
+This directory owns the authoritative Penatika HTTP API contract between
+Teacher Web, Classroom Display Web, and the Penatika Backend.
 
 ## Baseline
 
@@ -9,7 +9,8 @@ contract between Teacher Web, Classroom Display Web, and the Penatika Backend.
 - Current baseline: OpenAPI 3.1.2.
 - Preferred authoring format: YAML 1.2.
 - Preferred entry file: `openapi.yaml`.
-- Default transport/media: HTTPS + JSON.
+- Default transport/media: HTTPS + JSON; authorized Display projection push
+  uses `text/event-stream`.
 - HTTP error baseline: RFC 9457 Problem Details using
   `application/problem+json`.
 
@@ -24,8 +25,9 @@ operations, the resulting participant browser-session boundary, and the first
 deterministic revision-aware classroom command: `DIRECT_ACTION: NEXT`.
 It now also defines the participant-authorized authoritative Display snapshot,
 whose classroom-safe response references the canonical standalone projection
-schema in [`../schemas/`](../schemas/README.md). Display SSE and reconnect
-framing remain for the next contract slice.
+schema in [`../schemas/`](../schemas/README.md), plus the role-authorized
+Display SSE stream and `Last-Event-ID` authoritative full-projection
+reconciliation boundary.
 
 ADR-0011 defines the conceptual identity, authentication, account,
 participant, and pairing model. ADR-0012 defines synchronous HTTP commands
@@ -54,12 +56,17 @@ mutation requires both security schemes in one OpenAPI security-requirement
 object, the active `TEACHER_CONTROLLER` participant authorization for the path
 Classroom Session, and the existing CSRF header.
 
-The safe Display snapshot GET requires only the active
+The safe Display snapshot and Display SSE GET operations require only the active
 `ParticipantBrowserSession` bound as `CLASSROOM_DISPLAY` to the path Classroom
 Session. It does not require `TeacherBrowserSession` or CSRF material and it
 returns `Cache-Control: no-store`. A Controller participant cannot use Display
 authority, and foreign/nonexistent Classroom Sessions share a non-disclosing
-not-found response.
+not-found response. The SSE stream emits `display-projection` events whose
+`id` equals the projection `revision`; each `data` value reuses the standalone
+Display projection schema. Initial connection and reconnect both deliver the
+current full authoritative projection. `Last-Event-ID` is advisory resync
+context, not authority or a historical replay request. Heartbeats are
+comment-only, while exact heartbeat and retry timing remain uncontracted.
 
 The cookie and CSRF token are distinct opaque values; neither is a business
 identifier or client-supplied authorization decision. OAuth/OIDC access,

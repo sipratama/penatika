@@ -31,8 +31,8 @@ The active production schemas are:
   Details remain owned by OpenAPI.
 - [`classroom-display-projection.schema.json`](./classroom-display-projection.schema.json)
   — canonical owner of the complete classroom-safe Display projection used by
-  the authoritative HTTP snapshot and required for reuse by the future Display
-  SSE payload.
+  both the authoritative HTTP snapshot and each state-bearing Display SSE
+  event's JSON `data` payload.
 
 OpenAPI references these standalone owners and must not redefine their shapes.
 The shared-primitives file uses only a repository-local filename `$id` so Ajv

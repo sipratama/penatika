@@ -121,8 +121,8 @@ types, and status mappings.
 | Pairing | COMPLETE |
 | `NEXT` command / revision | COMPLETE |
 | Display projection / authoritative snapshot | COMPLETE |
-| SSE / reconnect | NEXT |
-| Final consistency and readiness audit | PENDING |
+| SSE / reconnect | COMPLETE |
+| Final consistency and readiness audit | NEXT |
 | Final branch checkpoint | PENDING |
 | Merge to `main` | PENDING |
 
