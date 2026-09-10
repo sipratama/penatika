@@ -23,10 +23,10 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.36 |
+| Version | 0.37 |
 | Last Updated | 2026-09-10 |
-| Current Phase | Source Scaffolding — Complete / Merge-Ready |
-| Implementation State | Source Scaffolding is complete; product/application implementation and product persistence have not started |
+| Current Phase | Application Implementation — Next |
+| Implementation State | Source Scaffolding is merged; application/product behavior and product persistence have not started |
 | Product Owner | sipratama |
 
 The final product-baseline consistency audit passed before the Architecture
@@ -72,7 +72,7 @@ Foundation handoff checkpoint was created.
 | Contract Foundation final audit | COMPLETE | current canonical contract and validation evidence |
 | Final Contract Foundation checkpoint | COMPLETE | [Contract Foundation Checkpoint](./checkpoints/2026-09-09-contract-foundation-complete.md) |
 | Contract Foundation merge to `main` | COMPLETE | merge commit `7995290b07c755425020b939fb669f9c4a0b2ce0` |
-| Source scaffolding | COMPLETE / MERGE-READY | [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md) / [Source Scaffolding Checkpoint](./checkpoints/2026-09-10-source-scaffolding-complete.md) |
+| Source scaffolding | COMPLETE / MERGED | [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md) / [Source Scaffolding Checkpoint](./checkpoints/2026-09-10-source-scaffolding-complete.md) / merge commit `49805720f79941dc967280fc0411ac78d2fe06e8` |
 | SS-01 plan / repository layout | COMPLETE | [Source Scaffolding Plan](./04_engineering/SOURCE_SCAFFOLDING_PLAN.md) |
 | SS-02 backend build / module skeleton | COMPLETE | backend Maven wrapper/POM + Java 21 Spring Boot shell and module package boundaries |
 | SS-03 frontend workspace / teacher-display shells | COMPLETE | npm workspace/lockfile plus independently buildable and testable React/TypeScript/Vite Teacher and Display shells |
@@ -80,8 +80,8 @@ Foundation handoff checkpoint was created.
 | SS-05 configuration + persistence mechanism baseline | COMPLETE | typed safe configuration, disabled-by-default persistence, PostgreSQL 18.6/Testcontainers, Spring JDBC/JdbcClient, and Flyway 13.5.0 empty-baseline evidence |
 | SS-06 consistency / readiness audit | COMPLETE | full backend, frontend, contract, persistence-mechanism, documentation, and merge-readiness evidence |
 | Final Source Scaffolding handoff checkpoint | COMPLETE | [Source Scaffolding Checkpoint](./checkpoints/2026-09-10-source-scaffolding-complete.md) |
-| Source Scaffolding merge to `main` | NEXT | after final checkpoint review/commit/push and remote verification |
-| Application implementation | PENDING | after source scaffolding |
+| Source Scaffolding merge to `main` | COMPLETE | merge commit `49805720f79941dc967280fc0411ac78d2fe06e8` |
+| Application implementation | NEXT | create the first implementation branch and prepare the First Protected Vertical Slice implementation plan |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
 | Commercial launch | PENDING | [BUSINESS_MODEL.md](./00_product/BUSINESS_MODEL.md) launch gates |
@@ -203,29 +203,16 @@ implementation exists yet.
 
 ## Immediate Next Step
 
-Architecture Foundation is complete and merged to `main` in `7cd6a2d`.
-Contract strategy and Field-Level Contract Foundation are complete, and the
-Contract Foundation merge is verified on `main` at
-`7995290b07c755425020b939fb669f9c4a0b2ce0`. The
-[Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md)
-records the completed first classroom vertical slice sequence. Shared wire
-primitives are established in
-[`contracts/schemas/wire-primitives.schema.json`](../contracts/schemas/wire-primitives.schema.json),
-and the base RFC 9457 HTTP problem contract remains in
-[`contracts/openapi/openapi.yaml`](../contracts/openapi/openapi.yaml).
-
-The first protected classroom vertical-slice contract remains defined by the
-[Contract Foundation Plan](./04_engineering/CONTRACT_FOUNDATION_PLAN.md) and
-the canonical contracts. Source Scaffolding SS-01 through SS-06 is complete on
-`feat/source-scaffolding`, including the backend and frontend shells,
-executable architecture/privacy checks, contract validation and deterministic
-role-scoped transport declarations, typed configuration, and the
-disabled-by-default PostgreSQL/Flyway/JdbcClient mechanism. The
+Architecture Foundation, Contract Foundation, and Source Scaffolding are
+complete and merged to `main`. The Source Scaffolding merge is remotely
+verified at `49805720f79941dc967280fc0411ac78d2fe06e8`; the historical
 [Final Source Scaffolding Handoff Checkpoint](./checkpoints/2026-09-10-source-scaffolding-complete.md)
-records the reviewed phase boundary. The immediate next step is deliberate
-merge of `feat/source-scaffolding` into `main` after human review, commit,
-push, and remote verification. Product/application implementation remains
-PENDING and has not started.
+remains the phase-boundary record.
+
+Create the first Application Implementation branch from verified `main` and
+prepare the First Protected Vertical Slice implementation plan. Do not treat
+Application Implementation as active until that branch and planning task are
+deliberately started. Product/application behavior has not started.
 `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
@@ -273,7 +260,10 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 [Source Scaffolding Checkpoint — Complete](./checkpoints/2026-09-10-source-scaffolding-complete.md)
 is the latest handoff checkpoint. It records completed Source Scaffolding,
 reviewed SS-06 evidence, and the merge-readiness boundary for
-`feat/source-scaffolding`. Application implementation has not started.
+`feat/source-scaffolding`. Its pre-merge wording remains historically correct;
+the subsequent merge is recorded by `PROJECT_STATUS.md` and merge commit
+`49805720f79941dc967280fc0411ac78d2fe06e8`. Application implementation has not
+started.
 
 The previous [Contract Foundation Checkpoint — Complete](./checkpoints/2026-09-09-contract-foundation-complete.md)
 remains immutable and historically correct. Its subsequent merge is recorded

@@ -78,7 +78,7 @@ Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architect
 
 Project Discovery sudah selesai. Inisialisasi product baseline Q-01–Q-07 / OPD-001–OPD-007 sudah selesai; tidak ada unresolved product decision dari set awal.
 
-Repository kini memiliki fondasi Source Scaffolding yang lengkap dan tervalidasi: satu backend Java 21/Spring Boot/Maven, shell Teacher dan Classroom Display React/TypeScript/Vite yang terpisah, architecture dan contract validation harness, generated transport declarations yang role-scoped, typed configuration, serta mekanisme PostgreSQL/Flyway/JdbcClient yang disabled by default dengan zero versioned migration. Fase ini complete/merge-ready dan Final Source Scaffolding Handoff Checkpoint sudah tersedia; merge ke `main` adalah langkah berikutnya. Product implementation, physical product database schema, security/auth implementation, deployment configuration, dan CI/CD belum dimulai.
+Repository kini memiliki fondasi Source Scaffolding yang lengkap dan tervalidasi: satu backend Java 21/Spring Boot/Maven, shell Teacher dan Classroom Display React/TypeScript/Vite yang terpisah, architecture dan contract validation harness, generated transport declarations yang role-scoped, typed configuration, serta mekanisme PostgreSQL/Flyway/JdbcClient yang disabled by default dengan zero versioned migration. Source Scaffolding sudah COMPLETE / MERGED; Application Implementation adalah fase NEXT, tetapi product behavior belum dimulai. Physical product database schema, security/auth implementation, deployment configuration, dan CI/CD juga belum dimulai.
 
 ## Documentation Map
 

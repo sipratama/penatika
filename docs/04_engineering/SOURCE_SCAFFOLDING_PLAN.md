@@ -16,8 +16,8 @@
 | Date | `2026-09-10` |
 | Branch | `feat/source-scaffolding` |
 | Starting main SHA | `8b93c0415e913e194f93dcbabb264f4141fd65bd` |
-| Status | SS-01 through SS-06 complete; final Source Scaffolding checkpoint complete; merge to `main` next |
-| Implementation state | Source Scaffolding is complete and merge-ready; no product behavior or product schema exists, and application implementation has not started |
+| Status | SS-01 through SS-06 complete; final Source Scaffolding checkpoint complete; merge to `main` complete |
+| Implementation state | Source Scaffolding is closed and merged; no product behavior or product schema exists, and further work belongs to Application Implementation |
 | SS-02 selected baseline | Java 21 LTS; Apache Maven 3.9.16; Maven Wrapper Plugin 3.3.4 (`only-script`, distribution SHA-256 pinned); Spring Boot 4.1.1 (GA) |
 | SS-03 selected baseline | Node.js 24.21.0 LTS (Krypton); npm 11.19.0; React / React DOM 19.2.8; Vite 8.2.2; TypeScript 7.0.2; Vitest 5.0.0; React Testing Library 16.3.3; jest-dom 7.0.1; jsdom 30.0.1 |
 | SS-04 selected baseline | ArchUnit 1.5.0; Redocly CLI 2.51.2; Ajv 8.17.1; openapi-typescript 7.13.0 accepted for deterministic role-scoped transport declarations |
@@ -428,7 +428,7 @@ SS-01 freezes the physical plan only.
 ```text
 Architecture Foundation                       COMPLETE / MERGED
 Contract Foundation                           COMPLETE / MERGED
-Source Scaffolding                            COMPLETE / MERGE-READY
+Source Scaffolding                            CLOSED / MERGED
 SS-01 Plan + Repository Layout Freeze         COMPLETE
 SS-02 Backend Build + Module Skeleton         COMPLETE
 SS-03 Frontend Workspace + Teacher/Display    COMPLETE
@@ -436,6 +436,6 @@ SS-04 Test + Contract Validation Harness      COMPLETE
 SS-05 Configuration + Persistence Baseline    COMPLETE
 SS-06 Consistency / Readiness Audit           COMPLETE
 Final Source Scaffolding Handoff Checkpoint   COMPLETE
-Source Scaffolding Merge to Main              NEXT
-Application Implementation                    PENDING
+Source Scaffolding Merge to Main              COMPLETE
+Application Implementation                    NEXT
 ```
