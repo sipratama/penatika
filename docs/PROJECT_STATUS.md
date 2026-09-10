@@ -23,10 +23,10 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.37 |
+| Version | 0.38 |
 | Last Updated | 2026-09-10 |
-| Current Phase | Application Implementation — Next |
-| Implementation State | Source Scaffolding is merged; application/product behavior and product persistence have not started |
+| Current Phase | Application Implementation — Active |
+| Implementation State | First Protected Vertical Slice planning is complete; production behavior and product persistence implementation have not started |
 | Product Owner | sipratama |
 
 The final product-baseline consistency audit passed before the Architecture
@@ -81,7 +81,10 @@ Foundation handoff checkpoint was created.
 | SS-06 consistency / readiness audit | COMPLETE | full backend, frontend, contract, persistence-mechanism, documentation, and merge-readiness evidence |
 | Final Source Scaffolding handoff checkpoint | COMPLETE | [Source Scaffolding Checkpoint](./checkpoints/2026-09-10-source-scaffolding-complete.md) |
 | Source Scaffolding merge to `main` | COMPLETE | merge commit `49805720f79941dc967280fc0411ac78d2fe06e8` |
-| Application implementation | NEXT | create the first implementation branch and prepare the First Protected Vertical Slice implementation plan |
+| Application implementation | ACTIVE | [First Protected Vertical Slice Implementation Plan](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md) |
+| IVS-01 First Vertical Slice Implementation Plan | COMPLETE | [First Protected Vertical Slice Implementation Plan](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md) |
+| IVS-02 First-Slice Physical Schema + Persistence Contracts | NEXT | first production implementation batch routed by the accepted working plan |
+| Remaining IVS batches | PENDING | IVS-03 through IVS-10 in the implementation plan |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
 | Commercial launch | PENDING | [BUSINESS_MODEL.md](./00_product/BUSINESS_MODEL.md) launch gates |
@@ -209,10 +212,13 @@ verified at `49805720f79941dc967280fc0411ac78d2fe06e8`; the historical
 [Final Source Scaffolding Handoff Checkpoint](./checkpoints/2026-09-10-source-scaffolding-complete.md)
 remains the phase-boundary record.
 
-Create the first Application Implementation branch from verified `main` and
-prepare the First Protected Vertical Slice implementation plan. Do not treat
-Application Implementation as active until that branch and planning task are
-deliberately started. Product/application behavior has not started.
+Application Implementation is active on the first protected vertical-slice
+workstream. [IVS-01](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md)
+has reconstructed the locked slice, frozen implementation sequencing, and
+routed IVS-02 as **First-Slice Physical Schema + Persistence Contracts**.
+
+Production application behavior and product persistence have not started.
+IVS-02 must not broaden product, architecture, or contract scope.
 `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
@@ -262,8 +268,9 @@ is the latest handoff checkpoint. It records completed Source Scaffolding,
 reviewed SS-06 evidence, and the merge-readiness boundary for
 `feat/source-scaffolding`. Its pre-merge wording remains historically correct;
 the subsequent merge is recorded by `PROJECT_STATUS.md` and merge commit
-`49805720f79941dc967280fc0411ac78d2fe06e8`. Application implementation has not
-started.
+`49805720f79941dc967280fc0411ac78d2fe06e8`. Application Implementation is now
+active at the planning boundary; runtime product behavior and product
+persistence implementation have not started.
 
 The previous [Contract Foundation Checkpoint — Complete](./checkpoints/2026-09-09-contract-foundation-complete.md)
 remains immutable and historically correct. Its subsequent merge is recorded
