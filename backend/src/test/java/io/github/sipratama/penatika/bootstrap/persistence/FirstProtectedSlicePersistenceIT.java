@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -12,6 +11,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -194,7 +194,40 @@ class FirstProtectedSlicePersistenceIT {
                 .consumeByCredentialVerifier(grant.credentialVerifier(), claimTime)
                 .isPresent());
         assertThat(claimed).containsExactlyInAnyOrder(true, false);
-        assertThat(pairingGrants.revoke(grant.id(), claimTime.plusSeconds(1))).isFalse();
+        assertThat(pairingGrants.revoke(
+                        foundation.classroomSession().id(), grant.id(), claimTime.plusSeconds(1)))
+                .isFalse();
+    }
+
+    @Test
+    void pairingGrantRevocationRequiresItsParentClassroomSession() {
+        Foundation foundation = createFoundation();
+        ClassroomSession otherSession = new ClassroomSessionFixtureBuilder()
+                .withId(UUID.fromString("30000000-0000-0000-0000-000000000011"))
+                .withReferences(
+                        foundation.teacher().id().value(), foundation.lessonVersion().id().value())
+                .build();
+        classroomSessions.create(otherSession);
+
+        PairingGrant grant = new PairingGrantFixtureBuilder()
+                .withClassroomSessionId(foundation.classroomSession().id().value())
+                .build();
+        pairingGrants.create(grant);
+        Instant revokedAt = grant.issuedAt().plusSeconds(10);
+
+        assertThat(pairingGrants.revoke(otherSession.id(), grant.id(), revokedAt)).isFalse();
+        assertThat(pairingGrants.findByCredentialVerifier(grant.credentialVerifier())).contains(grant);
+        assertThat(pairingGrants.revoke(foundation.classroomSession().id(), grant.id(), revokedAt))
+                .isTrue();
+
+        PairingGrant revoked = pairingGrants
+                .findByCredentialVerifier(grant.credentialVerifier())
+                .orElseThrow();
+        assertThat(revoked.classroomSessionId()).isEqualTo(foundation.classroomSession().id());
+        assertThat(revoked.revokedAt()).isEqualTo(revokedAt);
+        assertThat(pairingGrants.revoke(
+                        foundation.classroomSession().id(), grant.id(), revokedAt.plusSeconds(1)))
+                .isFalse();
     }
 
     @Test
@@ -234,7 +267,26 @@ class FirstProtectedSlicePersistenceIT {
     }
 
     @Test
-    void acceptedCommandIdentityIsUniqueAndOriginalOutcomeRoundTrips() {
+    void unrelatedParticipantCredentialAndIdCollisionsRemainDatabaseErrors() {
+        Foundation foundation = createFoundation();
+        ParticipantSession display = display(
+                foundation, "10000000-0000-0000-0000-000000000025", "1");
+        assertThat(participantSessions.tryCreateActive(display)).isTrue();
+        assertThat(participantSessions.revoke(display.id(), display.createdAt().plusSeconds(1))).isTrue();
+
+        ParticipantSession duplicateCredential = display(
+                foundation, "10000000-0000-0000-0000-000000000026", "1");
+        assertThatThrownBy(() -> participantSessions.tryCreateActive(duplicateCredential))
+                .isInstanceOf(DataIntegrityViolationException.class);
+
+        ParticipantSession duplicateId = display(
+                foundation, "10000000-0000-0000-0000-000000000025", "2");
+        assertThatThrownBy(() -> participantSessions.tryCreateActive(duplicateId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void acceptedCommandIdentityIsResolvedByConcurrentCompetingInserts() throws Exception {
         Foundation foundation = createFoundation();
         ParticipantSession controller = controller(
                 foundation, "10000000-0000-0000-0000-000000000031", "7");
@@ -257,11 +309,55 @@ class FirstProtectedSlicePersistenceIT {
                         controller.id().value())
                 .build();
 
+        List<Boolean> outcomes = runConcurrently(List.of(
+                () -> commandOutcomes.saveIfAbsent(original),
+                () -> commandOutcomes.saveIfAbsent(duplicate)));
+        assertThat(outcomes).containsExactlyInAnyOrder(true, false);
+
+        Integer acceptedRows = jdbcClient.sql("""
+                        SELECT count(*)
+                        FROM classroom_accepted_command
+                        WHERE classroom_session_id = :classroomSessionId
+                          AND command_id = :commandId
+                        """)
+                .param("classroomSessionId", foundation.classroomSession().id().value())
+                .param("commandId", original.commandId())
+                .query(Integer.class)
+                .single();
+        assertThat(acceptedRows).isEqualTo(1);
+
+        AcceptedCommandOutcome loaded = commandOutcomes
+                .findByCommandIdentity(foundation.classroomSession().id(), original.commandId())
+                .orElseThrow();
+        assertThat(List.of(original, duplicate)).contains(loaded);
+    }
+
+    @Test
+    void unrelatedAcceptedCommandIdCollisionRemainsDatabaseError() {
+        Foundation foundation = createFoundation();
+        ParticipantSession controller = controller(
+                foundation, "10000000-0000-0000-0000-000000000032", "8");
+        assertThat(participantSessions.tryCreateActive(controller)).isTrue();
+
+        AcceptedCommandOutcome original = new AcceptedCommandOutcomeFixtureBuilder()
+                .withContext(
+                        foundation.classroomSession().id().value(),
+                        foundation.teacher().id().value(),
+                        foundation.browserSession().id().value(),
+                        controller.id().value())
+                .build();
+        AcceptedCommandOutcome duplicateId = new AcceptedCommandOutcomeFixtureBuilder()
+                .withCommandId("command-002")
+                .withContext(
+                        foundation.classroomSession().id().value(),
+                        foundation.teacher().id().value(),
+                        foundation.browserSession().id().value(),
+                        controller.id().value())
+                .build();
+
         assertThat(commandOutcomes.saveIfAbsent(original)).isTrue();
-        assertThat(commandOutcomes.saveIfAbsent(duplicate)).isFalse();
-        assertThat(commandOutcomes.findByCommandIdentity(
-                        foundation.classroomSession().id(), original.commandId()))
-                .contains(original);
+        assertThatThrownBy(() -> commandOutcomes.saveIfAbsent(duplicateId))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -330,11 +426,7 @@ class FirstProtectedSlicePersistenceIT {
     }
 
     private static <T> List<T> runConcurrently(int count, Callable<T> operation) throws Exception {
-        List<Callable<T>> operations = new ArrayList<>();
-        for (int index = 0; index < count; index++) {
-            operations.add(operation);
-        }
-        return runConcurrently(operations);
+        return runConcurrently(IntStream.range(0, count).mapToObj(index -> operation).toList());
     }
 
     private static <T> List<T> runConcurrently(List<Callable<T>> operations) throws Exception {
@@ -350,11 +442,18 @@ class FirstProtectedSlicePersistenceIT {
                     .toList();
             ready.await();
             start.countDown();
-            List<T> results = new ArrayList<>();
-            for (Future<T> future : futures) {
-                results.add(future.get());
-            }
-            return results;
+            return futures.stream().map(FirstProtectedSlicePersistenceIT::get).toList();
+        }
+    }
+
+    private static <T> T get(Future<T> future) {
+        try {
+            return future.get();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting for concurrent test operation", exception);
+        } catch (java.util.concurrent.ExecutionException exception) {
+            throw new IllegalStateException("Concurrent test operation failed", exception.getCause());
         }
     }
 

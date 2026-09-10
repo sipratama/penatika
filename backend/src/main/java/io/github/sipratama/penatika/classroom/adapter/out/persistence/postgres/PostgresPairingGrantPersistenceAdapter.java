@@ -76,12 +76,19 @@ public final class PostgresPairingGrantPersistenceAdapter implements PairingGran
     }
 
     @Override
-    public boolean revoke(PairingGrantId pairingGrantId, Instant revokedAt) {
+    public boolean revoke(
+            ClassroomSessionId classroomSessionId,
+            PairingGrantId pairingGrantId,
+            Instant revokedAt) {
         return jdbcClient.sql("""
                         UPDATE classroom_pairing_grant
                         SET revoked_at = :revokedAt
-                        WHERE id = :id AND consumed_at IS NULL AND revoked_at IS NULL
+                        WHERE classroom_session_id = :classroomSessionId
+                          AND id = :id
+                          AND consumed_at IS NULL
+                          AND revoked_at IS NULL
                         """)
+                .param("classroomSessionId", classroomSessionId.value())
                 .param("id", pairingGrantId.value())
                 .param("revokedAt", timestamp(revokedAt))
                 .update() == 1;

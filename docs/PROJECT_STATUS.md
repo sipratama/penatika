@@ -23,10 +23,10 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.38 |
+| Version | 0.39 |
 | Last Updated | 2026-09-10 |
 | Current Phase | Application Implementation — Active |
-| Implementation State | First Protected Vertical Slice planning is complete; production behavior and product persistence implementation have not started |
+| Implementation State | IVS-02 first-slice product persistence is implemented and ready for review; production application behavior remains not started and IVS-03 is pending |
 | Product Owner | sipratama |
 
 The final product-baseline consistency audit passed before the Architecture
@@ -269,9 +269,9 @@ is the latest handoff checkpoint. It records completed Source Scaffolding,
 reviewed SS-06 evidence, and the merge-readiness boundary for
 `feat/source-scaffolding`. Its pre-merge wording remains historically correct;
 the subsequent merge is recorded by `PROJECT_STATUS.md` and merge commit
-`49805720f79941dc967280fc0411ac78d2fe06e8`. Application Implementation is now
-active at the planning boundary; runtime product behavior and product
-persistence implementation have not started.
+`49805720f79941dc967280fc0411ac78d2fe06e8`. Application Implementation is
+active; IVS-02 product persistence is ready for review, runtime product
+behavior has not started, and IVS-03 remains pending.
 
 The previous [Contract Foundation Checkpoint — Complete](./checkpoints/2026-09-09-contract-foundation-complete.md)
 remains immutable and historically correct. Its subsequent merge is recorded

@@ -4,7 +4,6 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 import io.github.sipratama.penatika.classroom.application.port.out.AcceptedCommandOutcomePersistencePort;
@@ -26,34 +25,31 @@ public final class PostgresAcceptedCommandOutcomePersistenceAdapter
 
     @Override
     public boolean saveIfAbsent(AcceptedCommandOutcome outcome) {
-        try {
-            return jdbcClient.sql("""
-                            INSERT INTO classroom_accepted_command (
-                                id, classroom_session_id, command_id, expected_revision,
-                                command_type, action, teacher_account_id, teacher_browser_session_id,
-                                controller_participant_session_id, controller_role,
-                                resulting_revision, accepted_at)
-                            VALUES (
-                                :id, :classroomSessionId, :commandId, :expectedRevision,
-                                :commandType, :action, :teacherAccountId, :teacherBrowserSessionId,
-                                :controllerParticipantSessionId, 'TEACHER_CONTROLLER',
-                                :resultingRevision, :acceptedAt)
-                            """)
-                    .param("id", outcome.id().value())
-                    .param("classroomSessionId", outcome.classroomSessionId().value())
-                    .param("commandId", outcome.commandId())
-                    .param("expectedRevision", outcome.expectedRevision().value())
-                    .param("commandType", outcome.commandType().name())
-                    .param("action", outcome.action().name())
-                    .param("teacherAccountId", outcome.teacherAccountId())
-                    .param("teacherBrowserSessionId", outcome.teacherBrowserSessionId())
-                    .param("controllerParticipantSessionId", outcome.controllerParticipantSessionId())
-                    .param("resultingRevision", outcome.resultingRevision().value())
-                    .param("acceptedAt", OffsetDateTime.ofInstant(outcome.acceptedAt(), java.time.ZoneOffset.UTC))
-                    .update() == 1;
-        } catch (DuplicateKeyException exception) {
-            return false;
-        }
+        return jdbcClient.sql("""
+                        INSERT INTO classroom_accepted_command (
+                            id, classroom_session_id, command_id, expected_revision,
+                            command_type, action, teacher_account_id, teacher_browser_session_id,
+                            controller_participant_session_id, controller_role,
+                            resulting_revision, accepted_at)
+                        VALUES (
+                            :id, :classroomSessionId, :commandId, :expectedRevision,
+                            :commandType, :action, :teacherAccountId, :teacherBrowserSessionId,
+                            :controllerParticipantSessionId, 'TEACHER_CONTROLLER',
+                            :resultingRevision, :acceptedAt)
+                        ON CONFLICT (classroom_session_id, command_id) DO NOTHING
+                        """)
+                .param("id", outcome.id().value())
+                .param("classroomSessionId", outcome.classroomSessionId().value())
+                .param("commandId", outcome.commandId())
+                .param("expectedRevision", outcome.expectedRevision().value())
+                .param("commandType", outcome.commandType().name())
+                .param("action", outcome.action().name())
+                .param("teacherAccountId", outcome.teacherAccountId())
+                .param("teacherBrowserSessionId", outcome.teacherBrowserSessionId())
+                .param("controllerParticipantSessionId", outcome.controllerParticipantSessionId())
+                .param("resultingRevision", outcome.resultingRevision().value())
+                .param("acceptedAt", OffsetDateTime.ofInstant(outcome.acceptedAt(), java.time.ZoneOffset.UTC))
+                .update() == 1;
     }
 
     @Override
