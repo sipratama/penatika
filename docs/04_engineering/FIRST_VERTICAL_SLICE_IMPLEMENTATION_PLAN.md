@@ -147,9 +147,9 @@ input before the owning batch can complete.
 | ID-02 | First migration | `LOCKED`: one coherent `V001` first-slice schema before repositories, with module-owned tables and constraints. | IVS-02 | Empty database and cross-cutting first-slice integrity favor one audited baseline. |
 | ID-03 | LessonVersion prerequisite | `LOCKED`: real Lesson/LessonVersion persistence; automated records are test fixtures only. No production seed/create endpoint. | IVS-02/04 | Meets the prerequisite without inventing authoring behavior. |
 | ID-04 | Teacher authentication | `LOCKED`: Spring Security OAuth2 Client/OIDC, Authorization Code + PKCE S256, provider-neutral configuration, and test-only provider support. Production provider `DEFERRED`. | IVS-03 | Implements ADR-0011 without production mock auth or an unapproved provider. |
-| ID-05 | Teacher session store | `LOCKED`: PostgreSQL opaque sessions with verifier-only credential storage, Teacher binding, CSRF association, rotation, expiry, activity, and revocation. Lifetimes are a `BLOCKING QUESTION`. | IVS-02/03 | Durable revocation/restart authority is required; Redis is not justified. |
+| ID-05 | Teacher session store | `LOCKED`: PostgreSQL opaque sessions with verifier-only credential storage, Teacher binding, CSRF association, rotation, activity, revocation, a 30-minute sliding idle timeout, and a fixed 8-hour absolute timeout from creation. | IVS-02/03 | Durable revocation/restart authority and bounded server-owned lifetimes are required; Redis is not justified. |
 | ID-06 | Participant sessions | `LOCKED`: PostgreSQL opaque sessions with verifier-only storage, session/role binding, active/revoked state, Controller Teacher binding, and one-active-role constraints. | IVS-02/05 | Authority/revocation must survive restart and concurrency. |
-| ID-07 | Pairing secret | `LOCKED`: cryptographic token source; return once; persist SHA-256 verifier and metadata; atomic consume. Entropy length `LOCK IN BATCH`. | IVS-05 | High-entropy token verification needs no reusable plaintext or password work factor. |
+| ID-07 | Pairing secret | `LOCKED`: generate 32 CSPRNG bytes (256 bits), encode as 43-character unpadded Base64URL, return once, persist only the lowercase 64-character SHA-256 verifier plus metadata, and consume atomically. Five-minute expiry and single-use/revocation semantics remain unchanged. | IVS-05 | High-entropy machine-transferred token verification needs no reusable plaintext or password work factor. |
 | ID-08 | Command idempotency | `LOCKED`: unique `(ClassroomSessionId, CommandId)` record with original request identity, participant context, and resulting Revision. | IVS-02/06 | Accepted outcomes must survive restart and uncertain acknowledgement. |
 | ID-09 | Classroom authority | `LOCKED`: persist selected LessonVersion, lifecycle, current position, and session-scoped monotonic Revision. Initial/increment mechanics `LOCK IN BATCH`, not client guarantees. | IVS-02/04/06 | Preserves one authority and the Revision/position distinction. |
 | ID-10 | Display projection | `LOCKED`: derive from Classroom Session + immutable LessonVersion; no second mutable persisted projection. | IVS-07 | Prevents divergent truths. |
@@ -268,18 +268,49 @@ classroom/{domain,application/port/in,application/port/out,
   Production never accepts mock-auth headers/test identity shortcuts.
 - Teacher cookie: opaque `__Host-penatika-session`, `Secure`, `HttpOnly`,
   `Path=/`, no `Domain`, `SameSite=Strict` for the same-origin slice; persist
-  only verifier; rotate after authentication; validate account, expiry, and
-  revocation.
+  only the lowercase 64-character SHA-256 verifier for a credential generated
+  from exactly 32 CSPRNG bytes (256 bits) and encoded as 43-character unpadded
+  Base64URL; rotate after authentication.
+- Teacher session idle expiry is 30 minutes and slides only from qualifying
+  successful authenticated Teacher application activity. Absolute expiry is
+  fixed at eight hours from creation and never slides. A session is unusable
+  when revoked, its TeacherAccount is not active, or current server time is at
+  or after either expiry. Client-provided timestamps never extend authority.
+  Static assets, health/readiness probes, anonymous requests, failed
+  authentication, rejected malformed requests, passive Display/SSE heartbeat,
+  and unrelated keep-alive polling do not qualify as Teacher activity. Any
+  idle refresh remains capped by the fixed absolute expiry.
 - Teacher CSRF: session-bound synchronizer token from `GET /api/teacher-session`,
-  sent in `X-Penatika-CSRF`, combined with strict origin/CORS policy.
+  generated from exactly 32 CSPRNG bytes (256 bits), encoded as 43-character
+  unpadded Base64URL, and persisted only as a lowercase 64-character SHA-256
+  verifier. It is unique to the Teacher session, rotates with session
+  replacement/rotation, is exposed raw only through that authenticated
+  contract-approved bootstrap boundary, and is returned in
+  `X-Penatika-CSRF`. It never enters URLs/query strings or logs. Combine it
+  with strict origin/CORS policy.
 - Participant cookie: protected `__Host-penatika-participant`, verifier-only,
-  bound to one session/role. Controller additionally requires active Teacher
-  account/session/ownership. Display gets no Teacher authority.
+  bound to one session/role, using the same 32-byte/256-bit CSPRNG,
+  43-character unpadded Base64URL, and lowercase 64-character SHA-256 verifier
+  baseline. Controller additionally requires active Teacher
+  account/session/ownership. Display gets no Teacher authority. OIQ-03 still
+  owns participant-session lifetime.
 - Display acknowledgement requires `X-Penatika-Display-Intent: synchronize`
   plus strict origin policy.
-- Pairing token is cryptographically generated, returned once with `no-store`,
-  never logged, stored as SHA-256 verifier, and expires exactly five minutes
-  from injected `Clock`.
+- Pairing token is a machine-transferred credential generated from exactly 32
+  CSPRNG bytes (256 bits), encoded as 43-character unpadded Base64URL, returned
+  once with `no-store`, never logged, and stored only as a lowercase
+  64-character SHA-256 verifier. It expires exactly five minutes from injected
+  `Clock` and retains existing single-use/revocation semantics. Do not
+  introduce a human-entered short pairing code without a separate reviewed
+  guessing/rate/attempt-control design.
+- Production security-sensitive randomness uses `java.security.SecureRandom`
+  behind module-owned application boundaries; deterministic test fakes are
+  permitted. Do not introduce a global random/security utility or substitute
+  `java.util.Random`, timestamps, UUID text, predictable counters, or
+  frontend-generated authoritative secrets.
+- OIDC `state`, `nonce`, and PKCE verifier remain ephemeral, transaction-
+  specific, cryptographically secure values; PKCE uses S256. They are not
+  persisted in V001 or converted into browser-session credentials.
 
 ## 12. Transaction and Idempotency Strategy
 
@@ -392,7 +423,7 @@ broader applicable validation.
 - **Inputs:** ADR-0011, OpenAPI security, Threat Model/security standard.
 - **Allowed:** Identity/bootstrap security. **Forbidden:** provider selection,
   passwords, auto-provisioning, Classroom behavior.
-- **Prerequisites:** IVS-02 and resolved lifetime/entropy questions.
+- **Prerequisites:** IVS-02 COMPLETE; OIQ-01 and OIQ-02 resolved.
 - **Tests/completion:** login, rotation/revocation/expiry, disabled account,
   cookies/CSRF/HTTP/PostgreSQL; real provider-neutral session works.
 
@@ -414,7 +445,8 @@ broader applicable validation.
 - **Inputs:** pairing/authority requirements and contracts.
 - **Allowed:** Pairing/participant authority. **Forbidden:** replacement API,
   command, SSE.
-- **Prerequisites:** IVS-03/04 and resolved secret/participant lifetime questions.
+- **Prerequisites:** IVS-03/04 and resolved OIQ-03 participant-session lifetime;
+  OIQ-02 secret entropy/encoding is already resolved.
 - **Tests/completion:** five-minute expiry, secrets, concurrency, replay,
   revocation, role/owner/session/slot/CSRF/non-disclosure; roles pair either order.
 
@@ -476,14 +508,16 @@ broader applicable validation.
 
 | ID | Question | Why | Owner | Resolution Path | Classification |
 |---|---|---|---|---|---|
-| OIQ-01 | Teacher session idle/absolute lifetimes? | ADR-0011 requires bounded values but defines no numbers. | IVS-03 | Product owner/security review records explicit values; no silent defaults. | Blocks IVS-03, not IVS-02 |
-| OIQ-02 | Minimum entropy/encoded lengths for Teacher, participant, PairingGrant, and CSRF secrets? | Credential generation/validation needs reviewed numeric policy. | IVS-03/05 | Security review selects current-guidance values in owning implementation/config docs. | Blocks IVS-03/05, not IVS-02 |
-| OIQ-03 | Independent participant-session expiry beyond revocation/session lifecycle? | Contract leaves lifetime open; arbitrary persistence weakens posture. | IVS-05 | Select browser-session/lifecycle scope or bounded absolute expiry. | Blocks IVS-05, not IVS-02 |
-| OIQ-04 | Display SSE heartbeat interval/dead timeout? | ADR-0012 requires heartbeat behavior but defers numbers. | IVS-08 | Reliability/security review chooses configurable values; tune later with evidence. | Blocks IVS-08, not IVS-02 |
+| OIQ-01 | Teacher session idle/absolute lifetimes? | `RESOLVED`: 30-minute sliding idle timeout and fixed 8-hour absolute timeout from session creation, with the server-authority and qualifying-activity semantics in §11. | IVS-03 | Human-reviewed security decision recorded in this implementation plan. | RESOLVED; no longer blocks IVS-03 |
+| OIQ-02 | Minimum entropy/encoded lengths for Teacher, participant, PairingGrant, and CSRF secrets? | `RESOLVED`: each uses exactly 32 CSPRNG bytes (256 bits), encoded as 43-character unpadded Base64URL; persistence stores only a lowercase 64-character SHA-256 verifier. | IVS-03/05 | Human-reviewed common first-slice credential baseline recorded in §11; OIDC transaction values remain ephemeral. | RESOLVED; no longer blocks IVS-03/05 |
+| OIQ-03 | Independent participant-session expiry beyond revocation/session lifecycle? | Contract leaves lifetime open; arbitrary persistence weakens posture. | IVS-05 | Select browser-session/lifecycle scope or bounded absolute expiry. | UNRESOLVED; blocks IVS-05 |
+| OIQ-04 | Display SSE heartbeat interval/dead timeout? | ADR-0012 requires heartbeat behavior but defers numbers. | IVS-08 | Reliability/security review chooses configurable values; tune later with evidence. | UNRESOLVED; blocks IVS-08 |
 
-No question blocks IVS-02. Exact columns, query shapes, initial Revision,
-internal increment, Java class names, and validator packaging are normal
-owning-batch decisions when contracts/invariants remain intact.
+OIQ-01 and OIQ-02 are resolved, so the IVS-03 security decision gate is clear.
+OIQ-03 remains unresolved and blocks IVS-05; OIQ-04 remains unresolved and
+blocks IVS-08. Exact query shapes, initial Revision, internal increment, Java
+class names, and validator packaging are normal owning-batch decisions when
+contracts/invariants remain intact.
 
 ## 18. Checkpoint and Merge Policy
 

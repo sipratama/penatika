@@ -23,10 +23,10 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.39 |
+| Version | 0.40 |
 | Last Updated | 2026-09-10 |
 | Current Phase | Application Implementation — Active |
-| Implementation State | IVS-02 first-slice product persistence is implemented and ready for review; production application behavior remains not started and IVS-03 is pending |
+| Implementation State | IVS-02 is accepted and complete; the OIQ-01/OIQ-02 security decision gate is resolved and IVS-03 is ready to execute, but no IVS-03 runtime implementation has started |
 | Product Owner | sipratama |
 
 The final product-baseline consistency audit passed before the Architecture
@@ -83,8 +83,9 @@ Foundation handoff checkpoint was created.
 | Source Scaffolding merge to `main` | COMPLETE | merge commit `49805720f79941dc967280fc0411ac78d2fe06e8` |
 | Application implementation | ACTIVE | [First Protected Vertical Slice Implementation Plan](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md) |
 | IVS-01 First Vertical Slice Implementation Plan | COMPLETE | [First Protected Vertical Slice Implementation Plan](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md) |
-| IVS-02 First-Slice Physical Schema + Persistence Contracts | READY FOR REVIEW | V001, module-owned ports/adapters, deterministic test fixtures, and PostgreSQL constraint/concurrency evidence implemented; human review pending |
-| Remaining IVS batches | PENDING | IVS-03 through IVS-10 in the implementation plan |
+| IVS-02 First-Slice Physical Schema + Persistence Contracts | COMPLETE | V001, module-owned ports/adapters, deterministic test fixtures, and PostgreSQL constraint/concurrency evidence accepted after human review |
+| IVS-03 Teacher Identity + Backend Browser Session Runtime | READY TO EXECUTE | IVS-02 is complete and OIQ-01/OIQ-02 lifetime and credential-generation decisions are resolved; runtime implementation has not started |
+| Remaining IVS batches | PENDING | IVS-04 through IVS-10 in the implementation plan |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
 | Commercial launch | PENDING | [BUSINESS_MODEL.md](./00_product/BUSINESS_MODEL.md) launch gates |
@@ -217,9 +218,11 @@ workstream. [IVS-01](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.m
 has reconstructed the locked slice, frozen implementation sequencing, and
 routed IVS-02 as **First-Slice Physical Schema + Persistence Contracts**.
 
-IVS-02 product persistence is implemented and ready for human review without
-HTTP, security/OIDC runtime, frontend, contract, ADR, or checkpoint changes.
-Production application behavior has not started; IVS-03 remains not started.
+IVS-02 product persistence is accepted and complete. The OIQ-01 Teacher-session
+lifetime and OIQ-02 security-sensitive credential generation decisions are
+resolved in the implementation plan, so IVS-03 is ready to execute. No
+security/OIDC runtime, HTTP behavior, frontend, contract, ADR, or checkpoint
+change has started for IVS-03.
 `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
@@ -270,8 +273,9 @@ reviewed SS-06 evidence, and the merge-readiness boundary for
 `feat/source-scaffolding`. Its pre-merge wording remains historically correct;
 the subsequent merge is recorded by `PROJECT_STATUS.md` and merge commit
 `49805720f79941dc967280fc0411ac78d2fe06e8`. Application Implementation is
-active; IVS-02 product persistence is ready for review, runtime product
-behavior has not started, and IVS-03 remains pending.
+active; IVS-02 product persistence is accepted and complete, the OIQ-01/OIQ-02
+security decision gate is resolved, and IVS-03 is ready to execute. Runtime
+product behavior has not started.
 
 The previous [Contract Foundation Checkpoint — Complete](./checkpoints/2026-09-09-contract-foundation-complete.md)
 remains immutable and historically correct. Its subsequent merge is recorded

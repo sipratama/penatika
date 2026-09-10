@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.7` |
-| Last Updated | `2026-09-08` |
+| Version | `0.8` |
+| Last Updated | `2026-09-10` |
 | Review Trigger | Identity, provider, contract, deployment, retention, or student-data decisions |
 
 ## 1. Scope
@@ -197,9 +197,11 @@ Realtime credential carriage and reconnect protocol are resolved by
 (SSE push reusing this identity model; no new realtime-specific credential).
 [ADR-0014](../02_architecture/adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
 selects PostgreSQL as the initial authoritative persistence for revocable
-browser/session security state; the concrete OIDC provider, exact physical
-session table/schema, exact session timeouts, cookie/path/header names, and
-CSRF mechanism remain implementation or deployment decisions.
+browser/session security state. The first-slice Teacher-session lifetime and
+security-sensitive credential baseline is frozen in the
+[First Protected Vertical Slice Implementation Plan](./FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md).
+The concrete OIDC provider and exact cookie/path/header and CSRF implementation
+details remain implementation or deployment decisions.
 
 ## 9. External Provider Review
 
@@ -234,8 +236,7 @@ Before selecting AI or speech providers, evaluate:
 ## 11. Open Security and Privacy Decisions
 
 - Concrete OIDC provider and its privacy, operational, logout, and revocation capabilities.
-- Exact browser-session idle and absolute timeouts.
-- Physical browser/participant session store.
+- Independent participant-session expiry beyond revocation/session lifecycle (OIQ-03).
 - Exact cookie name/path, transient OIDC transaction mechanism, and CSRF implementation/header names.
 - Future account-linking or identity-recovery UX if introduced.
 - Technical retention enforcement and physical purge evidence.
@@ -279,6 +280,7 @@ Review this threat model before:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.8` | `2026-09-10` | Record the resolved first-slice Teacher-session lifetime and credential-generation gate by reference to the implementation plan; retain participant-session lifetime as open | Codex |
 | `0.7` | `2026-09-08` | Add deployment threats/mitigations (public database/backend exposure, SSH/CI credential leakage, secret handling, backup boundary, cross-environment leakage, patch discipline, Docker socket, disk/log exposure, plain HTTP, artifact integrity, provider outage/single-host loss) for the portable single-Linux-VPS MVP/pilot baseline (ADR-0019) | Claude |
 | `0.6` | `2026-09-07` | Add AI-gateway threats/mitigations (privacy routing, provider fallback, server-controlled routing, scope abuse, validation shopping, credential exposure) for ADR-0017 | Claude |
 | `0.5` | `2026-09-07` | Add Mathematics-validator threats/mitigations (parser safety, floating-point, staleness, AI self-evaluation) for ADR-0016 | Claude |

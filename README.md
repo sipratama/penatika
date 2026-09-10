@@ -78,7 +78,7 @@ Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architect
 
 Project Discovery sudah selesai. Inisialisasi product baseline Q-01–Q-07 / OPD-001–OPD-007 sudah selesai; tidak ada unresolved product decision dari set awal.
 
-Repository kini memiliki fondasi Source Scaffolding yang lengkap dan tervalidasi: satu backend Java 21/Spring Boot/Maven, shell Teacher dan Classroom Display React/TypeScript/Vite yang terpisah, architecture dan contract validation harness, generated transport declarations yang role-scoped, typed configuration, serta mekanisme PostgreSQL/Flyway/JdbcClient yang disabled by default. Source Scaffolding sudah COMPLETE / MERGED; Application Implementation kini ACTIVE, dan IVS-02 sudah menyediakan physical schema first protected slice serta persistence contract/adapter per modul untuk human review. Runtime HTTP behavior, security/auth implementation, deployment configuration, dan CI/CD belum dimulai.
+Repository kini memiliki fondasi Source Scaffolding yang lengkap dan tervalidasi: satu backend Java 21/Spring Boot/Maven, shell Teacher dan Classroom Display React/TypeScript/Vite yang terpisah, architecture dan contract validation harness, generated transport declarations yang role-scoped, typed configuration, serta mekanisme PostgreSQL/Flyway/JdbcClient yang disabled by default. Source Scaffolding sudah COMPLETE / MERGED; Application Implementation kini ACTIVE, IVS-02 sudah ACCEPTED / COMPLETE, dan security decision gate OIQ-01/OIQ-02 sudah resolved sehingga IVS-03 READY TO EXECUTE. Runtime HTTP behavior dan security/auth implementation IVS-03 belum dimulai; deployment configuration dan CI/CD juga belum dimulai.
 
 ## Documentation Map
 
