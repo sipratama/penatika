@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.8` |
+| Version | `0.9` |
 | Last Updated | `2026-09-10` |
 | Review Trigger | Identity, provider, contract, deployment, retention, or student-data decisions |
 
@@ -172,17 +172,22 @@ exposed to ordinary application JavaScript or browser storage. Penatika stores
 no local teacher passwords for MVP and does not automatically link accounts by
 email.
 
-Teacher Web uses an opaque revocable backend session cookie. The authenticated
-cookie is `Secure`, `HttpOnly`, narrowly scoped, and host-only where practical;
-`SameSite=Strict` is preferred when compatible with the selected deployment.
-The session identifier rotates after authentication and sessions have bounded
-idle and absolute lifetimes. Local logout and server revocation terminate local
-authority even when upstream logout is unavailable.
+Teacher Web uses the opaque revocable `__Host-penatika-session` backend cookie
+with `Secure`, `HttpOnly`, `Path=/`, no `Domain`, and `SameSite=Strict`. Only its
+SHA-256 verifier is stored in PostgreSQL. The session identifier rotates after
+authentication, has a 30-minute sliding idle lifetime and fixed eight-hour
+absolute lifetime, and remains independent of transient `JSESSIONID`/OIDC
+framework state. Server revocation terminates local authority even when
+upstream logout is unavailable.
 
-Cookie-authenticated mutations require explicit CSRF protection. SameSite is
-defense in depth rather than the whole strategy. Credentialed cross-origin
-deployment requires explicit trusted-origin allowlists and never wildcard
-CORS.
+Cookie-authenticated mutations require explicit `X-Penatika-CSRF` protection.
+IVS-03 stores only a session-bound SHA-256 CSRF verifier and recovers the raw
+bootstrap material through the separate HttpOnly
+`__Host-penatika-csrf` cookie with the same secure host-only attributes. That
+recovery cookie is neither authentication nor accepted request-CSRF proof.
+SameSite is defense in depth rather than the whole strategy. Credentialed
+cross-origin deployment requires explicit trusted-origin allowlists and never
+wildcard CORS.
 
 Controller authority requires an authenticated active `TeacherAccount`,
 object/session authorization, and an active `TEACHER_CONTROLLER` participant.
@@ -200,8 +205,10 @@ selects PostgreSQL as the initial authoritative persistence for revocable
 browser/session security state. The first-slice Teacher-session lifetime and
 security-sensitive credential baseline is frozen in the
 [First Protected Vertical Slice Implementation Plan](./FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md).
-The concrete OIDC provider and exact cookie/path/header and CSRF implementation
-details remain implementation or deployment decisions.
+The concrete production OIDC provider remains a deployment decision. IVS-03
+automated evidence covers Authorization Code initiation, state, nonce, PKCE
+`S256`, existing-account resolution, transient-framework-authority isolation,
+cookies, session expiry/activity/revocation, and CSRF recovery/verification.
 
 ## 9. External Provider Review
 
@@ -237,7 +244,6 @@ Before selecting AI or speech providers, evaluate:
 
 - Concrete OIDC provider and its privacy, operational, logout, and revocation capabilities.
 - Independent participant-session expiry beyond revocation/session lifecycle (OIQ-03).
-- Exact cookie name/path, transient OIDC transaction mechanism, and CSRF implementation/header names.
 - Future account-linking or identity-recovery UX if introduced.
 - Technical retention enforcement and physical purge evidence.
 - Backup expiry evidence.
@@ -280,6 +286,7 @@ Review this threat model before:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.9` | `2026-09-10` | Record implemented IVS-03 cookie, backend-session authority, transient OIDC isolation, and CSRF recovery/verification controls and evidence | Codex |
 | `0.8` | `2026-09-10` | Record the resolved first-slice Teacher-session lifetime and credential-generation gate by reference to the implementation plan; retain participant-session lifetime as open | Codex |
 | `0.7` | `2026-09-08` | Add deployment threats/mitigations (public database/backend exposure, SSH/CI credential leakage, secret handling, backup boundary, cross-environment leakage, patch discipline, Docker socket, disk/log exposure, plain HTTP, artifact integrity, provider outage/single-host loss) for the portable single-Linux-VPS MVP/pilot baseline (ADR-0019) | Claude |
 | `0.6` | `2026-09-07` | Add AI-gateway threats/mitigations (privacy routing, provider fallback, server-controlled routing, scope abuse, validation shopping, credential exposure) for ADR-0017 | Claude |

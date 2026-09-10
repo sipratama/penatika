@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 
 @SpringBootTest
 class PenatikaApplicationTests {
@@ -22,5 +23,6 @@ class PenatikaApplicationTests {
         assertThat(applicationContext.getBeansOfType(DataSource.class)).isEmpty();
         assertThat(applicationContext.getBeansOfType(JdbcClient.class)).isEmpty();
         assertThat(applicationContext.getBeansOfType(Flyway.class)).isEmpty();
+        assertThat(applicationContext.getBeansOfType(ClientRegistrationRepository.class)).isEmpty();
     }
 }

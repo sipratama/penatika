@@ -2,9 +2,15 @@ package io.github.sipratama.penatika.bootstrap.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -19,12 +25,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
+
+import com.jayway.jsonpath.JsonPath;
 
 import io.github.sipratama.penatika.classroom.application.port.out.AcceptedCommandOutcomePersistencePort;
 import io.github.sipratama.penatika.classroom.application.port.out.ClassroomSessionPersistencePort;
@@ -40,10 +59,17 @@ import io.github.sipratama.penatika.classroom.fixtures.PairingGrantFixtureBuilde
 import io.github.sipratama.penatika.identity.application.port.out.ParticipantSessionPersistencePort;
 import io.github.sipratama.penatika.identity.application.port.out.TeacherBrowserSessionPersistencePort;
 import io.github.sipratama.penatika.identity.application.port.out.TeacherIdentityPersistencePort;
+import io.github.sipratama.penatika.identity.adapter.in.security.TeacherSessionCookies;
+import io.github.sipratama.penatika.identity.adapter.out.security.Sha256SecurityTokenVerifier;
+import io.github.sipratama.penatika.identity.application.model.RawSecurityToken;
 import io.github.sipratama.penatika.identity.domain.ExternalIdentityLink;
+import io.github.sipratama.penatika.identity.domain.ExternalIdentityLinkId;
 import io.github.sipratama.penatika.identity.domain.ParticipantSession;
 import io.github.sipratama.penatika.identity.domain.TeacherAccount;
+import io.github.sipratama.penatika.identity.domain.TeacherAccountId;
+import io.github.sipratama.penatika.identity.domain.TeacherAccountStatus;
 import io.github.sipratama.penatika.identity.domain.TeacherBrowserSession;
+import io.github.sipratama.penatika.identity.domain.TeacherBrowserSessionId;
 import io.github.sipratama.penatika.identity.fixtures.ExternalIdentityLinkFixtureBuilder;
 import io.github.sipratama.penatika.identity.fixtures.ParticipantSessionFixtureBuilder;
 import io.github.sipratama.penatika.identity.fixtures.TeacherAccountFixtureBuilder;
@@ -77,6 +103,11 @@ class FirstProtectedSlicePersistenceIT {
     @Autowired private ClassroomSessionPersistencePort classroomSessions;
     @Autowired private PairingGrantPersistencePort pairingGrants;
     @Autowired private AcceptedCommandOutcomePersistencePort commandOutcomes;
+    @Autowired private WebApplicationContext applicationContext;
+    @Autowired private Clock clock;
+
+    private final Sha256SecurityTokenVerifier tokenVerifier = new Sha256SecurityTokenVerifier();
+    private MockMvc mockMvc;
 
     @BeforeEach
     void cleanProductTables() {
@@ -96,6 +127,9 @@ class FirstProtectedSlicePersistenceIT {
                         CASCADE
                         """)
                 .update();
+        mockMvc = MockMvcBuilders.webAppContextSetup(applicationContext)
+                .apply(springSecurity())
+                .build();
     }
 
     @Test
@@ -384,6 +418,312 @@ class FirstProtectedSlicePersistenceIT {
         assertThat(updated.revision()).isEqualTo(new Revision(1));
     }
 
+    @Test
+    void teacherSessionHttpContractRefreshesActivityAndRecoversCsrfMaterial() throws Exception {
+        TeacherAccount teacher = createTeacher(
+                "10000000-0000-0000-0000-000000000201",
+                "10000000-0000-0000-0000-000000000202",
+                "http-subject",
+                TeacherAccountStatus.ACTIVE);
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+        RawSecurityToken sessionToken = rawToken('H');
+        RawSecurityToken csrfToken = rawToken('I');
+        TeacherBrowserSession session = runtimeSession(
+                "10000000-0000-0000-0000-000000000203",
+                teacher,
+                sessionToken,
+                csrfToken,
+                now.minusSeconds(300),
+                now.minusSeconds(120),
+                now.plusSeconds(600),
+                now.plusSeconds(3600),
+                null);
+        browserSessions.create(session);
+
+        MvcResult bootstrap = mockMvc.perform(get("/api/teacher-session")
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, sessionToken),
+                                cookie(TeacherSessionCookies.CSRF_RECOVERY_COOKIE_NAME, csrfToken)))
+                .andReturn();
+
+        assertThat(bootstrap.getResponse().getStatus()).isEqualTo(200);
+        assertThat(bootstrap.getResponse().getContentType()).isEqualTo("application/json");
+        assertThat(bootstrap.getResponse().getHeader("Cache-Control")).isEqualTo("no-store");
+        assertThat(bootstrap.getResponse().getContentAsString())
+                .isEqualTo("{\"csrfToken\":\"" + csrfToken.expose() + "\"}");
+        assertThat(bootstrap.getResponse().getHeaders("Set-Cookie")).isEmpty();
+
+        TeacherBrowserSession refreshed = browserSessions.findById(session.id()).orElseThrow();
+        assertThat(refreshed.lastActiveAt()).isAfter(session.lastActiveAt());
+        assertThat(refreshed.absoluteExpiresAt()).isEqualTo(session.absoluteExpiresAt());
+        assertThat(refreshed.idleExpiresAt())
+                .isEqualTo(refreshed.lastActiveAt().plusSeconds(30 * 60));
+
+        MvcResult repeated = mockMvc.perform(get("/api/teacher-session")
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, sessionToken),
+                                cookie(TeacherSessionCookies.CSRF_RECOVERY_COOKIE_NAME, csrfToken)))
+                .andReturn();
+        assertThat(repeated.getResponse().getContentAsString())
+                .isEqualTo("{\"csrfToken\":\"" + csrfToken.expose() + "\"}");
+        assertThat(repeated.getResponse().getHeaders("Set-Cookie")).isEmpty();
+
+        RawSecurityToken recoverySessionToken = rawToken('J');
+        RawSecurityToken originalRecoveryCsrf = rawToken('K');
+        TeacherBrowserSession recoverySession = runtimeSession(
+                "10000000-0000-0000-0000-000000000204",
+                teacher,
+                recoverySessionToken,
+                originalRecoveryCsrf,
+                now.minusSeconds(300),
+                now.minusSeconds(120),
+                now.plusSeconds(600),
+                now.plusSeconds(3600),
+                null);
+        browserSessions.create(recoverySession);
+
+        MvcResult recovered = mockMvc.perform(get("/api/teacher-session")
+                        .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, recoverySessionToken)))
+                .andReturn();
+        String recoveredCsrf = JsonPath.read(recovered.getResponse().getContentAsString(), "$.csrfToken");
+        assertThat(recovered.getResponse().getStatus()).isEqualTo(200);
+        assertThat(recoveredCsrf)
+                .hasSize(43)
+                .matches("[A-Za-z0-9_-]{43}")
+                .isNotEqualTo(originalRecoveryCsrf.expose())
+                .isNotEqualTo(recoverySessionToken.expose());
+        assertThat(browserSessions.findByCredentialVerifier(tokenVerifier.verifierFor(recoverySessionToken)))
+                .isPresent();
+        assertThat(browserSessions.findById(recoverySession.id()).orElseThrow().csrfVerifier())
+                .isEqualTo(tokenVerifier.verifierFor(RawSecurityToken.fromEncoded(recoveredCsrf)));
+        assertRecoveryCookie(recovered, recoveredCsrf);
+
+        MvcResult stableRecovery = mockMvc.perform(get("/api/teacher-session")
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, recoverySessionToken),
+                                new jakarta.servlet.http.Cookie(
+                                        TeacherSessionCookies.CSRF_RECOVERY_COOKIE_NAME, recoveredCsrf)))
+                .andReturn();
+        assertThat(stableRecovery.getResponse().getContentAsString())
+                .isEqualTo("{\"csrfToken\":\"" + recoveredCsrf + "\"}");
+        assertThat(stableRecovery.getResponse().getHeaders("Set-Cookie")).isEmpty();
+    }
+
+    @Test
+    void everyInvalidOrNonPenatikaAuthorityGetsTheSameNonDisclosing401() throws Exception {
+        TeacherAccount teacher = createTeacher(
+                "10000000-0000-0000-0000-000000000211",
+                "10000000-0000-0000-0000-000000000212",
+                "invalid-session-subject",
+                TeacherAccountStatus.ACTIVE);
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+
+        assertTeacherSessionRequired(get("/api/teacher-session"));
+        assertTeacherSessionRequired(get("/api/teacher-session")
+                .cookie(new jakarta.servlet.http.Cookie(
+                        TeacherSessionCookies.SESSION_COOKIE_NAME, "malformed")));
+        assertTeacherSessionRequired(get("/api/teacher-session")
+                .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, rawToken('U'))));
+        assertTeacherSessionRequired(get("/api/teacher-session")
+                .cookie(cookie(TeacherSessionCookies.CSRF_RECOVERY_COOKIE_NAME, rawToken('V'))));
+        assertTeacherSessionRequired(get("/api/teacher-session")
+                .header("Authorization", "Bearer upstream-oauth-token"));
+
+        MockHttpSession oidcFrameworkSession = new MockHttpSession();
+        oidcFrameworkSession.setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                new SecurityContextImpl(oidcAuthentication(now)));
+        assertTeacherSessionRequired(get("/api/teacher-session").session(oidcFrameworkSession));
+
+        RawSecurityToken revokedToken = rawToken('A');
+        browserSessions.create(runtimeSession(
+                "10000000-0000-0000-0000-000000000213",
+                teacher,
+                revokedToken,
+                rawToken('B'),
+                now.minusSeconds(3600),
+                now.minusSeconds(300),
+                now.plusSeconds(600),
+                now.plusSeconds(3600),
+                now.minusSeconds(1)));
+        assertTeacherSessionRequired(get("/api/teacher-session")
+                .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, revokedToken)));
+
+        RawSecurityToken idleExpiredToken = rawToken('C');
+        browserSessions.create(runtimeSession(
+                "10000000-0000-0000-0000-000000000214",
+                teacher,
+                idleExpiredToken,
+                rawToken('D'),
+                now.minusSeconds(3600),
+                now.minusSeconds(1800),
+                now.minusSeconds(1),
+                now.plusSeconds(3600),
+                null));
+        assertTeacherSessionRequired(get("/api/teacher-session")
+                .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, idleExpiredToken)));
+
+        RawSecurityToken absoluteExpiredToken = rawToken('E');
+        browserSessions.create(runtimeSession(
+                "10000000-0000-0000-0000-000000000215",
+                teacher,
+                absoluteExpiredToken,
+                rawToken('F'),
+                now.minusSeconds(9 * 3600),
+                now.minusSeconds(300),
+                now.plusSeconds(600),
+                now.minusSeconds(1),
+                null));
+        assertTeacherSessionRequired(get("/api/teacher-session")
+                .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, absoluteExpiredToken)));
+
+        RawSecurityToken inactiveToken = rawToken('G');
+        browserSessions.create(runtimeSession(
+                "10000000-0000-0000-0000-000000000216",
+                teacher,
+                inactiveToken,
+                rawToken('L'),
+                now.minusSeconds(3600),
+                now.minusSeconds(300),
+                now.plusSeconds(600),
+                now.plusSeconds(3600),
+                null));
+        jdbcClient.sql("UPDATE identity_teacher_account SET status = 'DISABLED' WHERE id = :id")
+                .param("id", teacher.id().value())
+                .update();
+        assertTeacherSessionRequired(get("/api/teacher-session")
+                .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, inactiveToken)));
+    }
+
+    @Test
+    void teacherSessionPersistenceMakesRotationExpiryActivityRevocationAndCsrfCasDurable() {
+        TeacherAccount firstTeacher = createTeacher(
+                "10000000-0000-0000-0000-000000000221",
+                "10000000-0000-0000-0000-000000000222",
+                "first-rotation-subject",
+                TeacherAccountStatus.ACTIVE);
+        TeacherAccount secondTeacher = createTeacher(
+                "10000000-0000-0000-0000-000000000223",
+                "10000000-0000-0000-0000-000000000224",
+                "second-rotation-subject",
+                TeacherAccountStatus.ACTIVE);
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+        RawSecurityToken oldCredential = rawToken('M');
+        TeacherBrowserSession oldSession = runtimeSession(
+                "10000000-0000-0000-0000-000000000225",
+                firstTeacher,
+                oldCredential,
+                rawToken('N'),
+                now.minusSeconds(3600),
+                now.minusSeconds(300),
+                now.plusSeconds(600),
+                now.plusSeconds(3600),
+                null);
+        browserSessions.create(oldSession);
+        TeacherBrowserSession independentSession = runtimeSession(
+                "10000000-0000-0000-0000-000000000228",
+                firstTeacher,
+                rawToken('Z'),
+                rawToken('0'),
+                now.minusSeconds(1800),
+                now.minusSeconds(120),
+                now.plusSeconds(600),
+                now.plusSeconds(3600),
+                null);
+        browserSessions.create(independentSession);
+
+        RawSecurityToken newCredential = rawToken('P');
+        RawSecurityToken originalCsrf = rawToken('Q');
+        TeacherBrowserSession replacement = runtimeSession(
+                "10000000-0000-0000-0000-000000000226",
+                secondTeacher,
+                newCredential,
+                originalCsrf,
+                now.minusSeconds(60),
+                now.minusSeconds(60),
+                now.plusSeconds(600),
+                now.plusSeconds(1200),
+                null);
+        browserSessions.createReplacing(
+                replacement, Optional.of(tokenVerifier.verifierFor(oldCredential)), now);
+
+        assertThat(browserSessions.findByCredentialVerifier(tokenVerifier.verifierFor(newCredential)))
+                .contains(replacement);
+        assertThat(browserSessions.findByCredentialVerifier(tokenVerifier.verifierFor(oldCredential))
+                        .orElseThrow()
+                        .revokedAt())
+                .isEqualTo(now);
+        assertThat(browserSessions.findById(independentSession.id()).orElseThrow().revokedAt())
+                .isNull();
+        assertThat(jdbcClient.sql("""
+                        SELECT credential_verifier
+                        FROM identity_teacher_browser_session
+                        WHERE id = :id
+                        """)
+                .param("id", replacement.id().value())
+                .query(String.class)
+                .single()
+                .trim())
+                .isEqualTo(tokenVerifier.verifierFor(newCredential))
+                .isNotEqualTo(newCredential.expose());
+
+        assertThat(browserSessions.refreshActivity(
+                        replacement.id(), now, now.plusSeconds(30 * 60)))
+                .isTrue();
+        TeacherBrowserSession refreshed = browserSessions.findById(replacement.id()).orElseThrow();
+        assertThat(refreshed.lastActiveAt()).isEqualTo(now);
+        assertThat(refreshed.idleExpiresAt()).isEqualTo(replacement.absoluteExpiresAt());
+        assertThat(refreshed.absoluteExpiresAt()).isEqualTo(replacement.absoluteExpiresAt());
+        assertThat(browserSessions.refreshActivity(
+                        replacement.id(), now.minusSeconds(1), now.plusSeconds(60)))
+                .isFalse();
+
+        RawSecurityToken replacementCsrf = rawToken('R');
+        assertThat(browserSessions.replaceCsrfVerifierAndRefreshActivity(
+                        replacement.id(),
+                        tokenVerifier.verifierFor(originalCsrf),
+                        tokenVerifier.verifierFor(replacementCsrf),
+                        now.plusSeconds(1),
+                        replacement.absoluteExpiresAt()))
+                .isTrue();
+        assertThat(browserSessions.replaceCsrfVerifierAndRefreshActivity(
+                        replacement.id(),
+                        tokenVerifier.verifierFor(originalCsrf),
+                        tokenVerifier.verifierFor(rawToken('T')),
+                        now.plusSeconds(2),
+                        replacement.absoluteExpiresAt()))
+                .isFalse();
+        assertThat(browserSessions.findById(replacement.id()).orElseThrow().csrfVerifier())
+                .isEqualTo(tokenVerifier.verifierFor(replacementCsrf));
+
+        assertThat(browserSessions.revoke(replacement.id(), now.plusSeconds(3))).isTrue();
+        assertThat(browserSessions.refreshActivity(
+                        replacement.id(), now.plusSeconds(4), replacement.absoluteExpiresAt()))
+                .isFalse();
+        assertThat(browserSessions.replaceCsrfVerifierAndRefreshActivity(
+                        replacement.id(),
+                        tokenVerifier.verifierFor(replacementCsrf),
+                        tokenVerifier.verifierFor(rawToken('W')),
+                        now.plusSeconds(4),
+                        replacement.absoluteExpiresAt()))
+                .isFalse();
+
+        TeacherBrowserSession expired = runtimeSession(
+                "10000000-0000-0000-0000-000000000227",
+                secondTeacher,
+                rawToken('X'),
+                rawToken('Y'),
+                now.minusSeconds(3600),
+                now.minusSeconds(1800),
+                now.minusSeconds(1),
+                now.plusSeconds(3600),
+                null);
+        browserSessions.create(expired);
+        assertThat(browserSessions.refreshActivity(
+                        expired.id(), now, now.plusSeconds(1800)))
+                .isFalse();
+    }
+
     private Foundation createFoundation() {
         TeacherAccount teacher = new TeacherAccountFixtureBuilder().build();
         ExternalIdentityLink link = new ExternalIdentityLinkFixtureBuilder()
@@ -406,6 +746,89 @@ class FirstProtectedSlicePersistenceIT {
                 .build();
         classroomSessions.create(classroomSession);
         return new Foundation(teacher, link, browserSession, lessonFixture.version(), classroomSession);
+    }
+
+    private TeacherAccount createTeacher(
+            String teacherId,
+            String linkId,
+            String subject,
+            TeacherAccountStatus status) {
+        TeacherAccount teacher = new TeacherAccount(
+                new TeacherAccountId(UUID.fromString(teacherId)),
+                status,
+                Instant.parse("2026-01-01T00:00:00Z"));
+        ExternalIdentityLink link = new ExternalIdentityLink(
+                new ExternalIdentityLinkId(UUID.fromString(linkId)),
+                teacher.id(),
+                "https://identity.integration.test",
+                subject,
+                Instant.parse("2026-01-01T00:00:01Z"));
+        teacherIdentities.create(teacher, link);
+        return teacher;
+    }
+
+    private TeacherBrowserSession runtimeSession(
+            String id,
+            TeacherAccount teacher,
+            RawSecurityToken credential,
+            RawSecurityToken csrf,
+            Instant createdAt,
+            Instant lastActiveAt,
+            Instant idleExpiresAt,
+            Instant absoluteExpiresAt,
+            Instant revokedAt) {
+        return new TeacherBrowserSession(
+                new TeacherBrowserSessionId(UUID.fromString(id)),
+                teacher.id(),
+                tokenVerifier.verifierFor(credential),
+                tokenVerifier.verifierFor(csrf),
+                createdAt,
+                lastActiveAt,
+                idleExpiresAt,
+                absoluteExpiresAt,
+                revokedAt);
+    }
+
+    private void assertTeacherSessionRequired(MockHttpServletRequestBuilder request) throws Exception {
+        MvcResult result = mockMvc.perform(request).andReturn();
+        assertThat(result.getResponse().getStatus()).isEqualTo(401);
+        assertThat(result.getResponse().getContentType()).isEqualTo("application/problem+json");
+        assertThat(result.getResponse().getContentAsString()).isEqualTo(
+                "{\"type\":\"about:blank\",\"title\":\"Unauthorized\",\"status\":401,"
+                        + "\"detail\":\"An authenticated Teacher session is required.\","
+                        + "\"code\":\"TEACHER_SESSION_REQUIRED\"}");
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .hasSize(2)
+                .allSatisfy(header -> assertThat(header)
+                        .contains("Max-Age=0", "Secure", "HttpOnly", "Path=/", "SameSite=Strict")
+                        .doesNotContain("Domain="));
+    }
+
+    private static void assertRecoveryCookie(MvcResult result, String expectedValue) {
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .singleElement()
+                .satisfies(header -> assertThat(header)
+                        .startsWith(TeacherSessionCookies.CSRF_RECOVERY_COOKIE_NAME + "=" + expectedValue)
+                        .contains("Secure", "HttpOnly", "Path=/", "SameSite=Strict")
+                        .doesNotContain("Domain="));
+    }
+
+    private static jakarta.servlet.http.Cookie cookie(String name, RawSecurityToken token) {
+        return new jakarta.servlet.http.Cookie(name, token.expose());
+    }
+
+    private static RawSecurityToken rawToken(char character) {
+        return RawSecurityToken.fromEncoded(String.valueOf(character).repeat(43));
+    }
+
+    private static OAuth2AuthenticationToken oidcAuthentication(Instant now) {
+        OidcIdToken idToken = new OidcIdToken(
+                "upstream-id-token",
+                now.minusSeconds(30),
+                now.plusSeconds(300),
+                Map.of("iss", "https://identity.integration.test", "sub", "oidc-only-subject"));
+        DefaultOidcUser user = new DefaultOidcUser(List.of(), idToken);
+        return new OAuth2AuthenticationToken(user, user.getAuthorities(), "test");
     }
 
     private ParticipantSession controller(Foundation foundation, String id, String verifierCharacter) {
@@ -442,11 +865,11 @@ class FirstProtectedSlicePersistenceIT {
                     .toList();
             ready.await();
             start.countDown();
-            return futures.stream().map(FirstProtectedSlicePersistenceIT::get).toList();
+            return futures.stream().map(FirstProtectedSlicePersistenceIT::getFuture).toList();
         }
     }
 
-    private static <T> T get(Future<T> future) {
+    private static <T> T getFuture(Future<T> future) {
         try {
             return future.get();
         } catch (InterruptedException exception) {

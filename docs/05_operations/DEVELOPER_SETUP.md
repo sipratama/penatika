@@ -1,13 +1,13 @@
 # Developer Setup — Penatika
 
-> Active setup and validation baseline for the current Source Scaffolding phase.
+> Active setup and validation baseline for the Application Implementation phase.
 
 ## Metadata
 
 | Field | Value |
 |---|---|
 | Product | Penatika |
-| Status | Active Source Scaffolding setup |
+| Status | Active Application Implementation setup |
 | Last Updated | `2026-09-10` |
 
 ## 1. Current Repository State
@@ -25,9 +25,12 @@ Backend shell:
   default;
 - PostgreSQL 18.6 integration support through Testcontainers 2.0.5;
 - Spring JDBC/JdbcClient plus Flyway 13.5.0 infrastructure composition with
-  zero domain migrations;
+  accepted V001 first-slice schema and module-owned persistence adapters;
+- Spring Security OAuth2 Client with provider-neutral OIDC infrastructure;
+- PostgreSQL-authoritative opaque Teacher browser sessions, secure host-only
+  cookies, CSRF bootstrap/recovery, and `GET /api/teacher-session`;
 - one Maven project rooted at `backend/`;
-- no product endpoints or business implementation.
+- no Classroom Session, Pairing, command, SSE, or frontend product behavior yet.
 
 Frontend workspace:
 
@@ -50,9 +53,9 @@ Contract validation tooling:
 - deterministic role-scoped transport declarations generated with
   `openapi-typescript` 7.13.0.
 
-The repository still has no physical product database schema or versioned
-migration, module persistence adapter, product application behavior, OIDC
-implementation, or deployment configuration.
+The repository has no configured production OIDC provider, deployment
+configuration, or CI/CD. IVS-04 and later Classroom application behavior remain
+unimplemented.
 
 ## 2. Current Prerequisites
 
@@ -115,7 +118,8 @@ The equivalent repository-root command is:
 ```
 
 Both commands include the Spring context smoke test, production architecture
-fitness rules, typed configuration activation/failure tests, and negative
+fitness rules, typed configuration activation/failure tests, security-token and
+Teacher-session application tests, OIDC success-handler tests, and negative
 test-fixture proof that the rules detect invalid dependencies. They do not
 start PostgreSQL or require a container runtime.
 
@@ -139,10 +143,12 @@ From `backend/`, run:
 ```
 
 This runs the fast suite and the Maven Failsafe integration suite. The
-integration smoke uses Testcontainers with the exact
-`postgres:18.6-bookworm` image to prove DataSource connectivity, JdbcClient
-query execution, and Flyway operation with zero versioned Penatika domain
-migrations.
+integration suite uses Testcontainers with the exact
+`postgres:18.6-bookworm` image to prove DataSource/JdbcClient/Flyway V001,
+module persistence, Teacher-session HTTP authority, expiry/activity/revocation,
+and CSRF recovery behavior. It also proves provider-neutral OIDC authorization
+requests contain state, nonce, and PKCE `S256` using test-only registration
+metadata; no production provider is configured.
 
 A usable Docker-compatible runtime is required. On macOS with Podman, the
 current shell may need to expose the active Podman machine's Docker-compatible
@@ -262,16 +268,16 @@ authorize implementation. Material architecture decisions remain governed by
 
 ## 10. Open Work
 
-SS-06 has confirmed the complete Source Scaffolding baseline is handoff-ready.
-The final Source Scaffolding handoff checkpoint is next and has not yet been
-created. Physical product database schema/migrations, module persistence
-adapters, identity/session implementation, product behavior, deployment files,
-CI/CD, and backup implementation remain pending.
+Source Scaffolding and IVS-02 are complete. IVS-03 Teacher identity and backend
+browser-session runtime is READY FOR REVIEW. IVS-04 Classroom Session start,
+later product behavior, production OIDC provider selection/configuration,
+deployment files, CI/CD, and backup implementation remain pending.
 
 ## 11. Change Log
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-10` | Record IVS-03 provider-neutral OIDC, Teacher browser-session runtime, HTTP endpoint, and PostgreSQL/security validation commands | Codex |
 | `2026-09-10` | Record SS-06 handoff-ready setup status without adding product, deployment, or CI behavior | Codex |
 | `2026-09-09` | Establish safe typed backend configuration, disabled-by-default persistence, fast test behavior, and full PostgreSQL 18.6 Testcontainers/Flyway/JdbcClient verification | Codex |
 | `2026-09-09` | Establish SS-04 backend architecture, frontend boundary, contract validation, and deterministic transport-generation commands | Codex |

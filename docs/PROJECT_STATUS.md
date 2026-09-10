@@ -23,10 +23,10 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.40 |
+| Version | 0.41 |
 | Last Updated | 2026-09-10 |
 | Current Phase | Application Implementation — Active |
-| Implementation State | IVS-02 is accepted and complete; the OIQ-01/OIQ-02 security decision gate is resolved and IVS-03 is ready to execute, but no IVS-03 runtime implementation has started |
+| Implementation State | IVS-01 and IVS-02 are complete; IVS-03 Teacher identity and backend browser-session runtime is READY FOR REVIEW; IVS-04 has not started |
 | Product Owner | sipratama |
 
 The final product-baseline consistency audit passed before the Architecture
@@ -84,8 +84,8 @@ Foundation handoff checkpoint was created.
 | Application implementation | ACTIVE | [First Protected Vertical Slice Implementation Plan](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md) |
 | IVS-01 First Vertical Slice Implementation Plan | COMPLETE | [First Protected Vertical Slice Implementation Plan](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md) |
 | IVS-02 First-Slice Physical Schema + Persistence Contracts | COMPLETE | V001, module-owned ports/adapters, deterministic test fixtures, and PostgreSQL constraint/concurrency evidence accepted after human review |
-| IVS-03 Teacher Identity + Backend Browser Session Runtime | READY TO EXECUTE | IVS-02 is complete and OIQ-01/OIQ-02 lifetime and credential-generation decisions are resolved; runtime implementation has not started |
-| Remaining IVS batches | PENDING | IVS-04 through IVS-10 in the implementation plan |
+| IVS-03 Teacher Identity + Backend Browser Session Runtime | READY FOR REVIEW | Provider-neutral OIDC, existing-account resolution, PostgreSQL-authoritative Teacher sessions, secure cookies/CSRF bootstrap, and `GET /api/teacher-session` have automated unit, HTTP, and PostgreSQL evidence |
+| Remaining IVS batches | PENDING | IVS-04 through IVS-10 in the implementation plan; IVS-04 is NOT STARTED |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
 | Commercial launch | PENDING | [BUSINESS_MODEL.md](./00_product/BUSINESS_MODEL.md) launch gates |
@@ -218,11 +218,12 @@ workstream. [IVS-01](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.m
 has reconstructed the locked slice, frozen implementation sequencing, and
 routed IVS-02 as **First-Slice Physical Schema + Persistence Contracts**.
 
-IVS-02 product persistence is accepted and complete. The OIQ-01 Teacher-session
-lifetime and OIQ-02 security-sensitive credential generation decisions are
-resolved in the implementation plan, so IVS-03 is ready to execute. No
-security/OIDC runtime, HTTP behavior, frontend, contract, ADR, or checkpoint
-change has started for IVS-03.
+IVS-02 product persistence is accepted and complete. IVS-03 now implements the
+resolved OIQ-01 Teacher-session lifetime and OIQ-02 credential baseline through
+provider-neutral OIDC, existing-account resolution, durable opaque Teacher
+sessions, secure recovery cookies, and `GET /api/teacher-session`. IVS-03 is
+READY FOR REVIEW. IVS-04 is NOT STARTED; frontend, contracts, ADRs, and
+checkpoints were not changed for IVS-03.
 `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
@@ -233,7 +234,7 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 
 - OAD-011 as applicable (CONDITIONAL only);
 - persistence migrations beyond the first protected-slice baseline;
-- identity implementation;
+- later identity extensions and production OIDC-provider selection;
 - realtime/reconnect transport implementation;
 - provider integrations;
 - deployment implementation evidence (VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, backup) per ADR-0019.
@@ -273,9 +274,9 @@ reviewed SS-06 evidence, and the merge-readiness boundary for
 `feat/source-scaffolding`. Its pre-merge wording remains historically correct;
 the subsequent merge is recorded by `PROJECT_STATUS.md` and merge commit
 `49805720f79941dc967280fc0411ac78d2fe06e8`. Application Implementation is
-active; IVS-02 product persistence is accepted and complete, the OIQ-01/OIQ-02
-security decision gate is resolved, and IVS-03 is ready to execute. Runtime
-product behavior has not started.
+active; IVS-02 product persistence is accepted and complete, and IVS-03
+Teacher identity/backend browser-session runtime is READY FOR REVIEW. IVS-04
+and later Classroom behavior have not started.
 
 The previous [Contract Foundation Checkpoint — Complete](./checkpoints/2026-09-09-contract-foundation-complete.md)
 remains immutable and historically correct. Its subsequent merge is recorded

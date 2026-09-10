@@ -129,11 +129,15 @@ optional simplifications.
 
 - Java 21/Spring Boot/Spring MVC with JDBC/JdbcClient, Flyway, PostgreSQL,
   Testcontainers, and `identity`, `lesson`, `classroom` roots.
-- Persistence mechanism is verified, but no product migration/repository exists.
+- Accepted V001 and module-owned PostgreSQL persistence adapters cover the
+  first protected-slice durable model.
+- IVS-03 adds provider-neutral OIDC infrastructure, existing-account Teacher
+  resolution, PostgreSQL-authoritative browser sessions, secure session/CSRF
+  cookies, and `GET /api/teacher-session`.
 - Separate Teacher and Display React/TypeScript/Vite applications exist.
 - Role-scoped generated transport declarations exist.
 - OpenAPI `0.8.0` and the closed Display schema are authoritative.
-- No application behavior exists at IVS-01 completion.
+- IVS-04 Classroom Session start behavior has not begun.
 
 ## 6. Implementation Decision Register
 
@@ -418,6 +422,7 @@ broader applicable validation.
 
 ### IVS-03 — Teacher Identity + Backend Browser Session Runtime
 
+- **Status:** `READY FOR REVIEW`.
 - **Objective/outputs:** provider-neutral OIDC, Teacher resolution, durable
   sessions/cookies/CSRF, `GET /api/teacher-session`.
 - **Inputs:** ADR-0011, OpenAPI security, Threat Model/security standard.

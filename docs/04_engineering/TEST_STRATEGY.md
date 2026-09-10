@@ -8,9 +8,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.8` |
+| Version | `0.9` |
 | Last Updated | `2026-09-10` |
-| Test Tooling | Deterministic scaffolding plus IVS-02 PostgreSQL schema, module-persistence, constraint, and concurrency evidence established; implementation tooling remains incremental |
+| Test Tooling | Deterministic scaffolding plus IVS-02 persistence and IVS-03 OIDC, Teacher-session, HTTP-security, cookie/CSRF, and PostgreSQL evidence established; implementation tooling remains incremental |
 
 ## 1. Testing Objectives
 
@@ -38,7 +38,8 @@ Minimum traceability targets:
 
 The executable Source Scaffolding baseline is:
 
-- backend: JUnit Jupiter, Spring Boot test support, and ArchUnit `1.5.0`;
+- backend: JUnit Jupiter, Spring Boot test support, Spring Security test support,
+  and ArchUnit `1.5.0`;
 - backend infrastructure: Maven Failsafe `3.5.6` plus Testcontainers `2.0.5`
   running an exact PostgreSQL `18.6` (`postgres:18.6-bookworm`) integration
   smoke;
@@ -48,13 +49,16 @@ The executable Source Scaffolding baseline is:
   Ajv `8.17.1` in Draft 2020-12 mode for canonical schema compilation and
   representative payload validation.
 
-The backend fast suite now proves disabled-by-default persistence and typed
-configuration activation/failure semantics without a database. The Failsafe
-integration suite proves PostgreSQL 18 connectivity, Spring JdbcClient query
-execution, Flyway 13.5.0 validation of the IVS-02 V001 physical schema,
-module-owned persistence adapter mappings, and PostgreSQL-backed first-slice
-constraint/concurrency behavior. It does not yet prove later-batch application
-behavior, full transaction orchestration, or migration-upgrade compatibility.
+The backend fast suite now proves disabled-by-default persistence/provider
+configuration, secure token generation and hashing, existing-account Teacher
+resolution, session lifetime/CSRF behavior, OIDC success handling, and
+architecture/configuration rules without a database. The Failsafe integration
+suite proves Authorization Code OIDC initiation with state, nonce, and PKCE
+`S256`, plus PostgreSQL 18 connectivity, Flyway V001, module-owned mappings,
+`GET /api/teacher-session`, authority isolation, session rotation/activity/
+expiry/revocation, and CSRF recovery/CAS behavior. It does not yet prove
+IVS-04 or later Classroom behavior, migration-upgrade compatibility, or a real
+production identity provider.
 
 Still future or open are Playwright activation when a real cross-application
 journey exists, formal coverage thresholds, the CI platform, AI evaluation
@@ -75,10 +79,10 @@ Cover structured lesson/scene models, commands, projections, AI proposal envelop
 
 Cover persistence transactions, identity/authorization integration, realtime adapter behavior, AI/speech adapters using controlled fakes or recorded sanitized fixtures, curriculum retrieval, and validation engine integration.
 
-The SS-05 mechanism smoke remains, and IVS-02 extends it with the V001 physical
-schema plus disposable-real-PostgreSQL evidence for Identity, Lesson, and
-Classroom module persistence adapters and their critical integrity/concurrency
-constraints. This does not claim IVS-03 or later runtime behavior.
+The SS-05 mechanism smoke remains; IVS-02 extends it with V001 and module-owned
+persistence evidence; IVS-03 adds provider-neutral OIDC request evidence and
+disposable-real-PostgreSQL HTTP/session-security evidence. This does not claim
+IVS-04 or later Classroom runtime behavior.
 
 ### Frontend Component Tests
 
@@ -276,6 +280,7 @@ Before pilot, evidence must cover all release blockers, high threats, architectu
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.9` | `2026-09-10` | Record IVS-03 token, OIDC, existing-account, backend-session, cookie/CSRF, HTTP authority-isolation, and PostgreSQL lifecycle evidence | Codex |
 | `0.8` | `2026-09-10` | Record IVS-02 V001, module-owned persistence adapter, and PostgreSQL constraint/concurrency evidence without claiming later application behavior | Codex |
 | `0.7` | `2026-09-10` | Correct stale test-tooling and deployment-environment status during the SS-06 Source Scaffolding readiness audit | Codex |
 | `0.6` | `2026-09-09` | Establish configuration activation/failure tests and the Maven Failsafe/Testcontainers PostgreSQL 18.6 infrastructure smoke for JdbcClient and Flyway 13.5.0 with zero domain migrations | Codex |

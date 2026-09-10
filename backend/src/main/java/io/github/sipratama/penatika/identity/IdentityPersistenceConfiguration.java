@@ -24,8 +24,9 @@ public class IdentityPersistenceConfiguration {
     }
 
     @Bean
-    TeacherBrowserSessionPersistencePort teacherBrowserSessionPersistencePort(JdbcClient jdbcClient) {
-        return new PostgresTeacherBrowserSessionPersistenceAdapter(jdbcClient);
+    TeacherBrowserSessionPersistencePort teacherBrowserSessionPersistencePort(
+            JdbcClient jdbcClient, TransactionTemplate transactionTemplate) {
+        return new PostgresTeacherBrowserSessionPersistenceAdapter(jdbcClient, transactionTemplate);
     }
 
     @Bean
