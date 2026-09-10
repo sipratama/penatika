@@ -78,7 +78,7 @@ Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architect
 
 Project Discovery sudah selesai. Inisialisasi product baseline Q-01–Q-07 / OPD-001–OPD-007 sudah selesai; tidak ada unresolved product decision dari set awal.
 
-Repository kini memiliki fondasi Source Scaffolding yang lengkap dan tervalidasi: satu backend Java 21/Spring Boot/Maven, shell Teacher dan Classroom Display React/TypeScript/Vite yang terpisah, architecture dan contract validation harness, generated transport declarations yang role-scoped, typed configuration, serta mekanisme PostgreSQL/Flyway/JdbcClient yang disabled by default dengan zero versioned migration. Source Scaffolding sudah COMPLETE / MERGED; Application Implementation kini ACTIVE dan implementation plan untuk First Protected Vertical Slice sudah ditetapkan, tetapi runtime product behavior belum diimplementasikan. Physical product database schema, security/auth implementation, deployment configuration, dan CI/CD juga belum dimulai.
+Repository kini memiliki fondasi Source Scaffolding yang lengkap dan tervalidasi: satu backend Java 21/Spring Boot/Maven, shell Teacher dan Classroom Display React/TypeScript/Vite yang terpisah, architecture dan contract validation harness, generated transport declarations yang role-scoped, typed configuration, serta mekanisme PostgreSQL/Flyway/JdbcClient yang disabled by default. Source Scaffolding sudah COMPLETE / MERGED; Application Implementation kini ACTIVE, dan IVS-02 sudah menyediakan physical schema first protected slice serta persistence contract/adapter per modul untuk human review. Runtime HTTP behavior, security/auth implementation, deployment configuration, dan CI/CD belum dimulai.
 
 ## Documentation Map
 
@@ -152,8 +152,8 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 ## Open Architecture and Implementation Decisions
 
 - Curriculum corpus data/import artifact belum dibuat (arsitektur sudah dipilih: controlled versioned corpus, lihat ADR-0015); licensing review untuk official guidance masih tertunda.
-- Physical persistence schema dan migrations (teknologi sudah dipilih: PostgreSQL + Flyway).
-- Concrete OIDC provider, physical session schema/representation, dan expiry/index implementation.
+- Persistence migration lanjutan setelah baseline first protected slice.
+- Concrete OIDC provider, runtime credential/session policy, dan expiry/index implementation yang tersisa.
 - Deployment implementation evidence: VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, backup (arsitektur sudah dipilih: lihat ADR-0019).
 - Evidence-driven device/accessibility/performance targets bila relevan.
 

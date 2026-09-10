@@ -7,6 +7,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import io.github.sipratama.penatika.bootstrap.configuration.PenatikaPersistenceProperties;
 import io.github.sipratama.penatika.bootstrap.configuration.PenatikaProperties;
@@ -26,6 +30,21 @@ public class PenatikaPersistenceConfiguration {
                 .username(persistence.getUsername())
                 .password(persistence.getPassword())
                 .build();
+    }
+
+    @Bean
+    JdbcClient penatikaJdbcClient(DataSource dataSource) {
+        return JdbcClient.create(dataSource);
+    }
+
+    @Bean
+    PlatformTransactionManager penatikaTransactionManager(DataSource dataSource) {
+        return new DataSourceTransactionManager(dataSource);
+    }
+
+    @Bean
+    TransactionTemplate penatikaTransactionTemplate(PlatformTransactionManager transactionManager) {
+        return new TransactionTemplate(transactionManager);
     }
 
     @Bean(initMethod = "migrate")

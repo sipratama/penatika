@@ -78,7 +78,7 @@ Material decisions are recorded in [`docs/02_architecture/adr/`](./docs/02_archi
 
 Product Discovery is complete. The initialized Q-01–Q-07 / OPD-001–OPD-007 product baseline is resolved; no unresolved product decisions remain from that set.
 
-The repository now has a complete, validated Source Scaffolding foundation: one Java 21/Spring Boot/Maven backend, separate React/TypeScript/Vite Teacher and Classroom Display shells, architecture and contract validation harnesses, role-scoped generated transport declarations, typed configuration, and a disabled-by-default PostgreSQL/Flyway/JdbcClient mechanism with zero versioned migrations. Source Scaffolding is COMPLETE / MERGED; Application Implementation is now ACTIVE and the First Protected Vertical Slice implementation plan is established, but runtime product behavior has not been implemented. The physical product database schema, security/auth implementation, deployment configuration, and CI/CD have not started either.
+The repository now has a complete, validated Source Scaffolding foundation: one Java 21/Spring Boot/Maven backend, separate React/TypeScript/Vite Teacher and Classroom Display shells, architecture and contract validation harnesses, role-scoped generated transport declarations, typed configuration, and a disabled-by-default PostgreSQL/Flyway/JdbcClient mechanism. Source Scaffolding is COMPLETE / MERGED; Application Implementation is ACTIVE, and IVS-02 now provides the first protected-slice physical schema plus module-owned persistence contracts/adapters for human review. Runtime HTTP behavior, security/auth implementation, deployment configuration, and CI/CD have not started.
 
 ## Documentation Map
 
@@ -152,8 +152,8 @@ This validator checks local Markdown links and unresolved core metadata placehol
 ## Open Architecture and Implementation Decisions
 
 - Curriculum corpus data/import artifact does not exist yet (architecture is selected: controlled versioned corpus, see ADR-0015); the Official Guidance licensing review remains pending.
-- Physical persistence schema and migrations (technology is selected: PostgreSQL + Flyway).
-- Concrete OIDC provider, physical session schema/representation, and expiry/index implementation.
+- Additional persistence migrations beyond the first protected-slice baseline.
+- Concrete OIDC provider, runtime credential/session policy, and remaining expiry/index implementation.
 - Deployment implementation evidence: VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, backup (architecture is selected: see ADR-0019).
 - Evidence-driven device/accessibility/performance targets where relevant.
 

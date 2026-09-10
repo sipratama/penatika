@@ -31,6 +31,19 @@ class PostgreSqlPersistenceSmokeIT {
     private static final DockerImageName POSTGRES_IMAGE =
             DockerImageName.parse("postgres:18.6-bookworm");
 
+    private static final List<String> EXPECTED_TABLES = List.of(
+            "classroom_accepted_command",
+            "classroom_pairing_grant",
+            "classroom_session",
+            "identity_external_identity_link",
+            "identity_participant_session",
+            "identity_teacher_account",
+            "identity_teacher_browser_session",
+            "lesson_lesson",
+            "lesson_lesson_scene",
+            "lesson_lesson_version",
+            "lesson_scene_block");
+
     @Container
     private static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(POSTGRES_IMAGE);
 
@@ -56,7 +69,7 @@ class PostgreSqlPersistenceSmokeIT {
     private Flyway flyway;
 
     @Test
-    void persistenceMechanismWorksAgainstPostgreSql18() throws Exception {
+    void persistenceMechanismAndFirstMigrationWorkAgainstPostgreSql18() throws Exception {
         assertThat(properties.getPersistence().isEnabled()).isTrue();
         assertThat(properties.getPersistence().getJdbcUrl()).isEqualTo(POSTGRES.getJdbcUrl());
         assertThat(properties.getPersistence().getUsername()).isEqualTo(POSTGRES.getUsername());
@@ -71,11 +84,11 @@ class PostgreSqlPersistenceSmokeIT {
         }
 
         assertThat(jdbcClient.sql("SELECT 1").query(Integer.class).single()).isEqualTo(1);
-        assertThat(flyway.info().applied()).isEmpty();
+        assertThat(flyway.info().applied()).hasSize(1);
+        assertThat(flyway.info().applied()[0].getVersion().getVersion()).isEqualTo("001");
         assertThatCode(flyway::validate).doesNotThrowAnyException();
-        assertThatCode(flyway::migrate).doesNotThrowAnyException();
+        assertThat(flyway.migrate().migrationsExecuted).isZero();
         assertThatCode(flyway::validate).doesNotThrowAnyException();
-        assertThat(flyway.info().applied()).isEmpty();
 
         List<String> productTables = jdbcClient.sql("""
                         SELECT table_name
@@ -86,6 +99,6 @@ class PostgreSqlPersistenceSmokeIT {
                         """)
                 .query(String.class)
                 .list();
-        assertThat(productTables).isEmpty();
+        assertThat(productTables).containsExactlyElementsOf(EXPECTED_TABLES);
     }
 }

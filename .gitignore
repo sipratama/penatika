@@ -57,6 +57,10 @@ logs/
 dist/
 build/
 out/
+!backend/src/main/java/**/adapter/out/
+!backend/src/main/java/**/adapter/out/**
+!backend/src/main/java/**/application/port/out/
+!backend/src/main/java/**/application/port/out/**
 tmp/
 *.tmp
 *.bak

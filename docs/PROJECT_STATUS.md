@@ -83,7 +83,7 @@ Foundation handoff checkpoint was created.
 | Source Scaffolding merge to `main` | COMPLETE | merge commit `49805720f79941dc967280fc0411ac78d2fe06e8` |
 | Application implementation | ACTIVE | [First Protected Vertical Slice Implementation Plan](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md) |
 | IVS-01 First Vertical Slice Implementation Plan | COMPLETE | [First Protected Vertical Slice Implementation Plan](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md) |
-| IVS-02 First-Slice Physical Schema + Persistence Contracts | NEXT | first production implementation batch routed by the accepted working plan |
+| IVS-02 First-Slice Physical Schema + Persistence Contracts | READY FOR REVIEW | V001, module-owned ports/adapters, deterministic test fixtures, and PostgreSQL constraint/concurrency evidence implemented; human review pending |
 | Remaining IVS batches | PENDING | IVS-03 through IVS-10 in the implementation plan |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
@@ -217,8 +217,9 @@ workstream. [IVS-01](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.m
 has reconstructed the locked slice, frozen implementation sequencing, and
 routed IVS-02 as **First-Slice Physical Schema + Persistence Contracts**.
 
-Production application behavior and product persistence have not started.
-IVS-02 must not broaden product, architecture, or contract scope.
+IVS-02 product persistence is implemented and ready for human review without
+HTTP, security/OIDC runtime, frontend, contract, ADR, or checkpoint changes.
+Production application behavior has not started; IVS-03 remains not started.
 `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
@@ -228,7 +229,7 @@ These are **not** unresolved Q-01–Q-07 / OPD-001–OPD-007 decisions.
 ### Architecture / Implementation
 
 - OAD-011 as applicable (CONDITIONAL only);
-- physical product persistence model/migrations;
+- persistence migrations beyond the first protected-slice baseline;
 - identity implementation;
 - realtime/reconnect transport implementation;
 - provider integrations;
