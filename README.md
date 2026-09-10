@@ -78,13 +78,13 @@ Material decisions tersedia di [`docs/02_architecture/adr/`](./docs/02_architect
 
 Project Discovery sudah selesai. Inisialisasi product baseline Q-01–Q-07 / OPD-001–OPD-007 sudah selesai; tidak ada unresolved product decision dari set awal.
 
-Repository belum memiliki application source code, package manifest, database migration, contract schema, atau deployment configuration. Fase utama berikutnya adalah architecture/technology decision-making dan contract definition sebelum source scaffolding.
+Repository kini memiliki fondasi Source Scaffolding yang lengkap dan tervalidasi: satu backend Java 21/Spring Boot/Maven, shell Teacher dan Classroom Display React/TypeScript/Vite yang terpisah, architecture dan contract validation harness, generated transport declarations yang role-scoped, typed configuration, serta mekanisme PostgreSQL/Flyway/JdbcClient yang disabled by default dengan zero versioned migration. Fase ini complete/merge-ready dan Final Source Scaffolding Handoff Checkpoint sudah tersedia; merge ke `main` adalah langkah berikutnya. Product implementation, physical product database schema, security/auth implementation, deployment configuration, dan CI/CD belum dimulai.
 
 ## Documentation Map
 
 ### Project Status
 
-- [Project Status](./docs/PROJECT_STATUS.md) — fase proyek saat ini, milestone yang selesai, dan pekerjaan arsitektur yang tertunda.
+- [Project Status](./docs/PROJECT_STATUS.md) — fase proyek saat ini, milestone yang selesai, status source scaffolding, dan pekerjaan implementasi yang tertunda.
 
 ### Architecture Handoff Checkpoint
 
@@ -154,7 +154,6 @@ Validator ini memeriksa local Markdown links dan unresolved core metadata placeh
 - Curriculum corpus data/import artifact belum dibuat (arsitektur sudah dipilih: controlled versioned corpus, lihat ADR-0015); licensing review untuk official guidance masih tertunda.
 - Physical persistence schema dan migrations (teknologi sudah dipilih: PostgreSQL + Flyway).
 - Concrete OIDC provider, physical session schema/representation, dan expiry/index implementation.
-- Field-level contract definitions.
 - Deployment implementation evidence: VPS provisioning, Dockerfile/Compose/Caddy, CI/CD, backup (arsitektur sudah dipilih: lihat ADR-0019).
 - Evidence-driven device/accessibility/performance targets bila relevan.
 

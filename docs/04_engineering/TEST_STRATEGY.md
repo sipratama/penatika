@@ -1,6 +1,6 @@
 # Test Strategy — Penatika
 
-> Defines the evidence required to trust Penatika's product behavior, contracts, AI boundaries, session consistency, and classroom risks. Tooling will be selected with the implementation stack.
+> Defines the evidence required to trust Penatika's product behavior, contracts, AI boundaries, session consistency, and classroom risks. Deterministic scaffolding tooling is established; later test layers remain activated with implementation needs.
 
 ## Metadata
 
@@ -8,9 +8,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.4` |
-| Last Updated | `2026-09-08` |
-| Test Tooling | Open Architecture Decision |
+| Version | `0.7` |
+| Last Updated | `2026-09-10` |
+| Test Tooling | Deterministic scaffolding plus PostgreSQL infrastructure mechanism baseline established; implementation tooling remains incremental |
 
 ## 1. Testing Objectives
 
@@ -34,7 +34,33 @@ Minimum traceability targets:
 - active threat mitigations;
 - release blockers and NFR quality gates.
 
-## 3. Test Layers
+## 3. Established Tooling Baseline
+
+The executable Source Scaffolding baseline is:
+
+- backend: JUnit Jupiter, Spring Boot test support, and ArchUnit `1.5.0`;
+- backend infrastructure: Maven Failsafe `3.5.6` plus Testcontainers `2.0.5`
+  running an exact PostgreSQL `18.6` (`postgres:18.6-bookworm`) integration
+  smoke;
+- frontend: Vitest `5.0.0`, React Testing Library `16.3.3`, and a Node/TypeScript
+  dependency-boundary guard;
+- contracts: Redocly CLI `2.51.2` for OpenAPI lint/dereferenced bundling and
+  Ajv `8.17.1` in Draft 2020-12 mode for canonical schema compilation and
+  representative payload validation.
+
+The backend fast suite now proves disabled-by-default persistence and typed
+configuration activation/failure semantics without a database. The Failsafe
+integration suite proves PostgreSQL 18 connectivity, Spring JdbcClient query
+execution, and Flyway 13.5.0 validation/migration with zero versioned domain
+migrations. It does not yet prove module persistence behavior, transaction or
+concurrency correctness, or migration-upgrade compatibility.
+
+Still future or open are Playwright activation when a real cross-application
+journey exists, formal coverage thresholds, the CI platform, AI evaluation
+tooling, the supported device/browser matrix, and numerical performance
+thresholds. This baseline does not claim complete product or pilot readiness.
+
+## 4. Test Layers
 
 ### Domain Unit Tests
 
@@ -48,6 +74,10 @@ Cover structured lesson/scene models, commands, projections, AI proposal envelop
 
 Cover persistence transactions, identity/authorization integration, realtime adapter behavior, AI/speech adapters using controlled fakes or recorded sanitized fixtures, curriculum retrieval, and validation engine integration.
 
+The current SS-05 infrastructure smoke is intentionally narrower: it verifies
+the selected PostgreSQL/Flyway/JdbcClient mechanism against disposable real
+PostgreSQL without introducing a product schema or persistence adapter.
+
 ### Frontend Component Tests
 
 Cover visibility rules, status states, keyboard interaction, input controls, destructive confirmation, safe fallback rendering, and prevention of private data in classroom components.
@@ -60,7 +90,7 @@ Cover prepare → review → start → pair → teach → adapt → annotate →
 
 Use real or representative smartphones, laptops/PCs, classroom displays, mouse, touch, and stylus. Validate viewing distance, controller ergonomics, orientation, and network variation.
 
-## 4. Priority Regression Suites
+## 5. Priority Regression Suites
 
 ### Teacher-Control Suite
 
@@ -135,7 +165,7 @@ Once a real `PILOT` deployment exists, verification must cover:
 
 No implementation or test exists yet for this suite; it defines future evidence requirements only.
 
-## 5. AI Evaluation Strategy
+## 6. AI Evaluation Strategy
 
 AI behavior requires a versioned evaluation set separate from deterministic application tests.
 
@@ -155,7 +185,7 @@ Evaluation datasets must use sanitized or synthetic content unless an approved p
 
 Per ADR-0017, a model/profile/provider route is activated for pilot/production only after passing Penatika's versioned evaluation corpus; `ROUTER` additionally requires classification-accuracy evaluation for `SUPPORTED`/`OUT_OF_SCOPE`/`UNSUPPORTED_CAPABILITY`/`NEEDS_CLARIFICATION` outcomes.
 
-## 6. Security Testing
+## 7. Security Testing
 
 - authorization matrix and object-level access;
 - session and pairing credential guessing, replay, expiry, and role escalation;
@@ -166,7 +196,7 @@ Per ADR-0017, a model/profile/provider route is activated for pilot/production o
 - secret exposure in clients or build artifacts;
 - dependency and supply-chain scanning after stack selection.
 
-## 7. Accessibility Testing
+## 8. Accessibility Testing
 
 - automated accessibility checks for supported surfaces;
 - keyboard and focus-path tests;
@@ -178,7 +208,7 @@ Per ADR-0017, a model/profile/provider route is activated for pilot/production o
 
 Automated checks do not replace manual assistive-technology and classroom-context testing.
 
-## 8. Performance and Reliability Testing
+## 9. Performance and Reliability Testing
 
 After a measurable prototype exists:
 
@@ -192,7 +222,7 @@ After a measurable prototype exists:
 
 Do not set pass thresholds before workload and target environments are defined.
 
-## 9. Test Data
+## 10. Test Data
 
 - Prefer deterministic builders and synthetic teacher/lesson/session data.
 - Do not use production personal data.
@@ -200,7 +230,7 @@ Do not set pass thresholds before workload and target environments are defined.
 - Keep provider fixtures sanitized and free of secrets or raw audio.
 - Separate valid, invalid, unsupported, adversarial, and degradation datasets.
 
-## 10. Environments
+## 11. Environments
 
 Required test environments will include:
 
@@ -210,9 +240,11 @@ Required test environments will include:
 - multi-device classroom simulation;
 - pilot-like device and network environment.
 
-Environment and deployment technology remain open.
+Exact test-environment provisioning remains open. Deployment architecture is
+selected by ADR-0019, but no deployment implementation or pilot-like test
+environment exists yet.
 
-## 11. Completion Evidence
+## 12. Completion Evidence
 
 For each implementation increment, report exact commands, test scope, results, skipped checks, and unresolved failures. No test is considered passed unless executed.
 
@@ -220,7 +252,7 @@ Before pilot, evidence must cover all release blockers, high threats, architectu
 
 ## 12. Open Testing Decisions
 
-- Language/framework test tools and CI platform.
+- Remaining product-layer, browser E2E, AI-evaluation tooling, and CI platform.
 - Formal coverage expectations.
 - AI evaluation scoring and acceptance thresholds.
 - Target-device/browser/network matrix.
@@ -242,6 +274,8 @@ Before pilot, evidence must cover all release blockers, high threats, architectu
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `0.7` | `2026-09-10` | Correct stale test-tooling and deployment-environment status during the SS-06 Source Scaffolding readiness audit | Codex |
+| `0.6` | `2026-09-09` | Establish configuration activation/failure tests and the Maven Failsafe/Testcontainers PostgreSQL 18.6 infrastructure smoke for JdbcClient and Flyway 13.5.0 with zero domain migrations | Codex |
 | `0.4` | `2026-09-08` | Add future Deployment Verification Suite concepts (health checks, reverse-proxy boundary, HTTPS, SSE, non-public database, secret absence, migration-blocking, immutable artifact identity, backup/restore, container recovery, log rotation, disk-pressure visibility, deployment smoke test) for the portable single-Linux-VPS MVP/pilot baseline (ADR-0019); no implementation exists yet | Claude |
 | `0.3` | `2026-09-07` | Add AI Generation Gateway Suite and model/route evaluation-gate requirements for the OpenRouter bounded-generation baseline (ADR-0017) | Claude |
 | `0.2` | `2026-09-07` | Expand Mathematics Assurance Suite with exact-arithmetic properties, Grade 5/7 corpora, resource-bound adversarial cases, and validator-version reproducibility (ADR-0016) | Claude |

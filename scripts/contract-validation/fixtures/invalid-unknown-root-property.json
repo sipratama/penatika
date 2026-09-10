@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "classroomSessionId": "synthetic-session-001",
+  "revision": 0,
+  "scene": {
+    "sceneId": "synthetic-scene-001",
+    "position": 0,
+    "blocks": [
+      {
+        "type": "PLAIN_TEXT",
+        "text": "Synthetic classroom-safe text."
+      }
+    ]
+  },
+  "privateTeacherState": "must-not-pass"
+}

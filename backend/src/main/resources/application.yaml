@@ -1,0 +1,12 @@
+spring:
+  flyway:
+    enabled: false
+
+penatika:
+  environment: ${PENATIKA_ENVIRONMENT:LOCAL}
+  persistence:
+    enabled: ${PENATIKA_PERSISTENCE_ENABLED:false}
+    jdbc-url: ${PENATIKA_DB_URL:}
+    username: ${PENATIKA_DB_USERNAME:}
+    password: ${PENATIKA_DB_PASSWORD:}
+    migrations-enabled: ${PENATIKA_MIGRATIONS_ENABLED:false}
