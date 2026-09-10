@@ -428,7 +428,7 @@ broader applicable validation.
 - **Prerequisite:** IVS-05. Test double may represent Display gate, but
   production fails closed until IVS-08.
 - **Tests/completion:** authority/stale/at-most-once/equivalent and changed
-  duplicate/uncertain outcome/position; durable exactly-once `NEXT`.
+  duplicate/uncertain outcome/position; durable at-most-once accepted `NEXT` mutation with equivalent accepted-outcome replay.
 
 ### IVS-07 — Display Projection + Snapshot
 
@@ -490,7 +490,7 @@ owning-batch decisions when contracts/invariants remain intact.
 Normal flow is `change → tests → commit → push/review → next batch`. A completed
 IVS batch does not create a checkpoint. Create a final first-slice handoff
 checkpoint only after IVS-10 proves the complete slice and the human accepts
-the merge-readiness handoff. IVS-01 is not committed or pushed by this task.
+the merge-readiness handoff. The IVS-01 implementation task itself does not perform commit or push; repository commit/push occurs through the normal human-reviewed batch workflow.
 
 ## 19. Definition of Done
 
