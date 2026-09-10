@@ -13,6 +13,9 @@ public interface LessonVersionPersistencePort {
 
     Optional<LessonVersion> findById(LessonVersionId lessonVersionId);
 
+    Optional<LessonVersion> findForTeacher(
+            LessonVersionId lessonVersionId, UUID teacherAccountId);
+
     Optional<LessonVersion> findClassroomReadyForTeacher(
             LessonVersionId lessonVersionId, UUID teacherAccountId);
 }

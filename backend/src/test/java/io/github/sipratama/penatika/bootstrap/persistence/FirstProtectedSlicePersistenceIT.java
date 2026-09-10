@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -51,6 +53,7 @@ import io.github.sipratama.penatika.classroom.application.port.out.PairingGrantP
 import io.github.sipratama.penatika.classroom.domain.AcceptedCommandOutcome;
 import io.github.sipratama.penatika.classroom.domain.ClassroomLifecycleState;
 import io.github.sipratama.penatika.classroom.domain.ClassroomSession;
+import io.github.sipratama.penatika.classroom.domain.ClassroomSessionId;
 import io.github.sipratama.penatika.classroom.domain.PairingGrant;
 import io.github.sipratama.penatika.classroom.domain.Revision;
 import io.github.sipratama.penatika.classroom.fixtures.AcceptedCommandOutcomeFixtureBuilder;
@@ -75,7 +78,16 @@ import io.github.sipratama.penatika.identity.fixtures.ParticipantSessionFixtureB
 import io.github.sipratama.penatika.identity.fixtures.TeacherAccountFixtureBuilder;
 import io.github.sipratama.penatika.identity.fixtures.TeacherBrowserSessionFixtureBuilder;
 import io.github.sipratama.penatika.lesson.application.port.out.LessonVersionPersistencePort;
+import io.github.sipratama.penatika.lesson.domain.Lesson;
+import io.github.sipratama.penatika.lesson.domain.LessonId;
+import io.github.sipratama.penatika.lesson.domain.LessonScene;
+import io.github.sipratama.penatika.lesson.domain.LessonSceneId;
 import io.github.sipratama.penatika.lesson.domain.LessonVersion;
+import io.github.sipratama.penatika.lesson.domain.LessonVersionId;
+import io.github.sipratama.penatika.lesson.domain.LessonVersionReadiness;
+import io.github.sipratama.penatika.lesson.domain.SceneBlock;
+import io.github.sipratama.penatika.lesson.domain.SceneBlockId;
+import io.github.sipratama.penatika.lesson.domain.SceneBlockType;
 import io.github.sipratama.penatika.lesson.fixtures.LessonVersionFixtureBuilder;
 
 @SpringBootTest
@@ -724,6 +736,210 @@ class FirstProtectedSlicePersistenceIT {
                 .isFalse();
     }
 
+    @Test
+    void classroomSessionStartReturnsExactContractAndPersistsInitialAuthority() throws Exception {
+        TeacherAccount teacher = createTeacher(
+                "10000000-0000-0000-0000-000000000301",
+                "10000000-0000-0000-0000-000000000302",
+                "classroom-start-subject",
+                TeacherAccountStatus.ACTIVE);
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+        SessionAuthority authority = createSessionAuthority(
+                teacher,
+                "10000000-0000-0000-0000-000000000303",
+                'a',
+                'b',
+                now);
+        LessonVersion lessonVersion = createLessonVersion(
+                teacher,
+                "20000000-0000-0000-0000-000000000301",
+                "20000000-0000-0000-0000-000000000302",
+                LessonVersionReadiness.CLASSROOM_READY,
+                true);
+        Instant requestStartedAt = clock.instant();
+
+        MvcResult result = startClassroomSession(
+                authority, lessonVersion.id().value().toString()).andReturn();
+
+        assertThat(result.getResponse().getStatus()).isEqualTo(201);
+        assertThat(result.getResponse().getContentType()).isEqualTo("application/json");
+        assertThat(result.getResponse().getHeader("Location")).isNull();
+        Map<String, Object> body = JsonPath.read(result.getResponse().getContentAsString(), "$");
+        assertThat(body).containsOnlyKeys("classroomSessionId", "lessonVersionId", "revision");
+        assertThat(body.get("lessonVersionId")).isEqualTo(lessonVersion.id().value().toString());
+        assertThat(body.get("revision")).isEqualTo(0);
+
+        ClassroomSession persisted = classroomSessions.findById(new ClassroomSessionId(
+                        UUID.fromString((String) body.get("classroomSessionId"))))
+                .orElseThrow();
+        assertThat(persisted.teacherAccountId()).isEqualTo(teacher.id().value());
+        assertThat(persisted.lessonVersionId()).isEqualTo(lessonVersion.id().value());
+        assertThat(persisted.lifecycleState()).isEqualTo(ClassroomLifecycleState.CREATED);
+        assertThat(persisted.currentScenePosition()).isZero();
+        assertThat(persisted.revision()).isEqualTo(new Revision(0));
+        assertThat(persisted.startedAt()).isBetween(requestStartedAt, clock.instant());
+        assertThat(browserSessions.findById(authority.session().id()).orElseThrow().lastActiveAt())
+                .isAfter(authority.session().lastActiveAt());
+        assertThat(rowCount("classroom_pairing_grant")).isZero();
+        assertThat(rowCount("identity_participant_session")).isZero();
+    }
+
+    @Test
+    void classroomSessionStartDistinguishesTeacherSessionAndCsrfFailures() throws Exception {
+        TeacherAccount teacher = createTeacher(
+                "10000000-0000-0000-0000-000000000311",
+                "10000000-0000-0000-0000-000000000312",
+                "classroom-authority-subject",
+                TeacherAccountStatus.ACTIVE);
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+        SessionAuthority authority = createSessionAuthority(
+                teacher,
+                "10000000-0000-0000-0000-000000000313",
+                'c',
+                'd',
+                now);
+        String request = "{\"lessonVersionId\":\"lesson_version_example_01\"}";
+
+        assertProblem(mockMvc.perform(post("/api/classroom-sessions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andReturn(), 401, "TEACHER_SESSION_REQUIRED");
+        assertProblem(mockMvc.perform(post("/api/classroom-sessions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)
+                        .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, rawToken('e'))))
+                .andReturn(), 401, "TEACHER_SESSION_REQUIRED");
+
+        assertProblem(mockMvc.perform(classroomSessionStartRequest(
+                        authority, "lesson_version_example_01"))
+                .andReturn(), 403, "CSRF_REJECTED");
+        assertProblem(mockMvc.perform(classroomSessionStartRequest(
+                                authority, "lesson_version_example_01")
+                        .header("X-Penatika-CSRF", rawToken('f').expose()))
+                .andReturn(), 403, "CSRF_REJECTED");
+        assertProblem(mockMvc.perform(post("/api/classroom-sessions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, authority.sessionToken()),
+                                cookie(TeacherSessionCookies.CSRF_RECOVERY_COOKIE_NAME, authority.csrfToken())))
+                .andReturn(), 403, "CSRF_REJECTED");
+        assertProblem(mockMvc.perform(classroomSessionStartRequest(
+                                authority, "lesson_version_example_01")
+                        .header("X-Penatika-CSRF", authority.sessionToken().expose()))
+                .andReturn(), 403, "CSRF_REJECTED");
+
+        assertThat(browserSessions.findById(authority.session().id()).orElseThrow().lastActiveAt())
+                .isEqualTo(authority.session().lastActiveAt());
+        assertThat(rowCount("classroom_session")).isZero();
+    }
+
+    @Test
+    void classroomSessionStartRejectsEveryStructuralRequestFailureBeforeActivity() throws Exception {
+        TeacherAccount teacher = createTeacher(
+                "10000000-0000-0000-0000-000000000321",
+                "10000000-0000-0000-0000-000000000322",
+                "classroom-validation-subject",
+                TeacherAccountStatus.ACTIVE);
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+        SessionAuthority authority = createSessionAuthority(
+                teacher,
+                "10000000-0000-0000-0000-000000000323",
+                'g',
+                'h',
+                now);
+        List<String> invalidBodies = List.of(
+                "{\"lessonVersionId\":",
+                "{}",
+                "[]",
+                "{\"lessonVersionId\":null}",
+                "{\"lessonVersionId\":\"\"}",
+                "{\"lessonVersionId\":\"two words\"}",
+                "{\"lessonVersionId\":\"" + "x".repeat(129) + "\"}",
+                "{\"lessonVersionId\":\"lesson_version_example_01\",\"teacherAccountId\":\"forged\"}");
+
+        for (String invalidBody : invalidBodies) {
+            MvcResult result = mockMvc.perform(post("/api/classroom-sessions")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(invalidBody)
+                            .cookie(cookie(
+                                    TeacherSessionCookies.SESSION_COOKIE_NAME, authority.sessionToken()))
+                            .header("X-Penatika-CSRF", authority.csrfToken().expose()))
+                    .andReturn();
+            assertProblem(result, 400, "REQUEST_VALIDATION_FAILED");
+            assertThat(result.getResponse().getContentAsString())
+                    .doesNotContain("two words", "forged", "x".repeat(129));
+        }
+
+        assertThat(browserSessions.findById(authority.session().id()).orElseThrow().lastActiveAt())
+                .isEqualTo(authority.session().lastActiveAt());
+        assertThat(rowCount("classroom_session")).isZero();
+    }
+
+    @Test
+    void classroomSessionStartPreservesLessonOwnershipAndReadinessNonDisclosure() throws Exception {
+        TeacherAccount teacher = createTeacher(
+                "10000000-0000-0000-0000-000000000331",
+                "10000000-0000-0000-0000-000000000332",
+                "classroom-lesson-subject",
+                TeacherAccountStatus.ACTIVE);
+        TeacherAccount otherTeacher = createTeacher(
+                "10000000-0000-0000-0000-000000000333",
+                "10000000-0000-0000-0000-000000000334",
+                "other-classroom-lesson-subject",
+                TeacherAccountStatus.ACTIVE);
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+        SessionAuthority authority = createSessionAuthority(
+                teacher,
+                "10000000-0000-0000-0000-000000000335",
+                'i',
+                'j',
+                now);
+        LessonVersion draft = createLessonVersion(
+                teacher,
+                "20000000-0000-0000-0000-000000000311",
+                "20000000-0000-0000-0000-000000000312",
+                LessonVersionReadiness.DRAFT,
+                true);
+        LessonVersion otherTeachersVersion = createLessonVersion(
+                otherTeacher,
+                "20000000-0000-0000-0000-000000000321",
+                "20000000-0000-0000-0000-000000000322",
+                LessonVersionReadiness.CLASSROOM_READY,
+                true);
+        LessonVersion incompleteReady = createLessonVersion(
+                teacher,
+                "20000000-0000-0000-0000-000000000331",
+                "20000000-0000-0000-0000-000000000332",
+                LessonVersionReadiness.CLASSROOM_READY,
+                false);
+
+        MvcResult opaqueId = startClassroomSession(
+                authority, "lesson_version_example_01").andReturn();
+        assertProblem(opaqueId, 404, "LESSON_VERSION_NOT_FOUND");
+        assertThat(opaqueId.getResponse().getContentAsString())
+                .doesNotContain("lesson_version_example_01", "UUID");
+
+        String nonexistentId = "20000000-0000-0000-0000-000000000399";
+        MvcResult nonexistent = startClassroomSession(authority, nonexistentId).andReturn();
+        assertProblem(nonexistent, 404, "LESSON_VERSION_NOT_FOUND");
+        assertThat(nonexistent.getResponse().getContentAsString()).doesNotContain(nonexistentId);
+
+        String otherTeachersVersionId = otherTeachersVersion.id().value().toString();
+        MvcResult unauthorized = startClassroomSession(
+                authority, otherTeachersVersionId).andReturn();
+        assertProblem(unauthorized, 404, "LESSON_VERSION_NOT_FOUND");
+        assertThat(unauthorized.getResponse().getContentAsString())
+                .doesNotContain(otherTeachersVersionId, otherTeacher.id().value().toString());
+        assertProblem(startClassroomSession(authority, draft.id().value().toString()).andReturn(),
+                409, "LESSON_VERSION_NOT_READY");
+        assertProblem(startClassroomSession(
+                        authority, incompleteReady.id().value().toString()).andReturn(),
+                409, "LESSON_VERSION_NOT_READY");
+
+        assertThat(rowCount("classroom_session")).isZero();
+    }
+
     private Foundation createFoundation() {
         TeacherAccount teacher = new TeacherAccountFixtureBuilder().build();
         ExternalIdentityLink link = new ExternalIdentityLinkFixtureBuilder()
@@ -746,6 +962,98 @@ class FirstProtectedSlicePersistenceIT {
                 .build();
         classroomSessions.create(classroomSession);
         return new Foundation(teacher, link, browserSession, lessonFixture.version(), classroomSession);
+    }
+
+    private org.springframework.test.web.servlet.ResultActions startClassroomSession(
+            SessionAuthority authority, String lessonVersionId) throws Exception {
+        return mockMvc.perform(classroomSessionStartRequest(authority, lessonVersionId)
+                .header("X-Penatika-CSRF", authority.csrfToken().expose()));
+    }
+
+    private MockHttpServletRequestBuilder classroomSessionStartRequest(
+            SessionAuthority authority, String lessonVersionId) {
+        return post("/api/classroom-sessions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"lessonVersionId\":\"" + lessonVersionId + "\"}")
+                .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, authority.sessionToken()));
+    }
+
+    private SessionAuthority createSessionAuthority(
+            TeacherAccount teacher,
+            String sessionId,
+            char sessionCharacter,
+            char csrfCharacter,
+            Instant now) {
+        RawSecurityToken sessionToken = rawToken(sessionCharacter);
+        RawSecurityToken csrfToken = rawToken(csrfCharacter);
+        TeacherBrowserSession session = runtimeSession(
+                sessionId,
+                teacher,
+                sessionToken,
+                csrfToken,
+                now.minusSeconds(300),
+                now.minusSeconds(120),
+                now.plusSeconds(600),
+                now.plusSeconds(3600),
+                null);
+        browserSessions.create(session);
+        return new SessionAuthority(session, sessionToken, csrfToken);
+    }
+
+    private LessonVersion createLessonVersion(
+            TeacherAccount teacher,
+            String lessonIdValue,
+            String versionIdValue,
+            LessonVersionReadiness readiness,
+            boolean includeContent) {
+        LessonId lessonId = new LessonId(UUID.fromString(lessonIdValue));
+        LessonVersionId versionId = new LessonVersionId(UUID.fromString(versionIdValue));
+        Lesson lesson = new Lesson(lessonId, teacher.id().value(), Instant.parse("2026-09-11T00:00:00Z"));
+        List<LessonScene> scenes = List.of();
+        if (includeContent) {
+            LessonSceneId sceneId = new LessonSceneId(incrementLastByte(versionId.value(), 1));
+            scenes = List.of(new LessonScene(
+                    sceneId,
+                    versionId,
+                    0,
+                    List.of(new SceneBlock(
+                            new SceneBlockId(incrementLastByte(versionId.value(), 2)),
+                            sceneId,
+                            0,
+                            SceneBlockType.PLAIN_TEXT,
+                            "Classroom-ready integration content"))));
+        }
+        LessonVersion version = new LessonVersion(
+                versionId,
+                lessonId,
+                readiness,
+                Instant.parse("2026-09-11T00:01:00Z"),
+                scenes);
+        lessonVersions.createImmutableVersion(lesson, version);
+        return version;
+    }
+
+    private static UUID incrementLastByte(UUID value, long increment) {
+        return new UUID(value.getMostSignificantBits(), value.getLeastSignificantBits() + increment);
+    }
+
+    private int rowCount(String table) {
+        String query = switch (table) {
+            case "classroom_pairing_grant" -> "SELECT count(*) FROM classroom_pairing_grant";
+            case "identity_participant_session" -> "SELECT count(*) FROM identity_participant_session";
+            case "classroom_session" -> "SELECT count(*) FROM classroom_session";
+            default -> throw new IllegalArgumentException("Unsupported table");
+        };
+        return jdbcClient.sql(query).query(Integer.class).single();
+    }
+
+    private static void assertProblem(MvcResult result, int status, String code) throws Exception {
+        assertThat(result.getResponse().getStatus()).isEqualTo(status);
+        assertThat(result.getResponse().getContentType()).isEqualTo("application/problem+json");
+        assertThat(JsonPath.<String>read(result.getResponse().getContentAsString(), "$.code"))
+                .isEqualTo(code);
+        assertThat(JsonPath.<Integer>read(result.getResponse().getContentAsString(), "$.status"))
+                .isEqualTo(status);
     }
 
     private TeacherAccount createTeacher(
@@ -886,4 +1194,9 @@ class FirstProtectedSlicePersistenceIT {
             TeacherBrowserSession browserSession,
             LessonVersion lessonVersion,
             ClassroomSession classroomSession) {}
+
+    private record SessionAuthority(
+            TeacherBrowserSession session,
+            RawSecurityToken sessionToken,
+            RawSecurityToken csrfToken) {}
 }

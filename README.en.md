@@ -78,7 +78,7 @@ Material decisions are recorded in [`docs/02_architecture/adr/`](./docs/02_archi
 
 Product Discovery is complete. The initialized Q-01–Q-07 / OPD-001–OPD-007 product baseline is resolved; no unresolved product decisions remain from that set.
 
-The repository now has a complete, validated Source Scaffolding foundation and an IVS-03 implementation ready for review: a Java 21/Spring Boot/Maven backend with PostgreSQL/Flyway/JdbcClient, provider-neutral OIDC, backend-managed Teacher browser sessions, and `GET /api/teacher-session`; the React/TypeScript/Vite Teacher and Classroom Display shells remain separate. Source Scaffolding is COMPLETE / MERGED; Application Implementation remains ACTIVE; IVS-01 and IVS-02 are COMPLETE; IVS-03 is READY FOR REVIEW; IVS-04 has not started. A production IdP, deployment configuration, and CI/CD remain unselected and unimplemented.
+The repository now has a complete, validated Source Scaffolding foundation, IVS-01 through IVS-03 are COMPLETE, and the IVS-04 implementation is ready for review: a Java 21/Spring Boot/Maven backend with PostgreSQL/Flyway/JdbcClient, provider-neutral OIDC, backend-managed Teacher browser sessions, `GET /api/teacher-session`, and Teacher/CSRF-authorized `POST /api/classroom-sessions` with ownership-scoped LessonVersion resolution. The React/TypeScript/Vite Teacher and Classroom Display shells remain separate. Application Implementation remains ACTIVE; IVS-04 is READY FOR REVIEW; IVS-05 has not started and remains blocked by OIQ-03. A production IdP, deployment configuration, and CI/CD remain unselected and unimplemented.
 
 ## Documentation Map
 

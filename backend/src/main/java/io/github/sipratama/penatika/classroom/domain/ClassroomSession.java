@@ -24,4 +24,19 @@ public record ClassroomSession(
             throw new IllegalArgumentException("currentScenePosition must be within the wire-safe integer range");
         }
     }
+
+    public static ClassroomSession start(
+            ClassroomSessionId id,
+            UUID teacherAccountId,
+            UUID lessonVersionId,
+            Instant startedAt) {
+        return new ClassroomSession(
+                id,
+                teacherAccountId,
+                lessonVersionId,
+                ClassroomLifecycleState.CREATED,
+                0,
+                new Revision(0),
+                startedAt);
+    }
 }

@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Active Application Implementation setup |
-| Last Updated | `2026-09-10` |
+| Last Updated | `2026-09-11` |
 
 ## 1. Current Repository State
 
@@ -29,8 +29,12 @@ Backend shell:
 - Spring Security OAuth2 Client with provider-neutral OIDC infrastructure;
 - PostgreSQL-authoritative opaque Teacher browser sessions, secure host-only
   cookies, CSRF bootstrap/recovery, and `GET /api/teacher-session`;
+- ownership-scoped LessonVersion classroom-start eligibility plus
+  Teacher/CSRF-authorized `POST /api/classroom-sessions`, persisting the initial
+  backend-authoritative `CREATED` state;
 - one Maven project rooted at `backend/`;
-- no Classroom Session, Pairing, command, SSE, or frontend product behavior yet.
+- no Pairing, participant, command, projection, SSE, or frontend product
+  behavior yet.
 
 Frontend workspace:
 
@@ -54,8 +58,8 @@ Contract validation tooling:
   `openapi-typescript` 7.13.0.
 
 The repository has no configured production OIDC provider, deployment
-configuration, or CI/CD. IVS-04 and later Classroom application behavior remain
-unimplemented.
+configuration, or CI/CD. IVS-05 and later Pairing, participant, command,
+projection, and realtime behavior remain unimplemented.
 
 ## 2. Current Prerequisites
 
@@ -268,15 +272,17 @@ authorize implementation. Material architecture decisions remain governed by
 
 ## 10. Open Work
 
-Source Scaffolding and IVS-02 are complete. IVS-03 Teacher identity and backend
-browser-session runtime is READY FOR REVIEW. IVS-04 Classroom Session start,
-later product behavior, production OIDC provider selection/configuration,
-deployment files, CI/CD, and backup implementation remain pending.
+Source Scaffolding and IVS-01 through IVS-03 are complete. IVS-04 LessonVersion
+eligibility and Classroom Session start is READY FOR REVIEW. IVS-05 has not
+started and remains blocked by OIQ-03; later product behavior, production OIDC
+provider selection/configuration, deployment files, CI/CD, and backup
+implementation remain pending.
 
 ## 11. Change Log
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-11` | Record IVS-04 LessonVersion eligibility, Teacher/CSRF-authorized Classroom Session start, and PostgreSQL/HTTP validation evidence | Codex |
 | `2026-09-10` | Record IVS-03 provider-neutral OIDC, Teacher browser-session runtime, HTTP endpoint, and PostgreSQL/security validation commands | Codex |
 | `2026-09-10` | Record SS-06 handoff-ready setup status without adding product, deployment, or CI behavior | Codex |
 | `2026-09-09` | Establish safe typed backend configuration, disabled-by-default persistence, fast test behavior, and full PostgreSQL 18.6 Testcontainers/Flyway/JdbcClient verification | Codex |

@@ -250,6 +250,54 @@ class TeacherBrowserSessionApplicationServiceTest {
     }
 
     @Test
+    void authorizesTeacherMutationOnlyAfterCurrentSessionCsrfAndActivityRefresh() {
+        TeacherBrowserSession current = session(
+                NOW.minusSeconds(60), NOW.plusSeconds(60), NOW.plusSeconds(3600), null);
+        AuthenticatedTeacherSession authenticated = authenticated(current);
+        when(browserSessions.findById(SESSION_ID)).thenReturn(Optional.of(current));
+        when(teacherIdentities.findTeacherAccount(TEACHER_ID))
+                .thenReturn(Optional.of(authenticated.teacherAccount()));
+        when(browserSessions.refreshActivity(
+                        SESSION_ID, NOW, NOW.plusSeconds(30 * 60)))
+                .thenReturn(true);
+
+        assertThat(service.authorizeMutation(authenticated, Optional.of(CSRF_TOKEN)).teacherAccountId())
+                .isEqualTo(TEACHER_ID.value());
+    }
+
+    @Test
+    void rejectsMissingWrongOrSessionCredentialCsrfWithoutRefreshingActivity() {
+        TeacherBrowserSession current = session(
+                NOW.minusSeconds(60), NOW.plusSeconds(60), NOW.plusSeconds(3600), null);
+        AuthenticatedTeacherSession authenticated = authenticated(current);
+        when(browserSessions.findById(SESSION_ID)).thenReturn(Optional.of(current));
+        when(teacherIdentities.findTeacherAccount(TEACHER_ID))
+                .thenReturn(Optional.of(authenticated.teacherAccount()));
+
+        assertThatThrownBy(() -> service.authorizeMutation(authenticated, Optional.empty()))
+                .isInstanceOf(TeacherCsrfRejectedException.class);
+        assertThatThrownBy(() -> service.authorizeMutation(authenticated, Optional.of(token('X'))))
+                .isInstanceOf(TeacherCsrfRejectedException.class);
+        assertThatThrownBy(() -> service.authorizeMutation(authenticated, Optional.of(SESSION_TOKEN)))
+                .isInstanceOf(TeacherCsrfRejectedException.class);
+
+        verify(browserSessions, never()).refreshActivity(any(), any(), any());
+    }
+
+    @Test
+    void treatsActivityRefreshRaceAsSessionRequired() {
+        TeacherBrowserSession current = session(
+                NOW.minusSeconds(60), NOW.plusSeconds(60), NOW.plusSeconds(3600), null);
+        AuthenticatedTeacherSession authenticated = authenticated(current);
+        when(browserSessions.findById(SESSION_ID)).thenReturn(Optional.of(current));
+        when(teacherIdentities.findTeacherAccount(TEACHER_ID))
+                .thenReturn(Optional.of(authenticated.teacherAccount()));
+
+        assertThatThrownBy(() -> service.authorizeMutation(authenticated, Optional.of(CSRF_TOKEN)))
+                .isInstanceOf(TeacherSessionRequiredException.class);
+    }
+
+    @Test
     void revocationUsesTheInjectedClock() {
         when(browserSessions.revoke(SESSION_ID, NOW)).thenReturn(true);
 

@@ -7,10 +7,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import io.github.sipratama.penatika.identity.adapter.in.security.TeacherSessionCookies;
+import io.github.sipratama.penatika.identity.application.TeacherCsrfRejectedException;
 import io.github.sipratama.penatika.identity.application.TeacherSessionRequiredException;
 import jakarta.servlet.http.HttpServletResponse;
 
-@RestControllerAdvice(assignableTypes = TeacherSessionController.class)
+@RestControllerAdvice
 @ConditionalOnProperty(prefix = "penatika.persistence", name = "enabled", havingValue = "true")
 public final class TeacherSessionExceptionHandler {
 
@@ -26,5 +27,12 @@ public final class TeacherSessionExceptionHandler {
         return ResponseEntity.status(401)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(new TeacherSessionProblem());
+    }
+
+    @ExceptionHandler(TeacherCsrfRejectedException.class)
+    ResponseEntity<TeacherCsrfProblem> teacherCsrfRejected() {
+        return ResponseEntity.status(403)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(new TeacherCsrfProblem());
     }
 }

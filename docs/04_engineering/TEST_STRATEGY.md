@@ -8,9 +8,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.9` |
-| Last Updated | `2026-09-10` |
-| Test Tooling | Deterministic scaffolding plus IVS-02 persistence and IVS-03 OIDC, Teacher-session, HTTP-security, cookie/CSRF, and PostgreSQL evidence established; implementation tooling remains incremental |
+| Version | `1.0` |
+| Last Updated | `2026-09-11` |
+| Test Tooling | Deterministic scaffolding plus IVS-02 persistence, accepted IVS-03 identity/session evidence, and IVS-04 LessonVersion eligibility, Teacher/CSRF mutation authority, Classroom start, HTTP, architecture, and PostgreSQL evidence established; implementation tooling remains incremental |
 
 ## 1. Testing Objectives
 
@@ -56,9 +56,10 @@ architecture/configuration rules without a database. The Failsafe integration
 suite proves Authorization Code OIDC initiation with state, nonce, and PKCE
 `S256`, plus PostgreSQL 18 connectivity, Flyway V001, module-owned mappings,
 `GET /api/teacher-session`, authority isolation, session rotation/activity/
-expiry/revocation, and CSRF recovery/CAS behavior. It does not yet prove
-IVS-04 or later Classroom behavior, migration-upgrade compatibility, or a real
-production identity provider.
+expiry/revocation, CSRF recovery/CAS behavior, ownership-scoped LessonVersion
+eligibility, and `POST /api/classroom-sessions` initial authoritative state. It
+does not yet prove IVS-05 or later Pairing/participant/command/Display behavior,
+migration-upgrade compatibility, or a real production identity provider.
 
 Still future or open are Playwright activation when a real cross-application
 journey exists, formal coverage thresholds, the CI platform, AI evaluation
@@ -81,8 +82,10 @@ Cover persistence transactions, identity/authorization integration, realtime ada
 
 The SS-05 mechanism smoke remains; IVS-02 extends it with V001 and module-owned
 persistence evidence; IVS-03 adds provider-neutral OIDC request evidence and
-disposable-real-PostgreSQL HTTP/session-security evidence. This does not claim
-IVS-04 or later Classroom runtime behavior.
+disposable-real-PostgreSQL HTTP/session-security evidence; IVS-04 adds
+LessonVersion ownership/readiness/non-disclosure and authoritative Classroom
+Session start evidence. This does not claim IVS-05 or later Pairing,
+participant, command, projection, or realtime behavior.
 
 ### Frontend Component Tests
 
@@ -280,6 +283,7 @@ Before pilot, evidence must cover all release blockers, high threats, architectu
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `1.0` | `2026-09-11` | Record IVS-04 LessonVersion eligibility/non-disclosure, Teacher/CSRF mutation authority, exact HTTP outcomes, initial Classroom state, and PostgreSQL evidence | Codex |
 | `0.9` | `2026-09-10` | Record IVS-03 token, OIDC, existing-account, backend-session, cookie/CSRF, HTTP authority-isolation, and PostgreSQL lifecycle evidence | Codex |
 | `0.8` | `2026-09-10` | Record IVS-02 V001, module-owned persistence adapter, and PostgreSQL constraint/concurrency evidence without claiming later application behavior | Codex |
 | `0.7` | `2026-09-10` | Correct stale test-tooling and deployment-environment status during the SS-06 Source Scaffolding readiness audit | Codex |

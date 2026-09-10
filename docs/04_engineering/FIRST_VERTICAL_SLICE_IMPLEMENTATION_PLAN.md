@@ -131,13 +131,16 @@ optional simplifications.
   Testcontainers, and `identity`, `lesson`, `classroom` roots.
 - Accepted V001 and module-owned PostgreSQL persistence adapters cover the
   first protected-slice durable model.
-- IVS-03 adds provider-neutral OIDC infrastructure, existing-account Teacher
-  resolution, PostgreSQL-authoritative browser sessions, secure session/CSRF
-  cookies, and `GET /api/teacher-session`.
+- IVS-03 provides accepted provider-neutral OIDC infrastructure,
+  existing-account Teacher resolution, PostgreSQL-authoritative browser
+  sessions, secure session/CSRF cookies, and `GET /api/teacher-session`.
+- IVS-04 adds ownership-scoped LessonVersion eligibility resolution,
+  session-bound Teacher CSRF authorization, and authoritative
+  `POST /api/classroom-sessions` creation.
 - Separate Teacher and Display React/TypeScript/Vite applications exist.
 - Role-scoped generated transport declarations exist.
 - OpenAPI `0.8.0` and the closed Display schema are authoritative.
-- IVS-04 Classroom Session start behavior has not begun.
+- IVS-04 Classroom Session start behavior is READY FOR REVIEW.
 
 ## 6. Implementation Decision Register
 
@@ -422,7 +425,7 @@ broader applicable validation.
 
 ### IVS-03 — Teacher Identity + Backend Browser Session Runtime
 
-- **Status:** `READY FOR REVIEW`.
+- **Status:** `COMPLETE` after human review.
 - **Objective/outputs:** provider-neutral OIDC, Teacher resolution, durable
   sessions/cookies/CSRF, `GET /api/teacher-session`.
 - **Inputs:** ADR-0011, OpenAPI security, Threat Model/security standard.
@@ -434,6 +437,7 @@ broader applicable validation.
 
 ### IVS-04 — LessonVersion Prerequisite + Classroom Session Start
 
+- **Status:** `READY FOR REVIEW`.
 - **Objective/outputs:** authorized ready LessonVersion resolution, Classroom
   state/start, `POST /api/classroom-sessions`.
 - **Inputs:** lesson/session requirements and start contract.
@@ -442,6 +446,12 @@ broader applicable validation.
 - **Prerequisites:** IVS-02/03.
 - **Tests/completion:** ownership/readiness/non-disclosure, scenes, initial
   state/Revision, transaction/HTTP; only legitimate fixture version starts.
+- **Internal first-slice mechanics:** new sessions start at lifecycle
+  `CREATED`, scene position `0`, and Revision `0`, with an application-generated
+  UUID and `startedAt` from the injected `Clock`. These are internal owning-batch
+  mechanics, not additional OpenAPI representation or universal revision
+  guarantees; Controller, Display, synchronization, and command behavior remain
+  outside IVS-04.
 
 ### IVS-05 — Pairing Grants + Participant Sessions
 
@@ -520,9 +530,11 @@ broader applicable validation.
 
 OIQ-01 and OIQ-02 are resolved, so the IVS-03 security decision gate is clear.
 OIQ-03 remains unresolved and blocks IVS-05; OIQ-04 remains unresolved and
-blocks IVS-08. Exact query shapes, initial Revision, internal increment, Java
-class names, and validator packaging are normal owning-batch decisions when
-contracts/invariants remain intact.
+blocks IVS-08. IVS-04 has locked its internal initial state as `CREATED`, scene
+position `0`, and Revision `0` without creating an additional wire guarantee.
+Exact later query shapes, revision increment mechanics, Java class names, and
+validator packaging remain normal owning-batch decisions when contracts and
+invariants stay intact.
 
 ## 18. Checkpoint and Merge Policy
 

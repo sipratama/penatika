@@ -8,11 +8,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 import io.github.sipratama.penatika.identity.application.model.AuthenticatedTeacherSession;
+import io.github.sipratama.penatika.identity.application.model.AuthorizedTeacherMutation;
 import io.github.sipratama.penatika.identity.application.model.EstablishedTeacherSession;
 import io.github.sipratama.penatika.identity.application.model.ExternalTeacherIdentity;
 import io.github.sipratama.penatika.identity.application.model.RawSecurityToken;
 import io.github.sipratama.penatika.identity.application.model.TeacherSessionBootstrap;
 import io.github.sipratama.penatika.identity.application.port.in.AuthenticateTeacherBrowserSessionUseCase;
+import io.github.sipratama.penatika.identity.application.port.in.AuthorizeTeacherMutationUseCase;
 import io.github.sipratama.penatika.identity.application.port.in.BootstrapTeacherBrowserSessionUseCase;
 import io.github.sipratama.penatika.identity.application.port.in.EstablishTeacherBrowserSessionUseCase;
 import io.github.sipratama.penatika.identity.application.port.in.RevokeTeacherBrowserSessionUseCase;
@@ -29,6 +31,7 @@ import io.github.sipratama.penatika.identity.domain.TeacherBrowserSessionId;
 public final class TeacherBrowserSessionApplicationService implements
         EstablishTeacherBrowserSessionUseCase,
         AuthenticateTeacherBrowserSessionUseCase,
+        AuthorizeTeacherMutationUseCase,
         BootstrapTeacherBrowserSessionUseCase,
         VerifyTeacherCsrfUseCase,
         RevokeTeacherBrowserSessionUseCase {
@@ -95,7 +98,8 @@ public final class TeacherBrowserSessionApplicationService implements
     public TeacherSessionBootstrap bootstrap(
             AuthenticatedTeacherSession authenticatedSession,
             Optional<RawSecurityToken> csrfRecoveryToken) {
-        TeacherBrowserSession currentSession = requireCurrentUsableSession(authenticatedSession.session().id());
+        TeacherBrowserSession currentSession = requireCurrentUsableSession(
+                authenticatedSession.session().id()).session();
         Instant now = clock.instant();
         Instant idleExpiresAt = currentSession.idleExpiryAfterActivity(now, IDLE_TIMEOUT);
 
@@ -127,10 +131,31 @@ public final class TeacherBrowserSessionApplicationService implements
             AuthenticatedTeacherSession authenticatedSession,
             Optional<RawSecurityToken> presentedToken) {
         return currentUsableSession(authenticatedSession.session().id())
+                .map(AuthenticatedTeacherSession::session)
                 .filter(session -> presentedToken
                         .filter(token -> tokenVerifier.matches(token, session.csrfVerifier()))
                         .isPresent())
                 .isPresent();
+    }
+
+    @Override
+    public AuthorizedTeacherMutation authorizeMutation(
+            AuthenticatedTeacherSession authenticatedSession,
+            Optional<RawSecurityToken> presentedToken) {
+        AuthenticatedTeacherSession currentSession = requireCurrentUsableSession(
+                authenticatedSession.session().id());
+        if (presentedToken
+                .filter(token -> tokenVerifier.matches(token, currentSession.session().csrfVerifier()))
+                .isEmpty()) {
+            throw new TeacherCsrfRejectedException();
+        }
+
+        Instant now = clock.instant();
+        Instant idleExpiresAt = currentSession.session().idleExpiryAfterActivity(now, IDLE_TIMEOUT);
+        if (!browserSessions.refreshActivity(currentSession.session().id(), now, idleExpiresAt)) {
+            throw new TeacherSessionRequiredException();
+        }
+        return new AuthorizedTeacherMutation(currentSession.teacherAccount().id().value());
     }
 
     @Override
@@ -148,12 +173,11 @@ public final class TeacherBrowserSessionApplicationService implements
                         .map(account -> new AuthenticatedTeacherSession(account, session)));
     }
 
-    private TeacherBrowserSession requireCurrentUsableSession(TeacherBrowserSessionId sessionId) {
+    private AuthenticatedTeacherSession requireCurrentUsableSession(TeacherBrowserSessionId sessionId) {
         return currentUsableSession(sessionId).orElseThrow(TeacherSessionRequiredException::new);
     }
 
-    private Optional<TeacherBrowserSession> currentUsableSession(TeacherBrowserSessionId sessionId) {
-        return authenticatePersistedSession(browserSessions.findById(sessionId))
-                .map(AuthenticatedTeacherSession::session);
+    private Optional<AuthenticatedTeacherSession> currentUsableSession(TeacherBrowserSessionId sessionId) {
+        return authenticatePersistedSession(browserSessions.findById(sessionId));
     }
 }

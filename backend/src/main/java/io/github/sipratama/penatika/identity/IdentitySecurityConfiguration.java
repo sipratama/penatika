@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -105,7 +106,8 @@ public class IdentitySecurityConfiguration {
             TeacherSessionAuthenticationEntryPoint entryPoint) throws Exception {
         http.securityMatcher("/api/**")
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/teacher-session").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/teacher-session").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/classroom-sessions").authenticated()
                         .anyRequest().denyAll())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -117,7 +119,7 @@ public class IdentitySecurityConfiguration {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
-                .csrf(Customizer.withDefaults());
+                .csrf(AbstractHttpConfigurer::disable);
         authenticationFilter.ifAvailable(filter -> http.addFilterBefore(filter, AnonymousAuthenticationFilter.class));
         return http.build();
     }

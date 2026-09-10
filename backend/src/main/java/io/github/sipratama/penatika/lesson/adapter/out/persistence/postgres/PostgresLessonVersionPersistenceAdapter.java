@@ -89,6 +89,15 @@ public final class PostgresLessonVersionPersistenceAdapter implements LessonVers
     }
 
     @Override
+    public Optional<LessonVersion> findForTeacher(
+            LessonVersionId lessonVersionId, UUID teacherAccountId) {
+        return load(
+                "v.id = :lessonVersionId AND l.teacher_account_id = :teacherAccountId",
+                lessonVersionId,
+                teacherAccountId);
+    }
+
+    @Override
     public Optional<LessonVersion> findClassroomReadyForTeacher(
             LessonVersionId lessonVersionId, UUID teacherAccountId) {
         return load(

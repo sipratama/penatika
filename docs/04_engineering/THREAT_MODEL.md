@@ -8,8 +8,8 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `0.9` |
-| Last Updated | `2026-09-10` |
+| Version | `1.0` |
+| Last Updated | `2026-09-11` |
 | Review Trigger | Identity, provider, contract, deployment, retention, or student-data decisions |
 
 ## 1. Scope
@@ -209,6 +209,13 @@ The concrete production OIDC provider remains a deployment decision. IVS-03
 automated evidence covers Authorization Code initiation, state, nonce, PKCE
 `S256`, existing-account resolution, transient-framework-authority isolation,
 cookies, session expiry/activity/revocation, and CSRF recovery/verification.
+IVS-04 applies that Identity-owned authority to the first state-changing
+Teacher API: it revalidates the current session, accepts only the raw
+`X-Penatika-CSRF` value as proof, refreshes qualifying activity only after CSRF
+success, derives Teacher ownership from server authentication, and merges
+nonexistent and other-Teacher LessonVersion references into the same 404
+outcome. The CSRF recovery cookie and Teacher session credential cannot
+substitute for the CSRF header.
 
 ## 9. External Provider Review
 
@@ -286,6 +293,7 @@ Review this threat model before:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `1.0` | `2026-09-11` | Record IVS-04 session revalidation, explicit mutation CSRF enforcement, trusted Teacher ownership, and LessonVersion non-disclosure evidence | Codex |
 | `0.9` | `2026-09-10` | Record implemented IVS-03 cookie, backend-session authority, transient OIDC isolation, and CSRF recovery/verification controls and evidence | Codex |
 | `0.8` | `2026-09-10` | Record the resolved first-slice Teacher-session lifetime and credential-generation gate by reference to the implementation plan; retain participant-session lifetime as open | Codex |
 | `0.7` | `2026-09-08` | Add deployment threats/mitigations (public database/backend exposure, SSH/CI credential leakage, secret handling, backup boundary, cross-environment leakage, patch discipline, Docker socket, disk/log exposure, plain HTTP, artifact integrity, provider outage/single-host loss) for the portable single-Linux-VPS MVP/pilot baseline (ADR-0019) | Claude |
