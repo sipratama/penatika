@@ -50,6 +50,12 @@ public record ClassroomSession(
                 || lifecycleState == ClassroomLifecycleState.ACTIVE;
     }
 
+    public boolean permitsDisplayAccess() {
+        return lifecycleState == ClassroomLifecycleState.CREATED
+                || lifecycleState == ClassroomLifecycleState.READY
+                || lifecycleState == ClassroomLifecycleState.ACTIVE;
+    }
+
     public ClassroomSession advanceToNextScene(long nextScenePosition) {
         if (!permitsStudentFacingMutation() || revision.value() == Revision.MAX_VALUE) {
             throw new IllegalStateException("ClassroomSession does not permit another mutation");

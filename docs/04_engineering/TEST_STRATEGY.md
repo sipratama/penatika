@@ -8,9 +8,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `1.1` |
+| Version | `1.2` |
 | Last Updated | `2026-09-11` |
-| Test Tooling | Deterministic scaffolding plus IVS-02 persistence, accepted IVS-03/04/05 evidence, and IVS-06 Controller authority, reconciliation, NEXT, Revision, idempotency, rollback, HTTP, and PostgreSQL concurrency evidence established; implementation tooling remains incremental |
+| Test Tooling | Deterministic scaffolding plus accepted IVS-02 through IVS-06 evidence and IVS-07 Display snapshot authority, closed projection, privacy, current-state, no-side-effect, HTTP, and PostgreSQL evidence established; implementation tooling remains incremental |
 
 ## 1. Testing Objectives
 
@@ -62,8 +62,10 @@ four IVS-05 Pairing/participant operations, transactional grant consumption,
 role-slot concurrency, stale authority cleanup, fixed participant expiry,
 dual-authority Controller reconciliation, transactional NEXT, durable original
 replay, changed CommandId reuse, exact-revision mutation gating, atomic
-rollback, and same-session PostgreSQL command serialization. It does not yet
-prove IVS-07 or later projection/realtime behavior,
+rollback, same-session PostgreSQL command serialization, and IVS-07 current
+Display snapshot authority, exact scene derivation, closed projection privacy,
+Unicode bounds, and no-side-effect behavior. It does not yet prove IVS-08 or
+later realtime behavior,
 migration-upgrade compatibility, or a real production identity provider.
 
 Still future or open are Playwright activation when a real cross-application
@@ -93,8 +95,10 @@ Session start evidence; IVS-05 adds PairingGrant/participant HTTP, cookie,
 authority, transaction rollback, expiry, replay, stale-slot, and PostgreSQL
 concurrency evidence; IVS-06 adds Controller reconciliation, dual authority,
 command structural validation, NEXT navigation/Revision mutation, durable
-idempotency, rollback, and PostgreSQL concurrency evidence. This does not claim
-IVS-07 or later projection or realtime behavior.
+idempotency, rollback, and PostgreSQL concurrency evidence; IVS-07 adds Display
+participant-only authorization, exact current-state snapshot derivation, closed
+schema/privacy validation, Unicode/order preservation, and lifetime/gate/state
+immutability evidence. This does not claim IVS-08 or later realtime behavior.
 
 ### Frontend Component Tests
 
@@ -292,6 +296,7 @@ Before pilot, evidence must cover all release blockers, high threats, architectu
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `1.2` | `2026-09-11` | Record IVS-07 Display snapshot authority, exact current-scene projection, closed privacy allow-list, Unicode/order, HTTP outcomes, and no-side-effect PostgreSQL evidence | Codex |
 | `1.0` | `2026-09-11` | Record IVS-04 LessonVersion eligibility/non-disclosure, Teacher/CSRF mutation authority, exact HTTP outcomes, initial Classroom state, and PostgreSQL evidence | Codex |
 | `0.9` | `2026-09-10` | Record IVS-03 token, OIDC, existing-account, backend-session, cookie/CSRF, HTTP authority-isolation, and PostgreSQL lifecycle evidence | Codex |
 | `0.8` | `2026-09-10` | Record IVS-02 V001, module-owned persistence adapter, and PostgreSQL constraint/concurrency evidence without claiming later application behavior | Codex |

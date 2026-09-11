@@ -38,8 +38,11 @@ Backend shell:
 - IVS-06 Controller revision reconciliation and transactional/idempotent
   `DIRECT_ACTION:NEXT`, with per-session PostgreSQL serialization and a
   production fail-closed Display mutation gate;
+- IVS-07 participant-authorized Display snapshot derived from current durable
+  ClassroomSession state and its immutable selected LessonVersion, with closed
+  schema `1.0` `PLAIN_TEXT` output and no synchronization side effect;
 - one Maven project rooted at `backend/`;
-- no Display projection, SSE, synchronization, or frontend product behavior yet.
+- no Display SSE, synchronization, or frontend product behavior yet.
 
 Frontend workspace:
 
@@ -63,9 +66,10 @@ Contract validation tooling:
   `openapi-typescript` 7.13.0.
 
 The repository has no configured production OIDC provider, deployment
-configuration, or CI/CD. IVS-07 and later projection/realtime behavior remain
-unimplemented; production NEXT remains fail-closed until IVS-08 supplies the
-real Display synchronization gate.
+configuration, or CI/CD. IVS-08 and later realtime behavior remain
+unimplemented; the IVS-07 snapshot does not synchronize Display, and production
+NEXT remains fail-closed until IVS-08 supplies the real Display synchronization
+gate.
 
 ## 2. Current Prerequisites
 
@@ -281,9 +285,9 @@ authorize implementation. Material architecture decisions remain governed by
 
 ## 10. Open Work
 
-Source Scaffolding and IVS-01 through IVS-05 are complete. IVS-06 Controller
-reconciliation and NEXT revision/idempotency runtime is READY FOR REVIEW.
-IVS-07 has not started; OIQ-04 remains unresolved and blocks IVS-08 only. Later product behavior,
+Source Scaffolding and IVS-01 through IVS-06 are complete. IVS-07 Display
+projection and snapshot is READY FOR REVIEW. IVS-08 has not started; OIQ-04
+remains unresolved and blocks IVS-08 only. Later product behavior,
 production OIDC provider selection/configuration, deployment files, CI/CD, and
 backup implementation remain pending.
 
@@ -291,6 +295,7 @@ backup implementation remain pending.
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-11` | Record IVS-07 participant-authorized derived Display snapshot, closed schema/privacy, current-state PostgreSQL evidence, and unchanged fail-closed synchronization gate | Codex |
 | `2026-09-11` | Record IVS-06 Controller reconciliation, dual authority, transactional NEXT, idempotency, rollback, fail-closed Display gate, and PostgreSQL concurrency validation | Codex |
 | `2026-09-11` | Record IVS-05 PairingGrant/participant HTTP, cookie, authority, expiry, rollback, stale-slot, and PostgreSQL concurrency validation | Codex |
 | `2026-09-11` | Record IVS-04 LessonVersion eligibility, Teacher/CSRF-authorized Classroom Session start, and PostgreSQL/HTTP validation evidence | Codex |

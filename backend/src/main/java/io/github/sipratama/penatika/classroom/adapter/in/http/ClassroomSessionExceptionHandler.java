@@ -14,6 +14,8 @@ import io.github.sipratama.penatika.classroom.application.ClassroomSessionNotPai
 import io.github.sipratama.penatika.classroom.application.ClassroomMutationNotAllowedException;
 import io.github.sipratama.penatika.classroom.application.CommandIdReuseConflictException;
 import io.github.sipratama.penatika.classroom.application.ControllerAuthorityRequiredException;
+import io.github.sipratama.penatika.classroom.application.DisplayAuthorityRequiredException;
+import io.github.sipratama.penatika.classroom.application.DisplaySessionRequiredException;
 import io.github.sipratama.penatika.classroom.application.PairingGrantRejectedException;
 import io.github.sipratama.penatika.classroom.application.ParticipantRoleAlreadyActiveException;
 import io.github.sipratama.penatika.classroom.application.StaleRevisionException;
@@ -23,6 +25,7 @@ import io.github.sipratama.penatika.lesson.application.LessonVersionNotReadyExce
 @RestControllerAdvice(assignableTypes = {
         ClassroomSessionController.class,
         ClassroomControllerCommandController.class,
+        ClassroomDisplaySnapshotController.class,
         PairingGrantController.class,
         ParticipantEstablishmentController.class
 })
@@ -110,6 +113,24 @@ public final class ClassroomSessionExceptionHandler {
                 "Forbidden",
                 "Active Controller authority is required for this request.",
                 "CONTROLLER_AUTHORITY_REQUIRED");
+    }
+
+    @ExceptionHandler(DisplaySessionRequiredException.class)
+    ResponseEntity<ClassroomSessionProblem> displaySessionRequired() {
+        return problem(
+                401,
+                "Unauthorized",
+                "An active Classroom Display participant session is required.",
+                "DISPLAY_SESSION_REQUIRED");
+    }
+
+    @ExceptionHandler(DisplayAuthorityRequiredException.class)
+    ResponseEntity<ClassroomSessionProblem> displayAuthorityRequired() {
+        return problem(
+                403,
+                "Forbidden",
+                "Active Classroom Display authority is required for this request.",
+                "DISPLAY_AUTHORITY_REQUIRED");
     }
 
     @ExceptionHandler(StaleRevisionException.class)

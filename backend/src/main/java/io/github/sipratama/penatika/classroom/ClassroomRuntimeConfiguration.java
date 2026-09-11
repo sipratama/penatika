@@ -15,6 +15,7 @@ import io.github.sipratama.penatika.classroom.adapter.out.synchronization.FailCl
 import io.github.sipratama.penatika.classroom.adapter.out.transaction.spring.TransactionalClassroomCommandUseCase;
 import io.github.sipratama.penatika.classroom.adapter.out.transaction.spring.TransactionalPairingGrantRedemptionUseCase;
 import io.github.sipratama.penatika.classroom.application.ClassroomCommandApplicationService;
+import io.github.sipratama.penatika.classroom.application.ClassroomDisplaySnapshotApplicationService;
 import io.github.sipratama.penatika.classroom.application.ControllerAuthorityApplicationService;
 import io.github.sipratama.penatika.classroom.application.ControllerReconciliationApplicationService;
 import io.github.sipratama.penatika.classroom.application.PairingGrantApplicationService;
@@ -29,6 +30,7 @@ import io.github.sipratama.penatika.classroom.application.port.out.PairingTokenV
 import io.github.sipratama.penatika.identity.application.port.in.ParticipantSessionAuthorityUseCase;
 import io.github.sipratama.penatika.identity.application.port.in.RecordTeacherSessionActivityUseCase;
 import io.github.sipratama.penatika.lesson.application.port.in.ResolveNextLessonSceneUseCase;
+import io.github.sipratama.penatika.lesson.application.port.in.ResolveClassroomLessonSceneUseCase;
 
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(prefix = "penatika.persistence", name = "enabled", havingValue = "true")
@@ -133,5 +135,14 @@ public class ClassroomRuntimeConfiguration {
             ClassroomCommandApplicationService delegate,
             TransactionTemplate transactionTemplate) {
         return new TransactionalClassroomCommandUseCase(delegate, transactionTemplate);
+    }
+
+    @Bean
+    ClassroomDisplaySnapshotApplicationService classroomDisplaySnapshotApplicationService(
+            ParticipantSessionAuthorityUseCase participantSessions,
+            ClassroomSessionPersistencePort classroomSessions,
+            ResolveClassroomLessonSceneUseCase lessonScenes) {
+        return new ClassroomDisplaySnapshotApplicationService(
+                participantSessions, classroomSessions, lessonScenes);
     }
 }

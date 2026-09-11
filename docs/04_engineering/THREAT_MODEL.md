@@ -229,6 +229,14 @@ accepted outcomes are disclosed only after current authority checks, and that
 per-session PostgreSQL serialization plus atomic rollback prevents duplicate or
 partial command effects. The production Display mutation gate remains
 fail-closed until IVS-08 establishes current-stream synchronization evidence.
+IVS-07 adds a participant-only Display snapshot boundary: missing or unusable
+credentials fail as 401, non-Display roles fail as 403, and foreign, absent, or
+inaccessible Classroom Sessions share a non-disclosing 404. The response is a
+closed allow-list derived from current ClassroomSession authority plus its
+immutable selected LessonVersion; it excludes Teacher, participant, credential,
+command, lifecycle, and persistence identities. Snapshot traffic renews no
+credential and creates no synchronization evidence, so the production mutation
+gate remains fail-closed.
 
 ## 9. External Provider Review
 

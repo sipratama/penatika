@@ -1632,6 +1632,290 @@ class FirstProtectedSlicePersistenceIT {
     }
 
     @Test
+    void displaySnapshotReturnsCurrentClosedPrivateProjectionWithoutSideEffects() throws Exception {
+        TeacherAccount teacher = createTeacher(
+                "10000000-0000-0000-0000-000000000801",
+                "10000000-0000-0000-0000-000000000802",
+                "ivs07-display-owner",
+                TeacherAccountStatus.ACTIVE);
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+        SessionAuthority authority = createSessionAuthority(
+                teacher,
+                "10000000-0000-0000-0000-000000000803",
+                'A',
+                'B',
+                now);
+        LessonVersion lessonVersion = createDisplayLessonVersion(teacher);
+        ClassroomSession classroomSession = new ClassroomSession(
+                new ClassroomSessionId(UUID.fromString("30000000-0000-0000-0000-000000000801")),
+                teacher.id().value(),
+                lessonVersion.id().value(),
+                ClassroomLifecycleState.ACTIVE,
+                1,
+                new Revision(4),
+                now.minusSeconds(600));
+        classroomSessions.create(classroomSession);
+
+        RawSecurityToken displayToken = rawToken('C');
+        ParticipantSession display = ParticipantSession.display(
+                new ParticipantSessionId(UUID.fromString("10000000-0000-0000-0000-000000000804")),
+                new ClassroomSessionReference(classroomSession.id().value()),
+                tokenVerifier.verifierFor(displayToken),
+                now.minusSeconds(300));
+        assertThat(participantSessions.tryCreateActive(display)).isTrue();
+        TeacherBrowserSession teacherBefore = browserSessions.findById(authority.session().id()).orElseThrow();
+        assertThat(displayMutationGate.isMutationPermitted(classroomSession.id(), classroomSession.revision()))
+                .isFalse();
+
+        MvcResult result = mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot",
+                                classroomSession.id().value())
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, authority.sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, displayToken)))
+                .andReturn();
+
+        assertThat(result.getResponse().getStatus()).isEqualTo(200);
+        assertThat(result.getResponse().getContentType()).isEqualTo("application/json");
+        assertThat(result.getResponse().getHeader("Cache-Control")).isEqualTo("no-store");
+        assertThat(result.getResponse().getHeader("Location")).isNull();
+        String json = result.getResponse().getContentAsString();
+        Map<String, Object> body = JsonPath.read(json, "$");
+        Map<String, Object> scene = JsonPath.read(json, "$.scene");
+        Map<String, Object> firstBlock = JsonPath.read(json, "$.scene.blocks[0]");
+        Map<String, Object> secondBlock = JsonPath.read(json, "$.scene.blocks[1]");
+        assertThat(body)
+                .containsOnlyKeys("schemaVersion", "classroomSessionId", "revision", "scene")
+                .containsEntry("schemaVersion", "1.0")
+                .containsEntry("classroomSessionId", classroomSession.id().value().toString())
+                .containsEntry("revision", 4);
+        assertThat(scene)
+                .containsOnlyKeys("sceneId", "position", "blocks")
+                .containsEntry("sceneId", lessonVersion.scenes().get(1).id().value().toString())
+                .containsEntry("position", 1);
+        assertThat(firstBlock)
+                .containsOnlyKeys("type", "text")
+                .containsEntry("type", "PLAIN_TEXT")
+                .containsEntry("text", "Bandingkan <, >, & dan \uD83E\uDDEE.");
+        assertThat(secondBlock)
+                .containsOnlyKeys("type", "text")
+                .containsEntry("type", "PLAIN_TEXT")
+                .containsEntry("text", "Baris pertama\nBaris kedua");
+
+        String pairingGrantId = "40000000-0000-0000-0000-000000000801";
+        String credentialVerifier = display.credentialVerifier();
+        String commandId = "ivs07-private-command-id";
+        assertThat(json).doesNotContain(
+                teacher.id().value().toString(),
+                authority.session().id().value().toString(),
+                display.id().value().toString(),
+                lessonVersion.id().value().toString(),
+                lessonVersion.lessonId().value().toString(),
+                pairingGrantId,
+                credentialVerifier,
+                commandId);
+
+        mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot",
+                                classroomSession.id().value())
+                        .cookie(cookie(ParticipantSessionCookies.COOKIE_NAME, displayToken)))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
+
+        ClassroomSession classroomAfter = classroomSessions.findById(classroomSession.id()).orElseThrow();
+        ParticipantSession participantAfter = participantSessions
+                .findByCredentialVerifier(display.credentialVerifier())
+                .orElseThrow();
+        TeacherBrowserSession teacherAfter = browserSessions.findById(authority.session().id()).orElseThrow();
+        assertThat(classroomAfter).isEqualTo(classroomSession);
+        assertThat(participantAfter.id()).isEqualTo(display.id());
+        assertThat(participantAfter.createdAt()).isEqualTo(display.createdAt());
+        assertThat(participantAfter.expiresAt()).isEqualTo(display.expiresAt());
+        assertThat(participantAfter.credentialVerifier()).isEqualTo(display.credentialVerifier());
+        assertThat(teacherAfter).isEqualTo(teacherBefore);
+        assertThat(displayMutationGate.isMutationPermitted(classroomSession.id(), classroomSession.revision()))
+                .isFalse();
+        assertThat(jdbcClient.sql("SELECT count(*) FROM classroom_accepted_command")
+                        .query(Integer.class)
+                        .single())
+                .isZero();
+    }
+
+    @Test
+    void displaySnapshotEnforcesParticipantOnly401403404AndWireValidation() throws Exception {
+        PairingFoundation foundation = createPairingFoundation('D', 'E');
+        String sessionId = foundation.classroomSession().id().value().toString();
+
+        assertProblem(mockMvc.perform(get(
+                        "/api/classroom-sessions/{id}/display-snapshot", sessionId)).andReturn(),
+                401, "DISPLAY_SESSION_REQUIRED");
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot", sessionId)
+                        .cookie(new jakarta.servlet.http.Cookie(
+                                ParticipantSessionCookies.COOKIE_NAME, "malformed")))
+                .andReturn(), 401, "DISPLAY_SESSION_REQUIRED");
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot", sessionId)
+                        .cookie(cookie(ParticipantSessionCookies.COOKIE_NAME, rawToken('F'))))
+                .andReturn(), 401, "DISPLAY_SESSION_REQUIRED");
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot", sessionId)
+                        .cookie(cookie(
+                                TeacherSessionCookies.SESSION_COOKIE_NAME,
+                                foundation.authority().sessionToken())))
+                .andReturn(), 401, "DISPLAY_SESSION_REQUIRED");
+
+        IssuedGrant grant = issueGrant(
+                foundation.authority(), foundation.classroomSession(), "CLASSROOM_DISPLAY");
+        MvcResult establishment = mockMvc.perform(post("/api/classroom-display-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(grant.token())))
+                .andReturn();
+        assertEstablishedParticipant(
+                establishment, foundation.classroomSession(), "CLASSROOM_DISPLAY");
+        String displayCredential = assertParticipantCookie(establishment);
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot", sessionId)
+                        .cookie(new jakarta.servlet.http.Cookie(
+                                ParticipantSessionCookies.COOKIE_NAME, grant.token())))
+                .andReturn(), 401, "DISPLAY_SESSION_REQUIRED");
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot", sessionId)
+                        .cookie(new jakarta.servlet.http.Cookie(
+                                ParticipantSessionCookies.COOKIE_NAME, grant.id())))
+                .andReturn(), 401, "DISPLAY_SESSION_REQUIRED");
+
+        RawSecurityToken controllerToken = rawToken('G');
+        ParticipantSession controller = ParticipantSession.controller(
+                new ParticipantSessionId(UUID.fromString("10000000-0000-0000-0000-000000000805")),
+                new ClassroomSessionReference(foundation.classroomSession().id().value()),
+                tokenVerifier.verifierFor(controllerToken),
+                foundation.teacher().id(),
+                foundation.authority().session().id(),
+                clock.instant());
+        assertThat(participantSessions.tryCreateActive(controller)).isTrue();
+        MvcResult controllerDenied = mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot", sessionId)
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, controllerToken)))
+                .andReturn();
+        assertProblem(controllerDenied, 403, "DISPLAY_AUTHORITY_REQUIRED");
+        assertThat(controllerDenied.getResponse().getContentAsString()).doesNotContain(
+                "TEACHER_CONTROLLER",
+                controller.id().value().toString(),
+                foundation.teacher().id().value().toString(),
+                foundation.authority().session().id().value().toString());
+
+        jakarta.servlet.http.Cookie displayCookie = new jakarta.servlet.http.Cookie(
+                ParticipantSessionCookies.COOKIE_NAME, displayCredential);
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot", "two words")
+                        .cookie(displayCookie))
+                .andReturn(), 400, "REQUEST_VALIDATION_FAILED");
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot", "\uD83E\uDDEE".repeat(129))
+                        .cookie(displayCookie))
+                .andReturn(), 400, "REQUEST_VALIDATION_FAILED");
+        MvcResult unresolved = mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot", "opaque-id")
+                        .cookie(displayCookie))
+                .andReturn();
+        assertProblem(unresolved, 404, "CLASSROOM_SESSION_NOT_FOUND");
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot", "1-1-1-1-1")
+                        .cookie(displayCookie))
+                .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+
+        TeacherAccount otherTeacher = createTeacher(
+                "10000000-0000-0000-0000-000000000811",
+                "10000000-0000-0000-0000-000000000812",
+                "ivs07-other-owner",
+                TeacherAccountStatus.ACTIVE);
+        LessonVersion otherLesson = createLessonVersion(
+                otherTeacher,
+                "20000000-0000-0000-0000-000000000811",
+                "20000000-0000-0000-0000-000000000812",
+                LessonVersionReadiness.CLASSROOM_READY,
+                true);
+        ClassroomSession otherSession = createClassroomSession(
+                otherTeacher, otherLesson, UUID.fromString("30000000-0000-0000-0000-000000000811"));
+        MvcResult foreign = mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot",
+                                otherSession.id().value())
+                        .cookie(displayCookie))
+                .andReturn();
+        assertProblem(foreign, 404, "CLASSROOM_SESSION_NOT_FOUND");
+        assertThat(foreign.getResponse().getContentAsString())
+                .isEqualTo(unresolved.getResponse().getContentAsString())
+                .doesNotContain(
+                        otherSession.id().value().toString(),
+                        otherLesson.id().value().toString(),
+                        otherTeacher.id().value().toString());
+
+        MvcResult staleTeacher = mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot", sessionId)
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, rawToken('H')),
+                                displayCookie))
+                .andReturn();
+        assertThat(staleTeacher.getResponse().getStatus()).isEqualTo(200);
+
+        Instant expiredAt = clock.instant();
+        ClassroomSession expiredParticipantSession = createClassroomSession(
+                otherTeacher, otherLesson, UUID.fromString("30000000-0000-0000-0000-000000000812"));
+        RawSecurityToken expiredToken = rawToken('I');
+        ParticipantSession expired = ParticipantSession.display(
+                new ParticipantSessionId(UUID.fromString("10000000-0000-0000-0000-000000000813")),
+                new ClassroomSessionReference(expiredParticipantSession.id().value()),
+                tokenVerifier.verifierFor(expiredToken),
+                expiredAt.minus(ParticipantSession.ABSOLUTE_LIFETIME));
+        assertThat(participantSessions.tryCreateActive(expired)).isTrue();
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot",
+                                expiredParticipantSession.id().value())
+                        .cookie(cookie(ParticipantSessionCookies.COOKIE_NAME, expiredToken)))
+                .andReturn(), 401, "DISPLAY_SESSION_REQUIRED");
+
+        ClassroomSession revokedParticipantSession = createClassroomSession(
+                otherTeacher, otherLesson, UUID.fromString("30000000-0000-0000-0000-000000000814"));
+        RawSecurityToken revokedToken = rawToken('J');
+        ParticipantSession revoked = ParticipantSession.display(
+                new ParticipantSessionId(UUID.fromString("10000000-0000-0000-0000-000000000815")),
+                new ClassroomSessionReference(revokedParticipantSession.id().value()),
+                tokenVerifier.verifierFor(revokedToken),
+                clock.instant());
+        assertThat(participantSessions.tryCreateActive(revoked)).isTrue();
+        assertThat(participantSessions.revoke(revoked.id(), clock.instant())).isTrue();
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot",
+                                revokedParticipantSession.id().value())
+                        .cookie(cookie(ParticipantSessionCookies.COOKIE_NAME, revokedToken)))
+                .andReturn(), 401, "DISPLAY_SESSION_REQUIRED");
+
+        ClassroomSession failedSession = new ClassroomSession(
+                new ClassroomSessionId(UUID.fromString("30000000-0000-0000-0000-000000000816")),
+                otherTeacher.id().value(),
+                otherLesson.id().value(),
+                ClassroomLifecycleState.FAILED,
+                0,
+                new Revision(0),
+                clock.instant());
+        classroomSessions.create(failedSession);
+        RawSecurityToken failedSessionToken = rawToken('K');
+        ParticipantSession failedSessionDisplay = ParticipantSession.display(
+                new ParticipantSessionId(UUID.fromString("10000000-0000-0000-0000-000000000817")),
+                new ClassroomSessionReference(failedSession.id().value()),
+                tokenVerifier.verifierFor(failedSessionToken),
+                clock.instant());
+        assertThat(participantSessions.tryCreateActive(failedSessionDisplay)).isTrue();
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot",
+                                failedSession.id().value())
+                        .cookie(cookie(ParticipantSessionCookies.COOKIE_NAME, failedSessionToken)))
+                .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+    }
+
+    @Test
     void controllerReconciliationAndCommandHttpEnforceDualAuthorityAndExactContract() throws Exception {
         Ivs06Foundation foundation = createIvs06Foundation('i', 'j', 'k');
         String sessionId = foundation.classroomSession().id().value().toString();
@@ -2258,6 +2542,55 @@ class FirstProtectedSlicePersistenceIT {
                 readiness,
                 Instant.parse("2026-09-11T00:01:00Z"),
                 scenes);
+        lessonVersions.createImmutableVersion(lesson, version);
+        return version;
+    }
+
+    private LessonVersion createDisplayLessonVersion(TeacherAccount teacher) {
+        LessonId lessonId = new LessonId(UUID.fromString("20000000-0000-0000-0000-000000000801"));
+        LessonVersionId versionId = new LessonVersionId(
+                UUID.fromString("20000000-0000-0000-0000-000000000802"));
+        Lesson lesson = new Lesson(lessonId, teacher.id().value(), Instant.parse("2026-09-11T00:00:00Z"));
+        LessonSceneId firstSceneId = new LessonSceneId(
+                UUID.fromString("20000000-0000-0000-0000-000000000803"));
+        LessonSceneId secondSceneId = new LessonSceneId(
+                UUID.fromString("20000000-0000-0000-0000-000000000804"));
+        LessonVersion version = new LessonVersion(
+                versionId,
+                lessonId,
+                LessonVersionReadiness.CLASSROOM_READY,
+                Instant.parse("2026-09-11T00:01:00Z"),
+                List.of(
+                        new LessonScene(
+                                firstSceneId,
+                                versionId,
+                                0,
+                                List.of(new SceneBlock(
+                                        new SceneBlockId(UUID.fromString(
+                                                "20000000-0000-0000-0000-000000000805")),
+                                        firstSceneId,
+                                        0,
+                                        SceneBlockType.PLAIN_TEXT,
+                                        "Scene pertama tidak boleh dipilih"))),
+                        new LessonScene(
+                                secondSceneId,
+                                versionId,
+                                1,
+                                List.of(
+                                        new SceneBlock(
+                                                new SceneBlockId(UUID.fromString(
+                                                        "20000000-0000-0000-0000-000000000806")),
+                                                secondSceneId,
+                                                0,
+                                                SceneBlockType.PLAIN_TEXT,
+                                                "Bandingkan <, >, & dan \uD83E\uDDEE."),
+                                        new SceneBlock(
+                                                new SceneBlockId(UUID.fromString(
+                                                        "20000000-0000-0000-0000-000000000807")),
+                                                secondSceneId,
+                                                1,
+                                                SceneBlockType.PLAIN_TEXT,
+                                                "Baris pertama\nBaris kedua")))));
         lessonVersions.createImmutableVersion(lesson, version);
         return version;
     }

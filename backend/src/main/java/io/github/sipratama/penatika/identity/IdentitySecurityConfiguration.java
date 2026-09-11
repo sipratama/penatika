@@ -110,6 +110,10 @@ public class IdentitySecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/teacher-session").authenticated()
                         .requestMatchers(
                                 HttpMethod.GET,
+                                "/api/classroom-sessions/*/display-snapshot")
+                        .permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
                                 "/api/classroom-sessions/*/controller-state")
                         .authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/classroom-sessions").authenticated()

@@ -10,6 +10,15 @@ import org.junit.jupiter.api.Test;
 
 class ClassroomSessionTest {
 
+    @Test
+    void displayAccessIsLimitedToLiveClassroomLifecycleStates() {
+        assertThat(session(ClassroomLifecycleState.CREATED, 0, 0).permitsDisplayAccess()).isTrue();
+        assertThat(session(ClassroomLifecycleState.READY, 0, 0).permitsDisplayAccess()).isTrue();
+        assertThat(session(ClassroomLifecycleState.ACTIVE, 0, 0).permitsDisplayAccess()).isTrue();
+        assertThat(session(ClassroomLifecycleState.FAILED, 0, 0).permitsDisplayAccess()).isFalse();
+        assertThat(session(ClassroomLifecycleState.EXPIRED, 0, 0).permitsDisplayAccess()).isFalse();
+    }
+
     private static final ClassroomSessionId SESSION_ID =
             new ClassroomSessionId(UUID.fromString("30000000-0000-0000-0000-000000000701"));
     private static final UUID TEACHER_ID = UUID.fromString("10000000-0000-0000-0000-000000000701");
