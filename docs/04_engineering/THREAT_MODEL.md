@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `1.0` |
+| Version | `1.1` |
 | Last Updated | `2026-09-11` |
 | Review Trigger | Identity, provider, contract, deployment, retention, or student-data decisions |
 
@@ -202,9 +202,12 @@ Realtime credential carriage and reconnect protocol are resolved by
 (SSE push reusing this identity model; no new realtime-specific credential).
 [ADR-0014](../02_architecture/adr/ADR-0014-postgresql-flyway-sql-first-persistence.md)
 selects PostgreSQL as the initial authoritative persistence for revocable
-browser/session security state. The first-slice Teacher-session lifetime and
-security-sensitive credential baseline is frozen in the
-[First Protected Vertical Slice Implementation Plan](./FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md).
+browser/session security state. The first-slice Teacher-session lifetime,
+participant-session lifetime, and security-sensitive credential baseline are
+frozen in the
+[First Protected Vertical Slice Implementation Plan](./FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md),
+which owns the resolved OIQ-03 fixed/non-sliding expiry and role-specific
+effective-authority rules.
 The concrete production OIDC provider remains a deployment decision. IVS-03
 automated evidence covers Authorization Code initiation, state, nonce, PKCE
 `S256`, existing-account resolution, transient-framework-authority isolation,
@@ -250,7 +253,6 @@ Before selecting AI or speech providers, evaluate:
 ## 11. Open Security and Privacy Decisions
 
 - Concrete OIDC provider and its privacy, operational, logout, and revocation capabilities.
-- Independent participant-session expiry beyond revocation/session lifecycle (OIQ-03).
 - Future account-linking or identity-recovery UX if introduced.
 - Technical retention enforcement and physical purge evidence.
 - Backup expiry evidence.
@@ -293,6 +295,7 @@ Review this threat model before:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `1.1` | `2026-09-11` | Remove resolved OIQ-03 from open security decisions and route the frozen participant-session lifetime to the implementation plan | Codex |
 | `1.0` | `2026-09-11` | Record IVS-04 session revalidation, explicit mutation CSRF enforcement, trusted Teacher ownership, and LessonVersion non-disclosure evidence | Codex |
 | `0.9` | `2026-09-10` | Record implemented IVS-03 cookie, backend-session authority, transient OIDC isolation, and CSRF recovery/verification controls and evidence | Codex |
 | `0.8` | `2026-09-10` | Record the resolved first-slice Teacher-session lifetime and credential-generation gate by reference to the implementation plan; retain participant-session lifetime as open | Codex |

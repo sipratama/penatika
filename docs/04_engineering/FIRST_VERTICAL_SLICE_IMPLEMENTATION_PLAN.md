@@ -140,7 +140,7 @@ optional simplifications.
 - Separate Teacher and Display React/TypeScript/Vite applications exist.
 - Role-scoped generated transport declarations exist.
 - OpenAPI `0.8.0` and the closed Display schema are authoritative.
-- IVS-04 Classroom Session start behavior is READY FOR REVIEW.
+- IVS-04 Classroom Session start behavior is COMPLETE after human review.
 
 ## 6. Implementation Decision Register
 
@@ -155,7 +155,7 @@ input before the owning batch can complete.
 | ID-03 | LessonVersion prerequisite | `LOCKED`: real Lesson/LessonVersion persistence; automated records are test fixtures only. No production seed/create endpoint. | IVS-02/04 | Meets the prerequisite without inventing authoring behavior. |
 | ID-04 | Teacher authentication | `LOCKED`: Spring Security OAuth2 Client/OIDC, Authorization Code + PKCE S256, provider-neutral configuration, and test-only provider support. Production provider `DEFERRED`. | IVS-03 | Implements ADR-0011 without production mock auth or an unapproved provider. |
 | ID-05 | Teacher session store | `LOCKED`: PostgreSQL opaque sessions with verifier-only credential storage, Teacher binding, CSRF association, rotation, activity, revocation, a 30-minute sliding idle timeout, and a fixed 8-hour absolute timeout from creation. | IVS-02/03 | Durable revocation/restart authority and bounded server-owned lifetimes are required; Redis is not justified. |
-| ID-06 | Participant sessions | `LOCKED`: PostgreSQL opaque sessions with verifier-only storage, session/role binding, active/revoked state, Controller Teacher binding, and one-active-role constraints. | IVS-02/05 | Authority/revocation must survive restart and concurrency. |
+| ID-06 | Participant sessions | `LOCKED`: PostgreSQL opaque sessions with verifier-only storage, session/role binding, active/revoked state, Controller Teacher binding, one-active-role constraints, and a fixed eight-hour absolute lifetime from creation with no idle timeout. | IVS-02/05 | Authority/revocation must survive restart and concurrency, while a non-sliding maximum lifetime bounds credential reuse exposure. |
 | ID-07 | Pairing secret | `LOCKED`: generate 32 CSPRNG bytes (256 bits), encode as 43-character unpadded Base64URL, return once, persist only the lowercase 64-character SHA-256 verifier plus metadata, and consume atomically. Five-minute expiry and single-use/revocation semantics remain unchanged. | IVS-05 | High-entropy machine-transferred token verification needs no reusable plaintext or password work factor. |
 | ID-08 | Command idempotency | `LOCKED`: unique `(ClassroomSessionId, CommandId)` record with original request identity, participant context, and resulting Revision. | IVS-02/06 | Accepted outcomes must survive restart and uncertain acknowledgement. |
 | ID-09 | Classroom authority | `LOCKED`: persist selected LessonVersion, lifecycle, current position, and session-scoped monotonic Revision. Initial/increment mechanics `LOCK IN BATCH`, not client guarantees. | IVS-02/04/06 | Preserves one authority and the Revision/position distinction. |
@@ -295,12 +295,58 @@ classroom/{domain,application/port/in,application/port/out,
   contract-approved bootstrap boundary, and is returned in
   `X-Penatika-CSRF`. It never enters URLs/query strings or logs. Combine it
   with strict origin/CORS policy.
+- Participant sessions created in IVS-05 use the injected server `Clock`:
+  `createdAt = Clock.instant()` and `expiresAt = createdAt + 8 hours`. This
+  fixed, non-sliding absolute lifetime applies to both `TEACHER_CONTROLLER` and
+  `CLASSROOM_DISPLAY`. IVS-05 runtime creation always persists a non-null
+  `expiresAt` even though the accepted V001 column remains physically nullable;
+  OIQ-03 requires neither a V001 change nor a V002 migration.
+- Participant sessions have no idle timeout and no participant `lastActiveAt`
+  expiry semantics in this slice. Controller HTTP requests or reconciliation,
+  commands, Display snapshots, SSE connections or heartbeats, reconnects,
+  browser polling, synchronization acknowledgements, and unrelated traffic
+  never move `createdAt` or `expiresAt` and never renew the credential.
+- Server time is authoritative: `now < expiresAt` is potentially usable and
+  `now >= expiresAt` is expired, including exact equality. Client timestamps
+  never control or extend participant authority.
+- Eight hours is an upper bound, not a guarantee of authority. Explicit
+  revocation, replacement/handoff, loss of the current role slot, a Classroom
+  Session that no longer permits the role, Classroom Session end when
+  implemented, and any other canonical invalidation rule make the participant
+  unusable earlier.
+- Effective Controller authority requires a valid participant credential,
+  `now < expiresAt`, no revocation/replacement, the current
+  `TEACHER_CONTROLLER` role slot, valid owning Classroom Session authority, an
+  `ACTIVE` linked `TeacherAccount`, a currently usable linked
+  `TeacherBrowserSession`, and a matching Classroom Session ownership binding.
+  Evaluate Teacher authority independently; do not persist
+  `min(participantExpiry, teacherBrowserSessionExpiry)` as participant expiry.
+- Effective Display authority requires a valid participant credential,
+  `now < expiresAt`, no revocation/replacement, the current
+  `CLASSROOM_DISPLAY` role slot, and an owning Classroom Session that still
+  permits Display authority. Display requires no `TeacherAccount` or
+  `TeacherBrowserSession` and receives no Teacher privilege.
+- A reconnect using the same still-valid, non-revoked, non-replaced credential
+  may retain the same participant identity, role authority, and original
+  `expiresAt`; it does not start another eight-hour period. A successful new
+  PairingGrant redemption establishes a new participant identity and credential
+  with a new `createdAt` and fixed eight-hour `expiresAt`, subject to the
+  existing role-slot and replacement rules.
 - Participant cookie: protected `__Host-penatika-participant`, verifier-only,
   bound to one session/role, using the same 32-byte/256-bit CSPRNG,
   43-character unpadded Base64URL, and lowercase 64-character SHA-256 verifier
-  baseline. Controller additionally requires active Teacher
-  account/session/ownership. Display gets no Teacher authority. OIQ-03 still
-  owns participant-session lifetime.
+  baseline. When issued, cookie `Max-Age` must not exceed the participant's
+  remaining absolute lifetime and should equal that remaining lifetime. Cookie
+  expiry is client cleanup only; PostgreSQL authority remains decisive, and a
+  stale cookie grants nothing after expiry, revocation, replacement, or other
+  session invalidation.
+- Participant credentials are security-sensitive browser credentials, not
+  Teacher authentication tokens. Their finite absolute lifetime bounds but
+  does not eliminate theft/reuse exposure; omitting an idle timeout avoids
+  ambiguous activity semantics for continuously connected classroom devices,
+  while the fixed deadline cannot be extended by attacker-generated traffic.
+  IVS-05 introduces no automatic rotation, renewal, refresh-token equivalent,
+  or activity/SSE/reconnect-based extension.
 - Display acknowledgement requires `X-Penatika-Display-Intent: synchronize`
   plus strict origin policy.
 - Pairing token is a machine-transferred credential generated from exactly 32
@@ -360,7 +406,11 @@ classroom/{domain,application/port/in,application/port/out,
   Revision invariants; command equivalence; projection allow-list/privacy.
 - **Application:** Teacher/ownership/Controller combinations; ready LessonVersion;
   grant issue/revoke/redeem/replay/role/slot; stale/duplicate/uncertain command;
-  Display gate before each mutation and after reconnect.
+  Display gate before each mutation and after reconnect; participant creation
+  persists a fixed non-null eight-hour expiry; exact expiry boundary; no
+  traffic-driven sliding; Controller Teacher-session/account invalidation;
+  Display independence; reconnect preserves expiry while re-pair creates a new
+  participant lifetime.
 - **PostgreSQL:** clean `V001`; identity/credential uniqueness; concurrent grant
   consumption; active role slots; Revision update; unique session/CommandId;
   outcome reload after restart.
@@ -437,7 +487,7 @@ broader applicable validation.
 
 ### IVS-04 — LessonVersion Prerequisite + Classroom Session Start
 
-- **Status:** `READY FOR REVIEW`.
+- **Status:** `COMPLETE` after human review.
 - **Objective/outputs:** authorized ready LessonVersion resolution, Classroom
   state/start, `POST /api/classroom-sessions`.
 - **Inputs:** lesson/session requirements and start contract.
@@ -455,15 +505,19 @@ broader applicable validation.
 
 ### IVS-05 — Pairing Grants + Participant Sessions
 
+- **Status:** `READY TO EXECUTE`.
 - **Objective/outputs:** four Pairing/participant operations, protected cookies,
   participant authority.
 - **Inputs:** pairing/authority requirements and contracts.
 - **Allowed:** Pairing/participant authority. **Forbidden:** replacement API,
   command, SSE.
-- **Prerequisites:** IVS-03/04 and resolved OIQ-03 participant-session lifetime;
-  OIQ-02 secret entropy/encoding is already resolved.
+- **Prerequisites:** IVS-03/04 COMPLETE; OIQ-02 secret entropy/encoding and
+  OIQ-03 participant-session lifetime are resolved.
 - **Tests/completion:** five-minute expiry, secrets, concurrency, replay,
-  revocation, role/owner/session/slot/CSRF/non-disclosure; roles pair either order.
+  revocation, role/owner/session/slot/CSRF/non-disclosure; roles pair either
+  order; fixed non-null eight-hour participant expiry, exact boundary, no idle
+  sliding or silent renewal, cookie lifetime cap, earlier authority
+  invalidation, and reconnect-versus-re-pair semantics.
 
 ### IVS-06 — Controller Reconciliation + NEXT Revision/Idempotency
 
@@ -525,16 +579,15 @@ broader applicable validation.
 |---|---|---|---|---|---|
 | OIQ-01 | Teacher session idle/absolute lifetimes? | `RESOLVED`: 30-minute sliding idle timeout and fixed 8-hour absolute timeout from session creation, with the server-authority and qualifying-activity semantics in §11. | IVS-03 | Human-reviewed security decision recorded in this implementation plan. | RESOLVED; no longer blocks IVS-03 |
 | OIQ-02 | Minimum entropy/encoded lengths for Teacher, participant, PairingGrant, and CSRF secrets? | `RESOLVED`: each uses exactly 32 CSPRNG bytes (256 bits), encoded as 43-character unpadded Base64URL; persistence stores only a lowercase 64-character SHA-256 verifier. | IVS-03/05 | Human-reviewed common first-slice credential baseline recorded in §11; OIDC transaction values remain ephemeral. | RESOLVED; no longer blocks IVS-03/05 |
-| OIQ-03 | Independent participant-session expiry beyond revocation/session lifecycle? | Contract leaves lifetime open; arbitrary persistence weakens posture. | IVS-05 | Select browser-session/lifecycle scope or bounded absolute expiry. | UNRESOLVED; blocks IVS-05 |
+| OIQ-03 | Independent participant-session expiry beyond revocation/session lifecycle? | `RESOLVED`: both participant roles receive a fixed, non-sliding eight-hour absolute lifetime from creation, with no idle timeout; server time and all earlier canonical authority invalidations remain authoritative as defined in §11. | IVS-05 | Human-reviewed security and implementation decision recorded in this implementation plan. | RESOLVED; no longer blocks IVS-05 |
 | OIQ-04 | Display SSE heartbeat interval/dead timeout? | ADR-0012 requires heartbeat behavior but defers numbers. | IVS-08 | Reliability/security review chooses configurable values; tune later with evidence. | UNRESOLVED; blocks IVS-08 |
 
-OIQ-01 and OIQ-02 are resolved, so the IVS-03 security decision gate is clear.
-OIQ-03 remains unresolved and blocks IVS-05; OIQ-04 remains unresolved and
-blocks IVS-08. IVS-04 has locked its internal initial state as `CREATED`, scene
-position `0`, and Revision `0` without creating an additional wire guarantee.
-Exact later query shapes, revision increment mechanics, Java class names, and
-validator packaging remain normal owning-batch decisions when contracts and
-invariants stay intact.
+OIQ-01, OIQ-02, and OIQ-03 are resolved. IVS-05 is ready to execute; OIQ-04
+remains unresolved and blocks IVS-08, not IVS-05. IVS-04 has locked its internal
+initial state as `CREATED`, scene position `0`, and Revision `0` without creating
+an additional wire guarantee. Exact later query shapes, revision increment
+mechanics, Java class names, and validator packaging remain normal owning-batch
+decisions when contracts and invariants stay intact.
 
 ## 18. Checkpoint and Merge Policy
 
