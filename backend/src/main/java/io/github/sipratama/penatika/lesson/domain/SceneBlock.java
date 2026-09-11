@@ -9,6 +9,8 @@ public record SceneBlock(
         SceneBlockType type,
         String plainText) {
 
+    private static final int MAX_PLAIN_TEXT_LENGTH = 16_384;
+
     public SceneBlock {
         Objects.requireNonNull(id, "id must not be null");
         Objects.requireNonNull(lessonSceneId, "lessonSceneId must not be null");
@@ -17,7 +19,8 @@ public record SceneBlock(
         if (position < 0) {
             throw new IllegalArgumentException("position must not be negative");
         }
-        if (plainText.isEmpty() || plainText.length() > 16384) {
+        int plainTextLength = plainText.codePointCount(0, plainText.length());
+        if (plainText.isEmpty() || plainTextLength > MAX_PLAIN_TEXT_LENGTH) {
             throw new IllegalArgumentException("plainText length must be between 1 and 16384");
         }
     }

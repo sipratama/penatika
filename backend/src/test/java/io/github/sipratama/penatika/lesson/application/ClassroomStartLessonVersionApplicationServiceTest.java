@@ -33,6 +33,8 @@ import io.github.sipratama.penatika.lesson.domain.SceneBlockType;
 @ExtendWith(MockitoExtension.class)
 class ClassroomStartLessonVersionApplicationServiceTest {
 
+    private static final int MAX_PLAIN_TEXT_LENGTH = 16_384;
+    private static final String SUPPLEMENTARY_CHARACTER = "\uD83D\uDE00";
     private static final UUID TEACHER_ID = UUID.fromString("10000000-0000-0000-0000-000000000301");
     private static final UUID VERSION_UUID = UUID.fromString("20000000-0000-0000-0000-000000000301");
     private static final String VERSION_ID = VERSION_UUID.toString();
@@ -74,6 +76,22 @@ class ClassroomStartLessonVersionApplicationServiceTest {
         when(lessonVersions.findForTeacher(INTERNAL_VERSION_ID, TEACHER_ID))
                 .thenReturn(Optional.of(eligible));
 
+        assertThat(service.resolve(VERSION_ID, TEACHER_ID).internalId()).isEqualTo(VERSION_UUID);
+    }
+
+    @Test
+    void resolvesClassroomReadyVersionAtTheUnicodeCodePointTextLimit() {
+        String text = SUPPLEMENTARY_CHARACTER.repeat(MAX_PLAIN_TEXT_LENGTH);
+        LessonSceneId lessonSceneId = sceneId();
+        LessonVersion eligible = version(List.of(new LessonScene(
+                lessonSceneId,
+                INTERNAL_VERSION_ID,
+                0,
+                List.of(block(lessonSceneId, 0, text)))));
+        when(lessonVersions.findForTeacher(INTERNAL_VERSION_ID, TEACHER_ID))
+                .thenReturn(Optional.of(eligible));
+
+        assertThat(text.length()).isEqualTo(MAX_PLAIN_TEXT_LENGTH * 2);
         assertThat(service.resolve(VERSION_ID, TEACHER_ID).internalId()).isEqualTo(VERSION_UUID);
     }
 
@@ -162,12 +180,17 @@ class ClassroomStartLessonVersionApplicationServiceTest {
     }
 
     private static SceneBlock block(LessonSceneId parentSceneId, long position) {
+        return block(parentSceneId, position, "Classroom-ready plain text");
+    }
+
+    private static SceneBlock block(
+            LessonSceneId parentSceneId, long position, String plainText) {
         return new SceneBlock(
                 new SceneBlockId(new UUID(0, position + 1)),
                 parentSceneId,
                 position,
                 SceneBlockType.PLAIN_TEXT,
-                "Classroom-ready plain text");
+                plainText);
     }
 
     private static List<SceneBlock> blocks(int count) {

@@ -40,11 +40,13 @@ public record LessonVersion(
             }
             for (int blockIndex = 0; blockIndex < scene.blocks().size(); blockIndex++) {
                 SceneBlock block = scene.blocks().get(blockIndex);
+                String plainText = block.plainText();
+                int plainTextLength = plainText.codePointCount(0, plainText.length());
                 if (!block.lessonSceneId().equals(scene.id())
                         || block.position() != blockIndex
                         || block.type() != SceneBlockType.PLAIN_TEXT
-                        || block.plainText().isEmpty()
-                        || block.plainText().length() > MAX_PLAIN_TEXT_LENGTH) {
+                        || plainText.isEmpty()
+                        || plainTextLength > MAX_PLAIN_TEXT_LENGTH) {
                     return false;
                 }
             }
