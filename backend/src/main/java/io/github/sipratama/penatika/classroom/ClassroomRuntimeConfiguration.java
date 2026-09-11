@@ -27,6 +27,7 @@ import io.github.sipratama.penatika.classroom.application.port.out.PairingGrantP
 import io.github.sipratama.penatika.classroom.application.port.out.PairingTokenGeneratorPort;
 import io.github.sipratama.penatika.classroom.application.port.out.PairingTokenVerifierPort;
 import io.github.sipratama.penatika.identity.application.port.in.ParticipantSessionAuthorityUseCase;
+import io.github.sipratama.penatika.identity.application.port.in.RecordTeacherSessionActivityUseCase;
 import io.github.sipratama.penatika.lesson.application.port.in.ResolveNextLessonSceneUseCase;
 
 @Configuration(proxyBeanMethods = false)
@@ -104,8 +105,10 @@ public class ClassroomRuntimeConfiguration {
     @Bean
     ControllerReconciliationApplicationService controllerReconciliationApplicationService(
             ClassroomSessionPersistencePort classroomSessions,
-            ControllerAuthorityApplicationService controllerAuthority) {
-        return new ControllerReconciliationApplicationService(classroomSessions, controllerAuthority);
+            ControllerAuthorityApplicationService controllerAuthority,
+            RecordTeacherSessionActivityUseCase teacherActivity) {
+        return new ControllerReconciliationApplicationService(
+                classroomSessions, controllerAuthority, teacherActivity);
     }
 
     @Bean

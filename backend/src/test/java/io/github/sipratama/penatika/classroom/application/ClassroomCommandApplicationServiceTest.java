@@ -3,6 +3,7 @@ package io.github.sipratama.penatika.classroom.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -91,6 +93,7 @@ class ClassroomCommandApplicationServiceTest {
         assertThat(outcome.getValue().teacherBrowserSessionId()).isEqualTo(BROWSER_ID);
         assertThat(outcome.getValue().controllerParticipantSessionId()).isEqualTo(PARTICIPANT_ID);
         assertThat(outcome.getValue().acceptedAt()).isEqualTo(NOW);
+        verify(classroomSessions).lockById(session.id());
     }
 
     @Test
@@ -138,7 +141,7 @@ class ClassroomCommandApplicationServiceTest {
     @Test
     void wrongRoleOrBindingIsOneControllerAuthorityFailure() {
         ClassroomSession session = session(0, 0, ClassroomLifecycleState.READY);
-        when(classroomSessions.lockById(session.id())).thenReturn(Optional.of(session));
+        when(classroomSessions.findById(session.id())).thenReturn(Optional.of(session));
         when(participantSessions.resolve(PARTICIPANT_TOKEN)).thenReturn(Optional.of(
                 new ResolvedParticipantSession(
                         PARTICIPANT_ID,
@@ -151,6 +154,63 @@ class ClassroomCommandApplicationServiceTest {
 
         assertThatThrownBy(() -> service.execute(request("command-1", 0)))
                 .isInstanceOf(ControllerAuthorityRequiredException.class);
+        verify(classroomSessions, never()).lockById(any());
+        verify(acceptedCommands, never()).findByCommandIdentity(any(), any());
+    }
+
+    @Test
+    void rejectsAnotherTeachersClassroomBeforeAcquiringTheMutationRowLock() {
+        ClassroomSession anotherTeachersSession = session(
+                UUID.fromString("10000000-0000-0000-0000-000000000099"),
+                0,
+                0,
+                ClassroomLifecycleState.READY);
+        when(classroomSessions.findById(anotherTeachersSession.id()))
+                .thenReturn(Optional.of(anotherTeachersSession));
+
+        assertThatThrownBy(() -> service.execute(request("command-1", 0)))
+                .isInstanceOf(ClassroomSessionNotFoundException.class);
+
+        verify(classroomSessions, never()).lockById(any());
+        verify(participantSessions, never()).resolve(any());
+    }
+
+    @Test
+    void preauthorizesBeforeLockAndRevalidatesControllerAuthorityAfterLock() {
+        ClassroomSession session = session(0, 0, ClassroomLifecycleState.READY);
+        when(classroomSessions.findById(session.id())).thenReturn(Optional.of(session));
+        when(classroomSessions.lockById(session.id())).thenReturn(Optional.of(session));
+        when(participantSessions.resolve(PARTICIPANT_TOKEN))
+                .thenReturn(Optional.of(authorizedParticipant()), Optional.empty());
+
+        assertThatThrownBy(() -> service.execute(request("command-1", 0)))
+                .isInstanceOf(ControllerAuthorityRequiredException.class);
+
+        InOrder authorizationOrder = inOrder(classroomSessions, participantSessions);
+        authorizationOrder.verify(classroomSessions).findById(session.id());
+        authorizationOrder.verify(participantSessions).resolve(PARTICIPANT_TOKEN);
+        authorizationOrder.verify(classroomSessions).lockById(session.id());
+        authorizationOrder.verify(participantSessions).resolve(PARTICIPANT_TOKEN);
+        verify(acceptedCommands, never()).findByCommandIdentity(any(), any());
+    }
+
+    @Test
+    void revalidatesClassroomOwnershipAfterAcquiringTheMutationRowLock() {
+        ClassroomSession preauthorized = session(0, 0, ClassroomLifecycleState.READY);
+        ClassroomSession ownershipChanged = session(
+                UUID.fromString("10000000-0000-0000-0000-000000000099"),
+                0,
+                0,
+                ClassroomLifecycleState.READY);
+        when(classroomSessions.findById(preauthorized.id())).thenReturn(Optional.of(preauthorized));
+        when(classroomSessions.lockById(preauthorized.id())).thenReturn(Optional.of(ownershipChanged));
+        when(participantSessions.resolve(PARTICIPANT_TOKEN))
+                .thenReturn(Optional.of(authorizedParticipant()));
+
+        assertThatThrownBy(() -> service.execute(request("command-1", 0)))
+                .isInstanceOf(ClassroomSessionNotFoundException.class);
+
+        verify(participantSessions).resolve(PARTICIPANT_TOKEN);
         verify(acceptedCommands, never()).findByCommandIdentity(any(), any());
     }
 
@@ -182,16 +242,21 @@ class ClassroomCommandApplicationServiceTest {
     }
 
     private void authorize(ClassroomSession session) {
+        when(classroomSessions.findById(session.id())).thenReturn(Optional.of(session));
         when(classroomSessions.lockById(session.id())).thenReturn(Optional.of(session));
-        when(participantSessions.resolve(PARTICIPANT_TOKEN)).thenReturn(Optional.of(
-                new ResolvedParticipantSession(
-                        PARTICIPANT_ID,
-                        SESSION_ID,
-                        "TEACHER_CONTROLLER",
-                        TEACHER_ID,
-                        BROWSER_ID,
-                        NOW.minusSeconds(1),
-                        NOW.plusSeconds(1))));
+        when(participantSessions.resolve(PARTICIPANT_TOKEN))
+                .thenReturn(Optional.of(authorizedParticipant()));
+    }
+
+    private static ResolvedParticipantSession authorizedParticipant() {
+        return new ResolvedParticipantSession(
+                PARTICIPANT_ID,
+                SESSION_ID,
+                "TEACHER_CONTROLLER",
+                TEACHER_ID,
+                BROWSER_ID,
+                NOW.minusSeconds(1),
+                NOW.plusSeconds(1));
     }
 
     private static ClassroomCommandRequest request(String commandId, long revision) {
@@ -206,9 +271,17 @@ class ClassroomCommandApplicationServiceTest {
 
     private static ClassroomSession session(
             long position, long revision, ClassroomLifecycleState lifecycle) {
+        return session(TEACHER_ID, position, revision, lifecycle);
+    }
+
+    private static ClassroomSession session(
+            UUID teacherAccountId,
+            long position,
+            long revision,
+            ClassroomLifecycleState lifecycle) {
         return new ClassroomSession(
                 new ClassroomSessionId(SESSION_ID),
-                TEACHER_ID,
+                teacherAccountId,
                 LESSON_VERSION_ID,
                 lifecycle,
                 position,

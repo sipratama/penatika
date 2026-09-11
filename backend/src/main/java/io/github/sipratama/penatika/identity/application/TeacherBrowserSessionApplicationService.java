@@ -20,6 +20,7 @@ import io.github.sipratama.penatika.identity.application.port.in.AuthorizeTeache
 import io.github.sipratama.penatika.identity.application.port.in.BootstrapTeacherBrowserSessionUseCase;
 import io.github.sipratama.penatika.identity.application.port.in.EstablishTeacherBrowserSessionUseCase;
 import io.github.sipratama.penatika.identity.application.port.in.RevokeTeacherBrowserSessionUseCase;
+import io.github.sipratama.penatika.identity.application.port.in.RecordTeacherSessionActivityUseCase;
 import io.github.sipratama.penatika.identity.application.port.in.VerifyTeacherCsrfUseCase;
 import io.github.sipratama.penatika.identity.application.port.out.SecurityTokenGeneratorPort;
 import io.github.sipratama.penatika.identity.application.port.out.SecurityTokenVerifierPort;
@@ -34,6 +35,7 @@ public final class TeacherBrowserSessionApplicationService implements
         EstablishTeacherBrowserSessionUseCase,
         AuthenticateTeacherBrowserSessionUseCase,
         AuthorizeTeacherReadUseCase,
+        RecordTeacherSessionActivityUseCase,
         AuthorizeTeacherMutationUseCase,
         BootstrapTeacherBrowserSessionUseCase,
         VerifyTeacherCsrfUseCase,
@@ -171,6 +173,23 @@ public final class TeacherBrowserSessionApplicationService implements
         return new AuthorizedTeacherSession(
                 currentSession.teacherAccount().id().value(),
                 currentSession.session().id().value());
+    }
+
+    @Override
+    public void recordActivity(AuthorizedTeacherSession authorizedSession) {
+        Objects.requireNonNull(authorizedSession, "authorizedSession must not be null");
+        TeacherBrowserSessionId sessionId = new TeacherBrowserSessionId(
+                authorizedSession.teacherBrowserSessionId());
+        AuthenticatedTeacherSession currentSession = requireCurrentUsableSession(sessionId);
+        if (!currentSession.teacherAccount().id().value().equals(authorizedSession.teacherAccountId())) {
+            throw new TeacherSessionRequiredException();
+        }
+
+        Instant now = clock.instant();
+        Instant idleExpiresAt = currentSession.session().idleExpiryAfterActivity(now, IDLE_TIMEOUT);
+        if (!browserSessions.refreshActivity(sessionId, now, idleExpiresAt)) {
+            throw new TeacherSessionRequiredException();
+        }
     }
 
     @Override

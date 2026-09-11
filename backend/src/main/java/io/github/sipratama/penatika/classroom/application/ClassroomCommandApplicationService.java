@@ -48,6 +48,14 @@ public final class ClassroomCommandApplicationService {
         Objects.requireNonNull(request, "request must not be null");
         ClassroomSessionId sessionId = new ClassroomSessionId(request.classroomSessionId());
         Revision expectedRevision = new Revision(request.expectedRevision());
+        ClassroomSession resolvedSession = classroomSessions.findById(sessionId)
+                .orElseThrow(ClassroomSessionNotFoundException::new);
+        controllerAuthority.requireAuthority(
+                resolvedSession,
+                request.teacherAccountId(),
+                request.teacherBrowserSessionId(),
+                request.participantCredential());
+
         ClassroomSession session = classroomSessions.lockById(sessionId)
                 .orElseThrow(ClassroomSessionNotFoundException::new);
         AuthorizedController controller = controllerAuthority.requireAuthority(

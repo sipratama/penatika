@@ -27,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.github.sipratama.penatika.identity.adapter.out.security.Sha256SecurityTokenVerifier;
 import io.github.sipratama.penatika.identity.application.model.AuthenticatedTeacherSession;
+import io.github.sipratama.penatika.identity.application.model.AuthorizedTeacherSession;
 import io.github.sipratama.penatika.identity.application.model.EstablishedTeacherSession;
 import io.github.sipratama.penatika.identity.application.model.ExternalTeacherIdentity;
 import io.github.sipratama.penatika.identity.application.model.RawSecurityToken;
@@ -266,19 +267,42 @@ class TeacherBrowserSessionApplicationServiceTest {
     }
 
     @Test
-    void authorizesCurrentTeacherReadWithoutRefreshingActivity() {
+    void recordsAuthorizedReadActivityWithTheSlidingIdleTimeout() {
         TeacherBrowserSession current = session(
                 NOW.minusSeconds(60), NOW.plusSeconds(60), NOW.plusSeconds(3600), null);
         AuthenticatedTeacherSession authenticated = authenticated(current);
         when(browserSessions.findById(SESSION_ID)).thenReturn(Optional.of(current));
         when(teacherIdentities.findTeacherAccount(TEACHER_ID))
                 .thenReturn(Optional.of(authenticated.teacherAccount()));
+        when(browserSessions.refreshActivity(
+                        SESSION_ID, NOW, NOW.plusSeconds(30 * 60)))
+                .thenReturn(true);
 
         var authorized = service.authorizeRead(authenticated);
+        service.recordActivity(authorized);
 
         assertThat(authorized.teacherAccountId()).isEqualTo(TEACHER_ID.value());
         assertThat(authorized.teacherBrowserSessionId()).isEqualTo(SESSION_ID.value());
-        verify(browserSessions, never()).refreshActivity(any(), any(), any());
+        verify(browserSessions).refreshActivity(
+                SESSION_ID, NOW, NOW.plusSeconds(30 * 60));
+    }
+
+    @Test
+    void capsAuthorizedReadActivityAtTheFixedAbsoluteExpiry() {
+        Instant absoluteExpiry = NOW.plusSeconds(10 * 60);
+        TeacherBrowserSession current = session(
+                NOW.minusSeconds(60), NOW.plusSeconds(60), absoluteExpiry, null);
+        AuthenticatedTeacherSession authenticated = authenticated(current);
+        when(browserSessions.findById(SESSION_ID)).thenReturn(Optional.of(current));
+        when(teacherIdentities.findTeacherAccount(TEACHER_ID))
+                .thenReturn(Optional.of(authenticated.teacherAccount()));
+        when(browserSessions.refreshActivity(SESSION_ID, NOW, absoluteExpiry))
+                .thenReturn(true);
+
+        service.recordActivity(new AuthorizedTeacherSession(
+                TEACHER_ID.value(), SESSION_ID.value()));
+
+        verify(browserSessions).refreshActivity(SESSION_ID, NOW, absoluteExpiry);
     }
 
     @Test

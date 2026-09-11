@@ -1650,8 +1650,21 @@ class FirstProtectedSlicePersistenceIT {
                 .containsOnlyKeys("classroomSessionId", "revision")
                 .containsEntry("classroomSessionId", sessionId)
                 .containsEntry("revision", 0);
-        assertThat(browserSessions.findById(foundation.authority().session().id()).orElseThrow().lastActiveAt())
-                .isEqualTo(foundation.authority().session().lastActiveAt());
+        TeacherBrowserSession refreshedTeacherSession = browserSessions
+                .findById(foundation.authority().session().id())
+                .orElseThrow();
+        assertThat(refreshedTeacherSession.lastActiveAt())
+                .isAfter(foundation.authority().session().lastActiveAt());
+        assertThat(refreshedTeacherSession.idleExpiresAt())
+                .isEqualTo(refreshedTeacherSession.absoluteExpiresAt());
+        assertThat(refreshedTeacherSession.absoluteExpiresAt())
+                .isEqualTo(foundation.authority().session().absoluteExpiresAt());
+        ParticipantSession unchangedParticipant = participantSessions
+                .findByCredentialVerifier(foundation.participant().credentialVerifier())
+                .orElseThrow();
+        assertThat(unchangedParticipant.createdAt()).isEqualTo(foundation.participant().createdAt());
+        assertThat(unchangedParticipant.expiresAt()).isEqualTo(foundation.participant().expiresAt());
+        Instant successfulReconciliationActivity = refreshedTeacherSession.lastActiveAt();
 
         assertProblem(mockMvc.perform(get(
                                 "/api/classroom-sessions/{id}/controller-state", sessionId)
@@ -1723,6 +1736,20 @@ class FirstProtectedSlicePersistenceIT {
                                 cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
                                 cookie(ParticipantSessionCookies.COOKIE_NAME, displayToken)))
                 .andReturn(), 403, "CONTROLLER_AUTHORITY_REQUIRED");
+        TeacherBrowserSession afterRejectedReconciliations = browserSessions
+                .findById(foundation.authority().session().id())
+                .orElseThrow();
+        assertThat(afterRejectedReconciliations.lastActiveAt())
+                .isEqualTo(successfulReconciliationActivity);
+        assertThat(afterRejectedReconciliations.idleExpiresAt())
+                .isEqualTo(refreshedTeacherSession.idleExpiresAt());
+        ParticipantSession participantAfterRejectedReconciliations = participantSessions
+                .findByCredentialVerifier(foundation.participant().credentialVerifier())
+                .orElseThrow();
+        assertThat(participantAfterRejectedReconciliations.createdAt())
+                .isEqualTo(foundation.participant().createdAt());
+        assertThat(participantAfterRejectedReconciliations.expiresAt())
+                .isEqualTo(foundation.participant().expiresAt());
 
         String commandBody = commandBody("command-http-1", 0);
         assertProblem(mockMvc.perform(post(
@@ -1955,12 +1982,14 @@ class FirstProtectedSlicePersistenceIT {
                 "10000000-0000-0000-0000-000000000702",
                 "ivs06-teacher",
                 TeacherAccountStatus.ACTIVE);
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         SessionAuthority authority = createSessionAuthority(
                 teacher,
                 "10000000-0000-0000-0000-000000000703",
                 sessionCharacter,
                 csrfCharacter,
-                clock.instant().truncatedTo(ChronoUnit.MICROS));
+                now,
+                now.plusSeconds(20 * 60));
         LessonVersionFixtureBuilder.Fixture lessonFixture = new LessonVersionFixtureBuilder()
                 .withTeacherAccountId(teacher.id().value())
                 .build();
@@ -1971,7 +2000,6 @@ class FirstProtectedSlicePersistenceIT {
                 .build();
         classroomSessions.create(classroomSession);
         RawSecurityToken participantToken = rawToken(participantCharacter);
-        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         ParticipantSession participant = ParticipantSession.controller(
                 new ParticipantSessionId(UUID.fromString("10000000-0000-0000-0000-000000000704")),
                 new ClassroomSessionReference(classroomSession.id().value()),
@@ -2169,6 +2197,22 @@ class FirstProtectedSlicePersistenceIT {
             char sessionCharacter,
             char csrfCharacter,
             Instant now) {
+        return createSessionAuthority(
+                teacher,
+                sessionId,
+                sessionCharacter,
+                csrfCharacter,
+                now,
+                now.plusSeconds(3600));
+    }
+
+    private SessionAuthority createSessionAuthority(
+            TeacherAccount teacher,
+            String sessionId,
+            char sessionCharacter,
+            char csrfCharacter,
+            Instant now,
+            Instant absoluteExpiresAt) {
         RawSecurityToken sessionToken = rawToken(sessionCharacter);
         RawSecurityToken csrfToken = rawToken(csrfCharacter);
         TeacherBrowserSession session = runtimeSession(
@@ -2179,7 +2223,7 @@ class FirstProtectedSlicePersistenceIT {
                 now.minusSeconds(300),
                 now.minusSeconds(120),
                 now.plusSeconds(600),
-                now.plusSeconds(3600),
+                absoluteExpiresAt,
                 null);
         browserSessions.create(session);
         return new SessionAuthority(session, sessionToken, csrfToken);
