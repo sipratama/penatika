@@ -14,18 +14,24 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.http.MediaType;
@@ -52,14 +58,20 @@ import com.jayway.jsonpath.JsonPath;
 import io.github.sipratama.penatika.classroom.adapter.out.security.Sha256PairingTokenVerifier;
 import io.github.sipratama.penatika.classroom.adapter.in.http.ParticipantSessionCookies;
 import io.github.sipratama.penatika.classroom.application.PairingGrantRejectedException;
+import io.github.sipratama.penatika.classroom.application.CommandIdReuseConflictException;
+import io.github.sipratama.penatika.classroom.application.StaleRevisionException;
+import io.github.sipratama.penatika.classroom.application.model.ClassroomCommandRequest;
+import io.github.sipratama.penatika.classroom.application.model.ClassroomCommandResult;
 import io.github.sipratama.penatika.classroom.application.ParticipantRoleAlreadyActiveException;
 import io.github.sipratama.penatika.classroom.application.model.EstablishedParticipant;
 import io.github.sipratama.penatika.classroom.application.model.PresentedPairingToken;
 import io.github.sipratama.penatika.classroom.application.model.RawPairingToken;
 import io.github.sipratama.penatika.classroom.application.port.in.EstablishClassroomDisplayParticipantUseCase;
 import io.github.sipratama.penatika.classroom.application.port.in.EstablishTeacherControllerParticipantUseCase;
+import io.github.sipratama.penatika.classroom.application.port.in.ExecuteClassroomCommandUseCase;
 import io.github.sipratama.penatika.classroom.application.port.out.AcceptedCommandOutcomePersistencePort;
 import io.github.sipratama.penatika.classroom.application.port.out.ClassroomSessionPersistencePort;
+import io.github.sipratama.penatika.classroom.application.port.out.DisplayMutationGatePort;
 import io.github.sipratama.penatika.classroom.application.port.out.PairingGrantPersistencePort;
 import io.github.sipratama.penatika.classroom.domain.AcceptedCommandOutcome;
 import io.github.sipratama.penatika.classroom.domain.ClassroomLifecycleState;
@@ -83,6 +95,9 @@ import io.github.sipratama.penatika.identity.application.model.RawSecurityToken;
 import io.github.sipratama.penatika.identity.domain.ExternalIdentityLink;
 import io.github.sipratama.penatika.identity.domain.ExternalIdentityLinkId;
 import io.github.sipratama.penatika.identity.domain.ParticipantSession;
+import io.github.sipratama.penatika.identity.domain.ClassroomSessionReference;
+import io.github.sipratama.penatika.identity.domain.ParticipantRole;
+import io.github.sipratama.penatika.identity.domain.ParticipantSessionId;
 import io.github.sipratama.penatika.identity.domain.TeacherAccount;
 import io.github.sipratama.penatika.identity.domain.TeacherAccountId;
 import io.github.sipratama.penatika.identity.domain.TeacherAccountStatus;
@@ -107,6 +122,7 @@ import io.github.sipratama.penatika.lesson.fixtures.LessonVersionFixtureBuilder;
 
 @SpringBootTest
 @Testcontainers
+@Import(FirstProtectedSlicePersistenceIT.ExactRevisionDisplayGateConfiguration.class)
 class FirstProtectedSlicePersistenceIT {
 
     @Container
@@ -133,6 +149,8 @@ class FirstProtectedSlicePersistenceIT {
     @Autowired private EstablishTeacherControllerParticipantUseCase establishControllerParticipant;
     @Autowired private EstablishClassroomDisplayParticipantUseCase establishDisplayParticipant;
     @Autowired private ParticipantSessionAuthorityUseCase participantAuthority;
+    @Autowired private ExecuteClassroomCommandUseCase executeClassroomCommand;
+    @Autowired private ExactRevisionDisplayGate displayMutationGate;
     @Autowired private WebApplicationContext applicationContext;
     @Autowired private Clock clock;
 
@@ -158,6 +176,7 @@ class FirstProtectedSlicePersistenceIT {
                         CASCADE
                         """)
                 .update();
+        displayMutationGate.clear();
         mockMvc = MockMvcBuilders.webAppContextSetup(applicationContext)
                 .apply(springSecurity())
                 .build();
@@ -1612,6 +1631,394 @@ class FirstProtectedSlicePersistenceIT {
         return pairingGrantPath(classroomSession) + "/" + pairingGrantId;
     }
 
+    @Test
+    void controllerReconciliationAndCommandHttpEnforceDualAuthorityAndExactContract() throws Exception {
+        Ivs06Foundation foundation = createIvs06Foundation('i', 'j', 'k');
+        String sessionId = foundation.classroomSession().id().value().toString();
+
+        MvcResult reconciliation = mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/controller-state", sessionId)
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, foundation.participantToken())))
+                .andReturn();
+        assertThat(reconciliation.getResponse().getStatus()).isEqualTo(200);
+        assertThat(reconciliation.getResponse().getContentType()).isEqualTo("application/json");
+        assertThat(reconciliation.getResponse().getHeader("Cache-Control")).isEqualTo("no-store");
+        assertThat(JsonPath.<Map<String, Object>>read(
+                        reconciliation.getResponse().getContentAsString(), "$"))
+                .containsOnlyKeys("classroomSessionId", "revision")
+                .containsEntry("classroomSessionId", sessionId)
+                .containsEntry("revision", 0);
+        assertThat(browserSessions.findById(foundation.authority().session().id()).orElseThrow().lastActiveAt())
+                .isEqualTo(foundation.authority().session().lastActiveAt());
+
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/controller-state", sessionId)
+                        .cookie(cookie(
+                                ParticipantSessionCookies.COOKIE_NAME,
+                                foundation.participantToken())))
+                .andReturn(), 401, "TEACHER_SESSION_REQUIRED");
+        assertProblem(mockMvc.perform(get("/api/classroom-sessions/{id}/controller-state", sessionId)
+                        .cookie(cookie(
+                                TeacherSessionCookies.SESSION_COOKIE_NAME,
+                                foundation.authority().sessionToken())))
+                .andReturn(), 403, "CONTROLLER_AUTHORITY_REQUIRED");
+        assertProblem(mockMvc.perform(get("/api/classroom-sessions/{id}/controller-state", "two words")
+                        .cookie(cookie(
+                                TeacherSessionCookies.SESSION_COOKIE_NAME,
+                                foundation.authority().sessionToken())))
+                .andReturn(), 400, "REQUEST_VALIDATION_FAILED");
+        assertProblem(mockMvc.perform(get("/api/classroom-sessions/{id}/controller-state", "x".repeat(129))
+                        .cookie(cookie(
+                                TeacherSessionCookies.SESSION_COOKIE_NAME,
+                                foundation.authority().sessionToken())))
+                .andReturn(), 400, "REQUEST_VALIDATION_FAILED");
+        assertProblem(mockMvc.perform(get("/api/classroom-sessions/{id}/controller-state", "opaque-id")
+                        .cookie(cookie(
+                                TeacherSessionCookies.SESSION_COOKIE_NAME,
+                                foundation.authority().sessionToken())))
+                .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/controller-state", UUID.randomUUID())
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, foundation.participantToken())))
+                .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+        assertProblem(mockMvc.perform(get("/api/classroom-sessions/{id}/controller-state", "1-1-1-1-1")
+                        .cookie(cookie(
+                                TeacherSessionCookies.SESSION_COOKIE_NAME,
+                                foundation.authority().sessionToken())))
+                .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+
+        TeacherAccount otherTeacher = createTeacher(
+                "10000000-0000-0000-0000-000000000711",
+                "10000000-0000-0000-0000-000000000712",
+                "ivs06-other-teacher",
+                TeacherAccountStatus.ACTIVE);
+        LessonVersion otherLesson = createLessonVersion(
+                otherTeacher,
+                "20000000-0000-0000-0000-000000000711",
+                "20000000-0000-0000-0000-000000000712",
+                LessonVersionReadiness.CLASSROOM_READY,
+                true);
+        ClassroomSession otherSession = createClassroomSession(otherTeacher, otherLesson, UUID.randomUUID());
+        assertProblem(mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/controller-state",
+                                otherSession.id().value())
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, foundation.participantToken())))
+                .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+
+        RawSecurityToken displayToken = rawToken('u');
+        ParticipantSession displayParticipant = ParticipantSession.display(
+                new ParticipantSessionId(UUID.randomUUID()),
+                new ClassroomSessionReference(foundation.classroomSession().id().value()),
+                tokenVerifier.verifierFor(displayToken),
+                clock.instant());
+        assertThat(participantSessions.tryCreateActive(displayParticipant)).isTrue();
+        assertProblem(mockMvc.perform(get("/api/classroom-sessions/{id}/controller-state", sessionId)
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, displayToken)))
+                .andReturn(), 403, "CONTROLLER_AUTHORITY_REQUIRED");
+
+        String commandBody = commandBody("command-http-1", 0);
+        assertProblem(mockMvc.perform(post(
+                                "/api/classroom-sessions/{id}/commands",
+                                otherSession.id().value())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(commandBody)
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, foundation.participantToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+        assertProblem(mockMvc.perform(post("/api/classroom-sessions/{id}/commands", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(commandBody)
+                        .cookie(cookie(
+                                ParticipantSessionCookies.COOKIE_NAME,
+                                foundation.participantToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn(), 401, "TEACHER_SESSION_REQUIRED");
+        assertProblem(mockMvc.perform(post("/api/classroom-sessions/{id}/commands", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(commandBody)
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, foundation.participantToken()))
+                        .header("X-Penatika-CSRF", rawToken('z').expose()))
+                .andReturn(), 403, "CSRF_REJECTED");
+        assertProblem(mockMvc.perform(post("/api/classroom-sessions/{id}/commands", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(commandBody)
+                        .cookie(cookie(
+                                TeacherSessionCookies.SESSION_COOKIE_NAME,
+                                foundation.authority().sessionToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn(), 403, "CONTROLLER_AUTHORITY_REQUIRED");
+        assertProblem(mockMvc.perform(post("/api/classroom-sessions/{id}/commands", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(commandBody)
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, displayToken))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn(), 403, "CONTROLLER_AUTHORITY_REQUIRED");
+        assertProblem(mockMvc.perform(post("/api/classroom-sessions/{id}/commands", "x".repeat(129))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(commandBody)
+                        .cookie(cookie(
+                                TeacherSessionCookies.SESSION_COOKIE_NAME,
+                                foundation.authority().sessionToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn(), 400, "REQUEST_VALIDATION_FAILED");
+        assertProblem(mockMvc.perform(post("/api/classroom-sessions/{id}/commands", "1-1-1-1-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(commandBody)
+                        .cookie(cookie(
+                                TeacherSessionCookies.SESSION_COOKIE_NAME,
+                                foundation.authority().sessionToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+
+        List<String> invalidBodies = List.of(
+                "{\"commandId\":",
+                "[]",
+                "{}",
+                "{\"commandId\":\"a\",\"commandType\":\"DIRECT_ACTION\",\"action\":\"NEXT\"}",
+                "{\"commandId\":\"a\",\"expectedRevision\":0,\"action\":\"NEXT\"}",
+                "{\"commandId\":\"a\",\"expectedRevision\":0,\"commandType\":\"DIRECT_ACTION\"}",
+                "{\"commandId\":\"a\",\"expectedRevision\":0,\"commandType\":\"DIRECT_ACTION\",\"action\":\"NEXT\",\"extra\":true}",
+                commandBody("two words", 0),
+                commandBody("x".repeat(129), 0),
+                "{\"commandId\":\"a\",\"expectedRevision\":-1,\"commandType\":\"DIRECT_ACTION\",\"action\":\"NEXT\"}",
+                "{\"commandId\":\"a\",\"expectedRevision\":9007199254740992,\"commandType\":\"DIRECT_ACTION\",\"action\":\"NEXT\"}",
+                "{\"commandId\":\"a\",\"expectedRevision\":0.5,\"commandType\":\"DIRECT_ACTION\",\"action\":\"NEXT\"}");
+        for (String invalidBody : invalidBodies) {
+            assertProblem(mockMvc.perform(post("/api/classroom-sessions/{id}/commands", sessionId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(invalidBody)
+                            .cookie(
+                                    cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                    cookie(ParticipantSessionCookies.COOKIE_NAME, foundation.participantToken()))
+                            .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                    .andReturn(), 400, "REQUEST_VALIDATION_FAILED");
+        }
+        assertValidationField(mockMvc.perform(post("/api/classroom-sessions/{id}/commands", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"commandId\":\"a\",\"expectedRevision\":0,\"commandType\":\"OTHER\",\"action\":\"NEXT\"}")
+                        .cookie(cookie(
+                                TeacherSessionCookies.SESSION_COOKIE_NAME,
+                                foundation.authority().sessionToken())))
+                .andReturn(), "commandType", "UNSUPPORTED_VALUE");
+        assertValidationField(mockMvc.perform(post("/api/classroom-sessions/{id}/commands", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"commandId\":\"a\",\"expectedRevision\":0,\"commandType\":\"DIRECT_ACTION\",\"action\":\"PREVIOUS\"}")
+                        .cookie(cookie(
+                                TeacherSessionCookies.SESSION_COOKIE_NAME,
+                                foundation.authority().sessionToken())))
+                .andReturn(), "action", "UNSUPPORTED_VALUE");
+
+        String supplementaryCommandId = "\uD83D\uDE80".repeat(128);
+        displayMutationGate.acknowledge(foundation.classroomSession().id(), new Revision(0));
+        MvcResult accepted = mockMvc.perform(post("/api/classroom-sessions/{id}/commands", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(commandBody(supplementaryCommandId, 0))
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, foundation.participantToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn();
+        assertThat(accepted.getResponse().getStatus()).isEqualTo(200);
+        assertThat(JsonPath.<Map<String, Object>>read(accepted.getResponse().getContentAsString(), "$"))
+                .containsOnlyKeys("classroomSessionId", "commandId", "resultingRevision")
+                .containsEntry("classroomSessionId", sessionId)
+                .containsEntry("commandId", supplementaryCommandId)
+                .containsEntry("resultingRevision", 1);
+        ClassroomSession advanced = classroomSessions.findById(foundation.classroomSession().id()).orElseThrow();
+        assertThat(advanced.currentScenePosition()).isEqualTo(1);
+        assertThat(advanced.revision()).isEqualTo(new Revision(1));
+        assertThat(advanced.lifecycleState()).isEqualTo(foundation.classroomSession().lifecycleState());
+        AcceptedCommandOutcome stored = commandOutcomes
+                .findByCommandIdentity(foundation.classroomSession().id(), supplementaryCommandId)
+                .orElseThrow();
+        assertThat(stored.teacherAccountId()).isEqualTo(foundation.teacher().id().value());
+        assertThat(stored.teacherBrowserSessionId()).isEqualTo(foundation.authority().session().id().value());
+        assertThat(stored.controllerParticipantSessionId()).isEqualTo(foundation.participant().id().value());
+
+        displayMutationGate.clear();
+        MvcResult replay = mockMvc.perform(post("/api/classroom-sessions/{id}/commands", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(commandBody(supplementaryCommandId, 0))
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, foundation.participantToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn();
+        assertThat(replay.getResponse().getStatus()).isEqualTo(200);
+        assertThat(JsonPath.<Integer>read(replay.getResponse().getContentAsString(), "$.resultingRevision"))
+                .isEqualTo(1);
+        assertProblem(mockMvc.perform(post("/api/classroom-sessions/{id}/commands", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(commandBody(supplementaryCommandId, 1))
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, foundation.participantToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn(), 409, "COMMAND_ID_REUSE_CONFLICT");
+        assertProblem(mockMvc.perform(post("/api/classroom-sessions/{id}/commands", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(commandBody("unseen-stale", 0))
+                        .cookie(
+                                cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()),
+                                cookie(ParticipantSessionCookies.COOKIE_NAME, foundation.participantToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn(), 409, "STALE_REVISION");
+        assertThat(acceptedCommandCount(foundation.classroomSession())).isEqualTo(1);
+    }
+
+    @Test
+    void postgresSerializesEquivalentAndCompetingCommandsAtMostOnce() throws Exception {
+        Ivs06Foundation equivalent = createIvs06Foundation('l', 'm', 'n');
+        displayMutationGate.acknowledge(equivalent.classroomSession().id(), new Revision(0));
+        ClassroomCommandRequest sameRequest = commandRequest(equivalent, "concurrent-same", 0);
+
+        List<ClassroomCommandResult> sameResults = runConcurrently(
+                2, () -> executeClassroomCommand.execute(sameRequest));
+
+        assertThat(sameResults).extracting(ClassroomCommandResult::resultingRevision)
+                .containsExactly(1L, 1L);
+        assertThat(classroomSessions.findById(equivalent.classroomSession().id()).orElseThrow().revision())
+                .isEqualTo(new Revision(1));
+        assertThat(acceptedCommandCount(equivalent.classroomSession())).isEqualTo(1);
+        assertThatThrownBy(() -> executeClassroomCommand.execute(
+                        commandRequest(equivalent, "concurrent-same", 1)))
+                .isInstanceOf(CommandIdReuseConflictException.class);
+
+        cleanProductTables();
+        Ivs06Foundation competing = createIvs06Foundation('o', 'p', 'q');
+        displayMutationGate.acknowledge(competing.classroomSession().id(), new Revision(0));
+        List<String> outcomes = runConcurrently(List.of(
+                () -> commandOutcome(commandRequest(competing, "command-a", 0)),
+                () -> commandOutcome(commandRequest(competing, "command-b", 0))));
+        assertThat(outcomes).containsExactlyInAnyOrder("SUCCESS", "STALE_REVISION");
+        ClassroomSession durable = classroomSessions.findById(competing.classroomSession().id()).orElseThrow();
+        assertThat(durable.currentScenePosition()).isEqualTo(1);
+        assertThat(durable.revision()).isEqualTo(new Revision(1));
+        assertThat(acceptedCommandCount(competing.classroomSession())).isEqualTo(1);
+    }
+
+    @Test
+    void acceptedOutcomeFailureRollsBackTheClassroomMutation() {
+        Ivs06Foundation foundation = createIvs06Foundation('r', 's', 't');
+        displayMutationGate.acknowledge(foundation.classroomSession().id(), new Revision(0));
+        jdbcClient.sql("""
+                        CREATE FUNCTION test_reject_accepted_command() RETURNS trigger AS $$
+                        BEGIN
+                            IF NEW.command_id = 'force-rollback' THEN
+                                RAISE EXCEPTION 'forced accepted outcome failure';
+                            END IF;
+                            RETURN NEW;
+                        END;
+                        $$ LANGUAGE plpgsql
+                        """).update();
+        jdbcClient.sql("""
+                        CREATE TRIGGER test_reject_accepted_command_trigger
+                        BEFORE INSERT ON classroom_accepted_command
+                        FOR EACH ROW EXECUTE FUNCTION test_reject_accepted_command()
+                        """).update();
+        try {
+            assertThatThrownBy(() -> executeClassroomCommand.execute(
+                            commandRequest(foundation, "force-rollback", 0)))
+                    .isInstanceOf(RuntimeException.class);
+            ClassroomSession unchanged = classroomSessions
+                    .findById(foundation.classroomSession().id())
+                    .orElseThrow();
+            assertThat(unchanged.currentScenePosition()).isZero();
+            assertThat(unchanged.revision()).isEqualTo(new Revision(0));
+            assertThat(acceptedCommandCount(foundation.classroomSession())).isZero();
+        } finally {
+            jdbcClient.sql("DROP TRIGGER test_reject_accepted_command_trigger ON classroom_accepted_command")
+                    .update();
+            jdbcClient.sql("DROP FUNCTION test_reject_accepted_command()")
+                    .update();
+        }
+    }
+
+    private Ivs06Foundation createIvs06Foundation(
+            char sessionCharacter, char csrfCharacter, char participantCharacter) {
+        TeacherAccount teacher = createTeacher(
+                "10000000-0000-0000-0000-000000000701",
+                "10000000-0000-0000-0000-000000000702",
+                "ivs06-teacher",
+                TeacherAccountStatus.ACTIVE);
+        SessionAuthority authority = createSessionAuthority(
+                teacher,
+                "10000000-0000-0000-0000-000000000703",
+                sessionCharacter,
+                csrfCharacter,
+                clock.instant().truncatedTo(ChronoUnit.MICROS));
+        LessonVersionFixtureBuilder.Fixture lessonFixture = new LessonVersionFixtureBuilder()
+                .withTeacherAccountId(teacher.id().value())
+                .build();
+        lessonVersions.createImmutableVersion(lessonFixture.lesson(), lessonFixture.version());
+        ClassroomSession classroomSession = new ClassroomSessionFixtureBuilder()
+                .withId(UUID.fromString("30000000-0000-0000-0000-000000000701"))
+                .withReferences(teacher.id().value(), lessonFixture.version().id().value())
+                .build();
+        classroomSessions.create(classroomSession);
+        RawSecurityToken participantToken = rawToken(participantCharacter);
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+        ParticipantSession participant = ParticipantSession.controller(
+                new ParticipantSessionId(UUID.fromString("10000000-0000-0000-0000-000000000704")),
+                new ClassroomSessionReference(classroomSession.id().value()),
+                tokenVerifier.verifierFor(participantToken),
+                teacher.id(),
+                authority.session().id(),
+                now);
+        assertThat(participantSessions.tryCreateActive(participant)).isTrue();
+        return new Ivs06Foundation(
+                teacher, authority, lessonFixture.version(), classroomSession, participant, participantToken);
+    }
+
+    private ClassroomCommandRequest commandRequest(
+            Ivs06Foundation foundation, String commandId, long expectedRevision) {
+        return new ClassroomCommandRequest(
+                foundation.classroomSession().id().value(),
+                commandId,
+                expectedRevision,
+                foundation.teacher().id().value(),
+                foundation.authority().session().id().value(),
+                Optional.of(foundation.participantToken()));
+    }
+
+    private String commandOutcome(ClassroomCommandRequest request) {
+        try {
+            executeClassroomCommand.execute(request);
+            return "SUCCESS";
+        } catch (StaleRevisionException exception) {
+            return "STALE_REVISION";
+        }
+    }
+
+    private int acceptedCommandCount(ClassroomSession classroomSession) {
+        return jdbcClient.sql("""
+                        SELECT count(*) FROM classroom_accepted_command
+                        WHERE classroom_session_id = :classroomSessionId
+                        """)
+                .param("classroomSessionId", classroomSession.id().value())
+                .query(Integer.class)
+                .single();
+    }
+
+    private static String commandBody(String commandId, long expectedRevision) {
+        return "{\"commandId\":\"" + commandId + "\",\"expectedRevision\":" + expectedRevision
+                + ",\"commandType\":\"DIRECT_ACTION\",\"action\":\"NEXT\"}";
+    }
+
     private PairingGrant createGrant(
             ClassroomSession classroomSession,
             PairingRole role,
@@ -1834,6 +2241,15 @@ class FirstProtectedSlicePersistenceIT {
                 .isEqualTo(status);
     }
 
+    private static void assertValidationField(
+            MvcResult result, String field, String fieldCode) throws Exception {
+        assertProblem(result, 400, "REQUEST_VALIDATION_FAILED");
+        assertThat(JsonPath.<String>read(result.getResponse().getContentAsString(), "$.fieldErrors[0].field"))
+                .isEqualTo(field);
+        assertThat(JsonPath.<String>read(result.getResponse().getContentAsString(), "$.fieldErrors[0].code"))
+                .isEqualTo(fieldCode);
+    }
+
     private TeacherAccount createTeacher(
             String teacherId,
             String linkId,
@@ -1966,6 +2382,39 @@ class FirstProtectedSlicePersistenceIT {
         }
     }
 
+    @TestConfiguration(proxyBeanMethods = false)
+    static class ExactRevisionDisplayGateConfiguration {
+
+        @Bean
+        @Primary
+        ExactRevisionDisplayGate exactRevisionDisplayGate() {
+            return new ExactRevisionDisplayGate();
+        }
+    }
+
+    static final class ExactRevisionDisplayGate implements DisplayMutationGatePort {
+
+        private final Set<String> acknowledgements = ConcurrentHashMap.newKeySet();
+
+        void acknowledge(ClassroomSessionId classroomSessionId, Revision revision) {
+            acknowledgements.add(key(classroomSessionId, revision));
+        }
+
+        void clear() {
+            acknowledgements.clear();
+        }
+
+        @Override
+        public boolean isMutationPermitted(
+                ClassroomSessionId classroomSessionId, Revision currentRevision) {
+            return acknowledgements.contains(key(classroomSessionId, currentRevision));
+        }
+
+        private static String key(ClassroomSessionId classroomSessionId, Revision revision) {
+            return classroomSessionId.value() + ":" + revision.value();
+        }
+    }
+
     private record Foundation(
             TeacherAccount teacher,
             ExternalIdentityLink identityLink,
@@ -1983,6 +2432,14 @@ class FirstProtectedSlicePersistenceIT {
             SessionAuthority authority,
             LessonVersion lessonVersion,
             ClassroomSession classroomSession) {}
+
+    private record Ivs06Foundation(
+            TeacherAccount teacher,
+            SessionAuthority authority,
+            LessonVersion lessonVersion,
+            ClassroomSession classroomSession,
+            ParticipantSession participant,
+            RawSecurityToken participantToken) {}
 
     private record IssuedGrant(
             String id,

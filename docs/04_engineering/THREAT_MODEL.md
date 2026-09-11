@@ -223,6 +223,12 @@ IVS-05 automated evidence covers high-entropy verifier-only PairingGrants,
 single-use transactional redemption, non-disclosing rejection, separate
 Controller/Display authority, fixed participant expiry, bounded secure cookies,
 stale-slot cleanup, and same-token/same-role/cross-role PostgreSQL concurrency.
+IVS-06 additionally proves that Controller reconciliation and NEXT require both
+current Teacher authority and the matching bound Controller participant, that
+accepted outcomes are disclosed only after current authority checks, and that
+per-session PostgreSQL serialization plus atomic rollback prevents duplicate or
+partial command effects. The production Display mutation gate remains
+fail-closed until IVS-08 establishes current-stream synchronization evidence.
 
 ## 9. External Provider Review
 

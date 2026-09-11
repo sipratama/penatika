@@ -505,7 +505,7 @@ broader applicable validation.
 
 ### IVS-05 — Pairing Grants + Participant Sessions
 
-- **Status:** `READY FOR REVIEW`.
+- **Status:** `COMPLETE` after human review.
 - **Objective/outputs:** four Pairing/participant operations, protected cookies,
   participant authority.
 - **Inputs:** pairing/authority requirements and contracts.
@@ -523,11 +523,11 @@ broader applicable validation.
   credential/authority handling, use-case-specific transactional redemption,
   secure participant cookies, stale lifetime/Controller slot cleanup, exact
   five-minute/eight-hour boundaries, and PostgreSQL single-use/same-role/
-  cross-role concurrency behavior are implemented. IVS-06 remains outside this
-  batch and has not started.
+  cross-role concurrency behavior were accepted after human review.
 
 ### IVS-06 — Controller Reconciliation + NEXT Revision/Idempotency
 
+- **Status:** `READY FOR REVIEW`.
 - **Objective/outputs:** Controller GET, command POST, durable Revision mutation
   and accepted outcome.
 - **Inputs:** recovery/revision requirements and command contract.
@@ -537,6 +537,15 @@ broader applicable validation.
   production fails closed until IVS-08.
 - **Tests/completion:** authority/stale/at-most-once/equivalent and changed
   duplicate/uncertain outcome/position; durable at-most-once accepted `NEXT` mutation with equivalent accepted-outcome replay.
+- **Implemented evidence:** the contracted Controller reconciliation GET and
+  command POST enforce current Teacher plus bound Controller authority;
+  `DIRECT_ACTION:NEXT` uses immutable Lesson navigation, per-session PostgreSQL
+  row locking, exact expected-Revision checks, atomic session/outcome
+  persistence, durable original replay, changed-reuse conflict detection, and
+  real concurrent at-most-once evidence. The production Display mutation gate
+  is intentionally fail-closed until IVS-08; tests open only an exact
+  ClassroomSessionId + Revision acknowledgement. No Display projection, SSE,
+  synchronization, or IVS-07/08 route is implemented.
 
 ### IVS-07 — Display Projection + Snapshot
 
@@ -589,8 +598,8 @@ broader applicable validation.
 | OIQ-03 | Independent participant-session expiry beyond revocation/session lifecycle? | `RESOLVED`: both participant roles receive a fixed, non-sliding eight-hour absolute lifetime from creation, with no idle timeout; server time and all earlier canonical authority invalidations remain authoritative as defined in §11. | IVS-05 | Human-reviewed security and implementation decision recorded in this implementation plan. | RESOLVED; no longer blocks IVS-05 |
 | OIQ-04 | Display SSE heartbeat interval/dead timeout? | ADR-0012 requires heartbeat behavior but defers numbers. | IVS-08 | Reliability/security review chooses configurable values; tune later with evidence. | UNRESOLVED; blocks IVS-08 |
 
-OIQ-01, OIQ-02, and OIQ-03 are resolved. IVS-05 is ready for review; OIQ-04
-remains unresolved and blocks IVS-08, not IVS-05. IVS-04 has locked its internal
+OIQ-01, OIQ-02, and OIQ-03 are resolved. IVS-05 is complete and IVS-06 is ready
+for review; OIQ-04 remains unresolved and blocks IVS-08 only. IVS-04 has locked its internal
 initial state as `CREATED`, scene position `0`, and Revision `0` without creating
 an additional wire guarantee. Exact later query shapes, revision increment
 mechanics, Java class names, and validator packaging remain normal owning-batch

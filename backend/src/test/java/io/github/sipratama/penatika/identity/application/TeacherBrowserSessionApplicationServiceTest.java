@@ -266,6 +266,22 @@ class TeacherBrowserSessionApplicationServiceTest {
     }
 
     @Test
+    void authorizesCurrentTeacherReadWithoutRefreshingActivity() {
+        TeacherBrowserSession current = session(
+                NOW.minusSeconds(60), NOW.plusSeconds(60), NOW.plusSeconds(3600), null);
+        AuthenticatedTeacherSession authenticated = authenticated(current);
+        when(browserSessions.findById(SESSION_ID)).thenReturn(Optional.of(current));
+        when(teacherIdentities.findTeacherAccount(TEACHER_ID))
+                .thenReturn(Optional.of(authenticated.teacherAccount()));
+
+        var authorized = service.authorizeRead(authenticated);
+
+        assertThat(authorized.teacherAccountId()).isEqualTo(TEACHER_ID.value());
+        assertThat(authorized.teacherBrowserSessionId()).isEqualTo(SESSION_ID.value());
+        verify(browserSessions, never()).refreshActivity(any(), any(), any());
+    }
+
+    @Test
     void rejectsMissingWrongOrSessionCredentialCsrfWithoutRefreshingActivity() {
         TeacherBrowserSession current = session(
                 NOW.minusSeconds(60), NOW.plusSeconds(60), NOW.plusSeconds(3600), null);

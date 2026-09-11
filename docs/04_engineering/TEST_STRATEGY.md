@@ -10,7 +10,7 @@
 | Status | Draft baseline |
 | Version | `1.1` |
 | Last Updated | `2026-09-11` |
-| Test Tooling | Deterministic scaffolding plus IVS-02 persistence, accepted IVS-03/04 evidence, and IVS-05 PairingGrant/participant domain, HTTP, transaction, cookie, authority, expiry, replay, stale-slot, and PostgreSQL concurrency evidence established; implementation tooling remains incremental |
+| Test Tooling | Deterministic scaffolding plus IVS-02 persistence, accepted IVS-03/04/05 evidence, and IVS-06 Controller authority, reconciliation, NEXT, Revision, idempotency, rollback, HTTP, and PostgreSQL concurrency evidence established; implementation tooling remains incremental |
 
 ## 1. Testing Objectives
 
@@ -59,8 +59,11 @@ suite proves Authorization Code OIDC initiation with state, nonce, and PKCE
 expiry/revocation, CSRF recovery/CAS behavior, ownership-scoped LessonVersion
 eligibility, `POST /api/classroom-sessions` initial authoritative state, the
 four IVS-05 Pairing/participant operations, transactional grant consumption,
-role-slot concurrency, stale authority cleanup, and fixed participant expiry.
-It does not yet prove IVS-06 or later command/projection/realtime behavior,
+role-slot concurrency, stale authority cleanup, fixed participant expiry,
+dual-authority Controller reconciliation, transactional NEXT, durable original
+replay, changed CommandId reuse, exact-revision mutation gating, atomic
+rollback, and same-session PostgreSQL command serialization. It does not yet
+prove IVS-07 or later projection/realtime behavior,
 migration-upgrade compatibility, or a real production identity provider.
 
 Still future or open are Playwright activation when a real cross-application
@@ -88,8 +91,10 @@ disposable-real-PostgreSQL HTTP/session-security evidence; IVS-04 adds
 LessonVersion ownership/readiness/non-disclosure and authoritative Classroom
 Session start evidence; IVS-05 adds PairingGrant/participant HTTP, cookie,
 authority, transaction rollback, expiry, replay, stale-slot, and PostgreSQL
-concurrency evidence. This does not claim IVS-06 or later command, projection,
-or realtime behavior.
+concurrency evidence; IVS-06 adds Controller reconciliation, dual authority,
+command structural validation, NEXT navigation/Revision mutation, durable
+idempotency, rollback, and PostgreSQL concurrency evidence. This does not claim
+IVS-07 or later projection or realtime behavior.
 
 ### Frontend Component Tests
 

@@ -108,10 +108,15 @@ public class IdentitySecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/api/classroom-display-participants").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/teacher-session").authenticated()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/classroom-sessions/*/controller-state")
+                        .authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/classroom-sessions").authenticated()
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/classroom-sessions/*/pairing-grants",
+                                "/api/classroom-sessions/*/commands",
                                 "/api/teacher-controller-participants")
                         .authenticated()
                         .requestMatchers(

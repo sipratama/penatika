@@ -13,6 +13,8 @@ public interface ClassroomSessionPersistencePort {
 
     Optional<ClassroomSession> findById(ClassroomSessionId classroomSessionId);
 
+    Optional<ClassroomSession> lockById(ClassroomSessionId classroomSessionId);
+
     boolean updatePositionIfRevisionMatches(
             ClassroomSessionId classroomSessionId,
             Revision expectedRevision,

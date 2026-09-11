@@ -9,12 +9,14 @@ import java.util.UUID;
 
 import io.github.sipratama.penatika.identity.application.model.AuthenticatedTeacherSession;
 import io.github.sipratama.penatika.identity.application.model.AuthorizedTeacherMutation;
+import io.github.sipratama.penatika.identity.application.model.AuthorizedTeacherSession;
 import io.github.sipratama.penatika.identity.application.model.EstablishedTeacherSession;
 import io.github.sipratama.penatika.identity.application.model.ExternalTeacherIdentity;
 import io.github.sipratama.penatika.identity.application.model.RawSecurityToken;
 import io.github.sipratama.penatika.identity.application.model.TeacherSessionBootstrap;
 import io.github.sipratama.penatika.identity.application.port.in.AuthenticateTeacherBrowserSessionUseCase;
 import io.github.sipratama.penatika.identity.application.port.in.AuthorizeTeacherMutationUseCase;
+import io.github.sipratama.penatika.identity.application.port.in.AuthorizeTeacherReadUseCase;
 import io.github.sipratama.penatika.identity.application.port.in.BootstrapTeacherBrowserSessionUseCase;
 import io.github.sipratama.penatika.identity.application.port.in.EstablishTeacherBrowserSessionUseCase;
 import io.github.sipratama.penatika.identity.application.port.in.RevokeTeacherBrowserSessionUseCase;
@@ -31,6 +33,7 @@ import io.github.sipratama.penatika.identity.domain.TeacherBrowserSessionId;
 public final class TeacherBrowserSessionApplicationService implements
         EstablishTeacherBrowserSessionUseCase,
         AuthenticateTeacherBrowserSessionUseCase,
+        AuthorizeTeacherReadUseCase,
         AuthorizeTeacherMutationUseCase,
         BootstrapTeacherBrowserSessionUseCase,
         VerifyTeacherCsrfUseCase,
@@ -156,6 +159,16 @@ public final class TeacherBrowserSessionApplicationService implements
             throw new TeacherSessionRequiredException();
         }
         return new AuthorizedTeacherMutation(
+                currentSession.teacherAccount().id().value(),
+                currentSession.session().id().value());
+    }
+
+    @Override
+    public AuthorizedTeacherSession authorizeRead(
+            AuthenticatedTeacherSession authenticatedSession) {
+        AuthenticatedTeacherSession currentSession = requireCurrentUsableSession(
+                authenticatedSession.session().id());
+        return new AuthorizedTeacherSession(
                 currentSession.teacherAccount().id().value(),
                 currentSession.session().id().value());
     }

@@ -43,12 +43,22 @@ public final class PostgresClassroomSessionPersistenceAdapter
 
     @Override
     public Optional<ClassroomSession> findById(ClassroomSessionId classroomSessionId) {
+        return queryById(classroomSessionId, "");
+    }
+
+    @Override
+    public Optional<ClassroomSession> lockById(ClassroomSessionId classroomSessionId) {
+        return queryById(classroomSessionId, " FOR UPDATE");
+    }
+
+    private Optional<ClassroomSession> queryById(
+            ClassroomSessionId classroomSessionId, String lockingClause) {
         return jdbcClient.sql("""
                         SELECT id, teacher_account_id, lesson_version_id, lifecycle_state,
                                current_scene_position, revision, started_at
                         FROM classroom_session
                         WHERE id = :id
-                        """)
+                        """ + lockingClause)
                 .param("id", classroomSessionId.value())
                 .query((row, rowNumber) -> new ClassroomSession(
                         new ClassroomSessionId(row.getObject("id", UUID.class)),

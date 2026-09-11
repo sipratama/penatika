@@ -43,4 +43,27 @@ public record ClassroomSession(
     public boolean isPairable() {
         return lifecycleState == ClassroomLifecycleState.CREATED;
     }
+
+    public boolean permitsStudentFacingMutation() {
+        return lifecycleState == ClassroomLifecycleState.CREATED
+                || lifecycleState == ClassroomLifecycleState.READY
+                || lifecycleState == ClassroomLifecycleState.ACTIVE;
+    }
+
+    public ClassroomSession advanceToNextScene(long nextScenePosition) {
+        if (!permitsStudentFacingMutation() || revision.value() == Revision.MAX_VALUE) {
+            throw new IllegalStateException("ClassroomSession does not permit another mutation");
+        }
+        if (nextScenePosition <= currentScenePosition || nextScenePosition > Revision.MAX_VALUE) {
+            throw new IllegalArgumentException("nextScenePosition must advance within the wire-safe range");
+        }
+        return new ClassroomSession(
+                id,
+                teacherAccountId,
+                lessonVersionId,
+                lifecycleState,
+                nextScenePosition,
+                new Revision(revision.value() + 1),
+                startedAt);
+    }
 }

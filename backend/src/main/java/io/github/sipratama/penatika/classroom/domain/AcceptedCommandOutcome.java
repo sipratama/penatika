@@ -29,11 +29,31 @@ public record AcceptedCommandOutcome(
         Objects.requireNonNull(controllerParticipantSessionId, "controllerParticipantSessionId must not be null");
         Objects.requireNonNull(resultingRevision, "resultingRevision must not be null");
         Objects.requireNonNull(acceptedAt, "acceptedAt must not be null");
-        if (commandId.isBlank() || commandId.length() > 128) {
-            throw new IllegalArgumentException("commandId length must be between 1 and 128");
+        int commandIdLength = commandId.codePointCount(0, commandId.length());
+        if (commandIdLength < 1
+                || commandIdLength > 128
+                || commandId.codePoints().anyMatch(AcceptedCommandOutcome::isWhitespace)) {
+            throw new IllegalArgumentException("commandId must contain 1 to 128 non-whitespace code points");
         }
         if (resultingRevision.value() <= expectedRevision.value()) {
             throw new IllegalArgumentException("resultingRevision must advance expectedRevision");
         }
+    }
+
+    public boolean isEquivalentTo(
+            ClassroomSessionId requestedClassroomSessionId,
+            String requestedCommandId,
+            Revision requestedExpectedRevision,
+            CommandType requestedCommandType,
+            ClassroomAction requestedAction) {
+        return classroomSessionId.equals(requestedClassroomSessionId)
+                && commandId.equals(requestedCommandId)
+                && expectedRevision.equals(requestedExpectedRevision)
+                && commandType == requestedCommandType
+                && action == requestedAction;
+    }
+
+    private static boolean isWhitespace(int codePoint) {
+        return Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint);
     }
 }

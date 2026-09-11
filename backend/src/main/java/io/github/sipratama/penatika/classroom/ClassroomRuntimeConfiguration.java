@@ -11,15 +11,23 @@ import org.springframework.transaction.support.TransactionTemplate;
 import io.github.sipratama.penatika.classroom.adapter.in.http.ParticipantSessionCookies;
 import io.github.sipratama.penatika.classroom.adapter.out.security.SecureRandomPairingTokenGenerator;
 import io.github.sipratama.penatika.classroom.adapter.out.security.Sha256PairingTokenVerifier;
+import io.github.sipratama.penatika.classroom.adapter.out.synchronization.FailClosedDisplayMutationGate;
+import io.github.sipratama.penatika.classroom.adapter.out.transaction.spring.TransactionalClassroomCommandUseCase;
 import io.github.sipratama.penatika.classroom.adapter.out.transaction.spring.TransactionalPairingGrantRedemptionUseCase;
+import io.github.sipratama.penatika.classroom.application.ClassroomCommandApplicationService;
+import io.github.sipratama.penatika.classroom.application.ControllerAuthorityApplicationService;
+import io.github.sipratama.penatika.classroom.application.ControllerReconciliationApplicationService;
 import io.github.sipratama.penatika.classroom.application.PairingGrantApplicationService;
 import io.github.sipratama.penatika.classroom.application.PairingGrantRedemptionApplicationService;
 import io.github.sipratama.penatika.classroom.application.StartClassroomSessionApplicationService;
+import io.github.sipratama.penatika.classroom.application.port.out.AcceptedCommandOutcomePersistencePort;
 import io.github.sipratama.penatika.classroom.application.port.out.ClassroomSessionPersistencePort;
+import io.github.sipratama.penatika.classroom.application.port.out.DisplayMutationGatePort;
 import io.github.sipratama.penatika.classroom.application.port.out.PairingGrantPersistencePort;
 import io.github.sipratama.penatika.classroom.application.port.out.PairingTokenGeneratorPort;
 import io.github.sipratama.penatika.classroom.application.port.out.PairingTokenVerifierPort;
 import io.github.sipratama.penatika.identity.application.port.in.ParticipantSessionAuthorityUseCase;
+import io.github.sipratama.penatika.lesson.application.port.in.ResolveNextLessonSceneUseCase;
 
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(prefix = "penatika.persistence", name = "enabled", havingValue = "true")
@@ -80,5 +88,47 @@ public class ClassroomRuntimeConfiguration {
             PairingGrantRedemptionApplicationService delegate,
             TransactionTemplate transactionTemplate) {
         return new TransactionalPairingGrantRedemptionUseCase(delegate, transactionTemplate);
+    }
+
+    @Bean
+    DisplayMutationGatePort displayMutationGate() {
+        return new FailClosedDisplayMutationGate();
+    }
+
+    @Bean
+    ControllerAuthorityApplicationService controllerAuthorityApplicationService(
+            ParticipantSessionAuthorityUseCase participantSessions) {
+        return new ControllerAuthorityApplicationService(participantSessions);
+    }
+
+    @Bean
+    ControllerReconciliationApplicationService controllerReconciliationApplicationService(
+            ClassroomSessionPersistencePort classroomSessions,
+            ControllerAuthorityApplicationService controllerAuthority) {
+        return new ControllerReconciliationApplicationService(classroomSessions, controllerAuthority);
+    }
+
+    @Bean
+    ClassroomCommandApplicationService classroomCommandApplicationService(
+            ClassroomSessionPersistencePort classroomSessions,
+            AcceptedCommandOutcomePersistencePort acceptedCommands,
+            DisplayMutationGatePort displayMutationGate,
+            ResolveNextLessonSceneUseCase lessonNavigation,
+            ControllerAuthorityApplicationService controllerAuthority,
+            Clock clock) {
+        return new ClassroomCommandApplicationService(
+                classroomSessions,
+                acceptedCommands,
+                displayMutationGate,
+                lessonNavigation,
+                controllerAuthority,
+                clock);
+    }
+
+    @Bean
+    TransactionalClassroomCommandUseCase transactionalClassroomCommandUseCase(
+            ClassroomCommandApplicationService delegate,
+            TransactionTemplate transactionTemplate) {
+        return new TransactionalClassroomCommandUseCase(delegate, transactionTemplate);
     }
 }

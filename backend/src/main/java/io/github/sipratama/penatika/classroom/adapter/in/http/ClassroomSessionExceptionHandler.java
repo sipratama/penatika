@@ -11,13 +11,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import io.github.sipratama.penatika.classroom.application.ClassroomSessionNotFoundException;
 import io.github.sipratama.penatika.classroom.application.ClassroomSessionNotPairableException;
+import io.github.sipratama.penatika.classroom.application.ClassroomMutationNotAllowedException;
+import io.github.sipratama.penatika.classroom.application.CommandIdReuseConflictException;
+import io.github.sipratama.penatika.classroom.application.ControllerAuthorityRequiredException;
 import io.github.sipratama.penatika.classroom.application.PairingGrantRejectedException;
 import io.github.sipratama.penatika.classroom.application.ParticipantRoleAlreadyActiveException;
+import io.github.sipratama.penatika.classroom.application.StaleRevisionException;
 import io.github.sipratama.penatika.lesson.application.LessonVersionNotFoundOrUnauthorizedException;
 import io.github.sipratama.penatika.lesson.application.LessonVersionNotReadyException;
 
 @RestControllerAdvice(assignableTypes = {
         ClassroomSessionController.class,
+        ClassroomControllerCommandController.class,
         PairingGrantController.class,
         ParticipantEstablishmentController.class
 })
@@ -96,6 +101,42 @@ public final class ClassroomSessionExceptionHandler {
                 "Conflict",
                 "An active participant already occupies the requested role.",
                 "PARTICIPANT_ROLE_ALREADY_ACTIVE");
+    }
+
+    @ExceptionHandler(ControllerAuthorityRequiredException.class)
+    ResponseEntity<ClassroomSessionProblem> controllerAuthorityRequired() {
+        return problem(
+                403,
+                "Forbidden",
+                "Active Controller authority is required for this request.",
+                "CONTROLLER_AUTHORITY_REQUIRED");
+    }
+
+    @ExceptionHandler(StaleRevisionException.class)
+    ResponseEntity<ClassroomSessionProblem> staleRevision() {
+        return problem(
+                409,
+                "Conflict",
+                "The command revision does not match authoritative state.",
+                "STALE_REVISION");
+    }
+
+    @ExceptionHandler(CommandIdReuseConflictException.class)
+    ResponseEntity<ClassroomSessionProblem> commandIdReuseConflict() {
+        return problem(
+                409,
+                "Conflict",
+                "The command identity was reused for a different command.",
+                "COMMAND_ID_REUSE_CONFLICT");
+    }
+
+    @ExceptionHandler(ClassroomMutationNotAllowedException.class)
+    ResponseEntity<ClassroomSessionProblem> classroomMutationNotAllowed() {
+        return problem(
+                409,
+                "Conflict",
+                "The classroom session does not currently permit mutation.",
+                "CLASSROOM_MUTATION_NOT_ALLOWED");
     }
 
     private static ResponseEntity<ClassroomSessionProblem> problem(
