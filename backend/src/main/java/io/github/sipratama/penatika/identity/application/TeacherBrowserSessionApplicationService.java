@@ -155,7 +155,9 @@ public final class TeacherBrowserSessionApplicationService implements
         if (!browserSessions.refreshActivity(currentSession.session().id(), now, idleExpiresAt)) {
             throw new TeacherSessionRequiredException();
         }
-        return new AuthorizedTeacherMutation(currentSession.teacherAccount().id().value());
+        return new AuthorizedTeacherMutation(
+                currentSession.teacherAccount().id().value(),
+                currentSession.session().id().value());
     }
 
     @Override

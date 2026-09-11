@@ -10,7 +10,9 @@ import org.springframework.context.annotation.Configuration;
 
 import io.github.sipratama.penatika.identity.adapter.out.security.SecureRandomSecurityTokenGenerator;
 import io.github.sipratama.penatika.identity.adapter.out.security.Sha256SecurityTokenVerifier;
+import io.github.sipratama.penatika.identity.application.ParticipantSessionApplicationService;
 import io.github.sipratama.penatika.identity.application.TeacherBrowserSessionApplicationService;
+import io.github.sipratama.penatika.identity.application.port.out.ParticipantSessionPersistencePort;
 import io.github.sipratama.penatika.identity.application.port.out.SecurityTokenGeneratorPort;
 import io.github.sipratama.penatika.identity.application.port.out.SecurityTokenVerifierPort;
 import io.github.sipratama.penatika.identity.application.port.out.TeacherBrowserSessionPersistencePort;
@@ -45,6 +47,23 @@ public class IdentityRuntimeConfiguration {
             Clock clock) {
         return new TeacherBrowserSessionApplicationService(
                 teacherIdentities, browserSessions, tokenGenerator, tokenVerifier, clock);
+    }
+
+    @Bean
+    ParticipantSessionApplicationService participantSessionApplicationService(
+            ParticipantSessionPersistencePort participantSessions,
+            TeacherIdentityPersistencePort teacherIdentities,
+            TeacherBrowserSessionPersistencePort browserSessions,
+            SecurityTokenGeneratorPort tokenGenerator,
+            SecurityTokenVerifierPort tokenVerifier,
+            Clock clock) {
+        return new ParticipantSessionApplicationService(
+                participantSessions,
+                teacherIdentities,
+                browserSessions,
+                tokenGenerator,
+                tokenVerifier,
+                clock);
     }
 
 }

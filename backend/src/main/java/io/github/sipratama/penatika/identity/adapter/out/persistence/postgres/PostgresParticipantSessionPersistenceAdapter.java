@@ -56,19 +56,50 @@ public final class PostgresParticipantSessionPersistenceAdapter
                                teacher_account_id, teacher_browser_session_id, created_at, expires_at, revoked_at
                         FROM identity_participant_session
                         WHERE credential_verifier = :credentialVerifier
+                          AND expires_at IS NOT NULL
                         """)
                 .param("credentialVerifier", credentialVerifier)
-                .query((row, rowNumber) -> new ParticipantSession(
-                        new ParticipantSessionId(row.getObject("id", UUID.class)),
-                        new ClassroomSessionReference(row.getObject("classroom_session_id", UUID.class)),
-                        ParticipantRole.valueOf(row.getString("participant_role")),
-                        row.getString("credential_verifier").trim(),
-                        teacherId(row.getObject("teacher_account_id", UUID.class)),
-                        browserSessionId(row.getObject("teacher_browser_session_id", UUID.class)),
-                        instant(row.getObject("created_at", OffsetDateTime.class)),
-                        instant(row.getObject("expires_at", OffsetDateTime.class)),
-                        instant(row.getObject("revoked_at", OffsetDateTime.class))))
+                .query((row, rowNumber) -> map(row))
                 .optional();
+    }
+
+    @Override
+    public Optional<ParticipantSession> findActiveByRole(
+            ClassroomSessionReference classroomSessionId,
+            ParticipantRole participantRole) {
+        return jdbcClient.sql("""
+                        SELECT id, classroom_session_id, participant_role, credential_verifier,
+                               teacher_account_id, teacher_browser_session_id, created_at, expires_at, revoked_at
+                        FROM identity_participant_session
+                        WHERE classroom_session_id = :classroomSessionId
+                          AND participant_role = :participantRole
+                          AND revoked_at IS NULL
+                          AND expires_at IS NOT NULL
+                        """)
+                .param("classroomSessionId", classroomSessionId.value())
+                .param("participantRole", participantRole.name())
+                .query((row, rowNumber) -> map(row))
+                .optional();
+    }
+
+    @Override
+    public int revokeInvalidLifetimeOccupants(
+            ClassroomSessionReference classroomSessionId,
+            ParticipantRole participantRole,
+            Instant now) {
+        return jdbcClient.sql("""
+                        UPDATE identity_participant_session
+                        SET revoked_at = :revokedAt
+                        WHERE classroom_session_id = :classroomSessionId
+                          AND participant_role = :participantRole
+                          AND revoked_at IS NULL
+                          AND (expires_at IS NULL OR expires_at <= :now)
+                        """)
+                .param("revokedAt", timestamp(now))
+                .param("classroomSessionId", classroomSessionId.value())
+                .param("participantRole", participantRole.name())
+                .param("now", timestamp(now))
+                .update();
     }
 
     @Override
@@ -105,5 +136,18 @@ public final class PostgresParticipantSessionPersistenceAdapter
 
     private static OffsetDateTime timestamp(Instant value) {
         return value == null ? null : OffsetDateTime.ofInstant(value, java.time.ZoneOffset.UTC);
+    }
+
+    private static ParticipantSession map(java.sql.ResultSet row) throws java.sql.SQLException {
+        return new ParticipantSession(
+                new ParticipantSessionId(row.getObject("id", UUID.class)),
+                new ClassroomSessionReference(row.getObject("classroom_session_id", UUID.class)),
+                ParticipantRole.valueOf(row.getString("participant_role")),
+                row.getString("credential_verifier").trim(),
+                teacherId(row.getObject("teacher_account_id", UUID.class)),
+                browserSessionId(row.getObject("teacher_browser_session_id", UUID.class)),
+                instant(row.getObject("created_at", OffsetDateTime.class)),
+                instant(row.getObject("expires_at", OffsetDateTime.class)),
+                instant(row.getObject("revoked_at", OffsetDateTime.class)));
     }
 }

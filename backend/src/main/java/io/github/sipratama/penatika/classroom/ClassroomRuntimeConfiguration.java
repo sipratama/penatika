@@ -1,13 +1,24 @@
 package io.github.sipratama.penatika.classroom;
 
+import java.security.SecureRandom;
 import java.time.Clock;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import io.github.sipratama.penatika.classroom.adapter.out.security.SecureRandomPairingTokenGenerator;
+import io.github.sipratama.penatika.classroom.adapter.out.security.Sha256PairingTokenVerifier;
+import io.github.sipratama.penatika.classroom.adapter.out.transaction.spring.TransactionalPairingGrantRedemptionUseCase;
+import io.github.sipratama.penatika.classroom.application.PairingGrantApplicationService;
+import io.github.sipratama.penatika.classroom.application.PairingGrantRedemptionApplicationService;
 import io.github.sipratama.penatika.classroom.application.StartClassroomSessionApplicationService;
 import io.github.sipratama.penatika.classroom.application.port.out.ClassroomSessionPersistencePort;
+import io.github.sipratama.penatika.classroom.application.port.out.PairingGrantPersistencePort;
+import io.github.sipratama.penatika.classroom.application.port.out.PairingTokenGeneratorPort;
+import io.github.sipratama.penatika.classroom.application.port.out.PairingTokenVerifierPort;
+import io.github.sipratama.penatika.identity.application.port.in.ParticipantSessionAuthorityUseCase;
 
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(prefix = "penatika.persistence", name = "enabled", havingValue = "true")
@@ -18,5 +29,50 @@ public class ClassroomRuntimeConfiguration {
             ClassroomSessionPersistencePort classroomSessions,
             Clock clock) {
         return new StartClassroomSessionApplicationService(classroomSessions, clock);
+    }
+
+    @Bean
+    PairingTokenGeneratorPort pairingTokenGenerator() {
+        return new SecureRandomPairingTokenGenerator(new SecureRandom());
+    }
+
+    @Bean
+    PairingTokenVerifierPort pairingTokenVerifier() {
+        return new Sha256PairingTokenVerifier();
+    }
+
+    @Bean
+    PairingGrantApplicationService pairingGrantApplicationService(
+            ClassroomSessionPersistencePort classroomSessions,
+            PairingGrantPersistencePort pairingGrants,
+            ParticipantSessionAuthorityUseCase participantSessions,
+            PairingTokenGeneratorPort tokenGenerator,
+            PairingTokenVerifierPort tokenVerifier,
+            Clock clock) {
+        return new PairingGrantApplicationService(
+                classroomSessions,
+                pairingGrants,
+                participantSessions,
+                tokenGenerator,
+                tokenVerifier,
+                clock);
+    }
+
+    @Bean
+    PairingGrantRedemptionApplicationService pairingGrantRedemptionApplicationService(
+            PairingGrantPersistencePort pairingGrants,
+            ClassroomSessionPersistencePort classroomSessions,
+            ParticipantSessionAuthorityUseCase participantSessions,
+            PairingTokenVerifierPort tokenVerifier,
+            Clock clock) {
+        return new PairingGrantRedemptionApplicationService(
+                pairingGrants, classroomSessions, participantSessions, tokenVerifier, clock);
+    }
+
+    @Bean
+    TransactionalPairingGrantRedemptionUseCase transactionalPairingGrantRedemptionUseCase(
+            PairingGrantRedemptionApplicationService delegate,
+            TransactionTemplate transactionTemplate) {
+        return new TransactionalPairingGrantRedemptionUseCase(delegate, transactionTemplate);
     }
 }

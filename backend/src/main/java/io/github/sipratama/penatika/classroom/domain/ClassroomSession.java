@@ -39,4 +39,8 @@ public record ClassroomSession(
                 new Revision(0),
                 startedAt);
     }
+
+    public boolean isPairable() {
+        return lifecycleState == ClassroomLifecycleState.CREATED;
+    }
 }
