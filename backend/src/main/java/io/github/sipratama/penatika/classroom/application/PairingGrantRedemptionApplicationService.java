@@ -14,7 +14,6 @@ import io.github.sipratama.penatika.classroom.domain.ClassroomSession;
 import io.github.sipratama.penatika.classroom.domain.PairingGrant;
 import io.github.sipratama.penatika.classroom.domain.PairingRole;
 import io.github.sipratama.penatika.identity.application.ParticipantRoleOccupiedException;
-import io.github.sipratama.penatika.identity.application.ParticipantTeacherAuthorityInvalidException;
 import io.github.sipratama.penatika.identity.application.model.EstablishedParticipantSession;
 import io.github.sipratama.penatika.identity.application.port.in.ParticipantSessionAuthorityUseCase;
 
@@ -56,8 +55,6 @@ public final class PairingGrantRedemptionApplicationService {
             return established(participant, PairingRole.TEACHER_CONTROLLER);
         } catch (ParticipantRoleOccupiedException exception) {
             throw new ParticipantRoleAlreadyActiveException();
-        } catch (ParticipantTeacherAuthorityInvalidException exception) {
-            throw new PairingGrantRejectedException();
         }
     }
 

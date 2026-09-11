@@ -23,10 +23,10 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.43 |
+| Version | 0.44 |
 | Last Updated | 2026-09-11 |
 | Current Phase | Application Implementation — Active |
-| Implementation State | IVS-01 through IVS-04 are complete; OIQ-03 is resolved; IVS-05 is READY TO EXECUTE |
+| Implementation State | IVS-01 through IVS-04 are complete; IVS-05 is READY FOR REVIEW; IVS-06 is not started |
 | Product Owner | sipratama |
 
 The final product-baseline consistency audit passed before the Architecture
@@ -87,8 +87,8 @@ Foundation handoff checkpoint was created.
 | IVS-03 Teacher Identity + Backend Browser Session Runtime | COMPLETE | Provider-neutral OIDC, existing-account resolution, PostgreSQL-authoritative Teacher sessions, secure cookies/CSRF bootstrap, and `GET /api/teacher-session` accepted after human review |
 | IVS-04 LessonVersion Prerequisite + Classroom Session Start | COMPLETE | Teacher/CSRF-authorized `POST /api/classroom-sessions`, ownership-scoped LessonVersion readiness resolution, and authoritative `CREATED` session persistence accepted after human review |
 | OIQ-03 Participant-Session Lifetime Decision Gate | COMPLETE | Fixed, non-sliding eight-hour absolute lifetime with no idle timeout; [First Protected Vertical Slice Implementation Plan](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md) owns the frozen decision |
-| IVS-05 Pairing Grants + Participant Sessions | READY TO EXECUTE | IVS-03/04 and OIQ-02/OIQ-03 prerequisites are complete; runtime implementation has not started |
-| Remaining IVS batches | PENDING | IVS-06 through IVS-10 in the implementation plan; OIQ-04 remains unresolved and blocks IVS-08 only |
+| IVS-05 Pairing Grants + Participant Sessions | READY FOR REVIEW | Four contracted HTTP operations, secure verifier-only grants/participant credentials, fixed participant expiry, transactional redemption, stale-slot cleanup, cookies, and PostgreSQL concurrency evidence implemented |
+| Remaining IVS batches | PENDING | IVS-06 through IVS-10 have not started; OIQ-04 remains unresolved and blocks IVS-08 only |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
 | Commercial launch | PENDING | [BUSINESS_MODEL.md](./00_product/BUSINESS_MODEL.md) launch gates |
@@ -225,10 +225,12 @@ IVS-02 product persistence, IVS-03 Teacher identity/browser-session runtime,
 and IVS-04 ownership-scoped LessonVersion eligibility plus authoritative
 Classroom Session start are accepted and complete. OIQ-03 now freezes a fixed,
 non-sliding eight-hour participant-session absolute lifetime with no idle
-timeout. IVS-05 is READY TO EXECUTE but its runtime implementation has not
-started. OIQ-04 remains unresolved and blocks IVS-08 only. Frontend, contracts,
-Accepted ADRs, checkpoints, and V001 remain unchanged by the OIQ-03 decision
-gate.
+timeout. IVS-05 PairingGrant and participant-session runtime is READY FOR
+REVIEW, including the four contracted operations, transactional single-use
+redemption, role-specific authority, secure cookies, stale-slot cleanup, and
+PostgreSQL concurrency evidence. IVS-06 has not started. OIQ-04 remains
+unresolved and blocks IVS-08 only. Frontend, contracts, Accepted ADRs,
+checkpoints, and V001 remain unchanged.
 `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
@@ -279,10 +281,11 @@ reviewed SS-06 evidence, and the merge-readiness boundary for
 `feat/source-scaffolding`. Its pre-merge wording remains historically correct;
 the subsequent merge is recorded by `PROJECT_STATUS.md` and merge commit
 `49805720f79941dc967280fc0411ac78d2fe06e8`. Application Implementation is
-active; IVS-02 product persistence and IVS-03 Teacher identity/backend
-browser-session runtime and IVS-04 LessonVersion eligibility/Classroom Session
-start are accepted and complete. OIQ-03 is resolved, making IVS-05 READY TO
-EXECUTE; IVS-05 runtime and later behavior have not started.
+active; IVS-02 product persistence, IVS-03 Teacher identity/backend
+browser-session runtime, and IVS-04 LessonVersion eligibility/Classroom Session
+start are accepted and complete. OIQ-03 is resolved and IVS-05 PairingGrant /
+participant-session runtime is READY FOR REVIEW. IVS-06 and later runtime have
+not started.
 
 The previous [Contract Foundation Checkpoint — Complete](./checkpoints/2026-09-09-contract-foundation-complete.md)
 remains immutable and historically correct. Its subsequent merge is recorded

@@ -171,7 +171,7 @@ public final class ParticipantSessionApplicationService implements ParticipantSe
             TeacherBrowserSessionId browserSessionId,
             Instant now) {
         if (!teacherContextIsUsable(teacherAccountId, browserSessionId, now)) {
-            throw new ParticipantTeacherAuthorityInvalidException();
+            throw new TeacherSessionRequiredException();
         }
     }
 

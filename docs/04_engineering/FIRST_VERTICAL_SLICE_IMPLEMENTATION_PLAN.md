@@ -505,7 +505,7 @@ broader applicable validation.
 
 ### IVS-05 — Pairing Grants + Participant Sessions
 
-- **Status:** `READY TO EXECUTE`.
+- **Status:** `READY FOR REVIEW`.
 - **Objective/outputs:** four Pairing/participant operations, protected cookies,
   participant authority.
 - **Inputs:** pairing/authority requirements and contracts.
@@ -518,6 +518,13 @@ broader applicable validation.
   order; fixed non-null eight-hour participant expiry, exact boundary, no idle
   sliding or silent renewal, cookie lifetime cap, earlier authority
   invalidation, and reconnect-versus-re-pair semantics.
+- **Implemented evidence:** the four contracted HTTP operations, Classroom-owned
+  PairingGrant generation/verifier handling, Identity-owned participant
+  credential/authority handling, use-case-specific transactional redemption,
+  secure participant cookies, stale lifetime/Controller slot cleanup, exact
+  five-minute/eight-hour boundaries, and PostgreSQL single-use/same-role/
+  cross-role concurrency behavior are implemented. IVS-06 remains outside this
+  batch and has not started.
 
 ### IVS-06 — Controller Reconciliation + NEXT Revision/Idempotency
 
@@ -582,7 +589,7 @@ broader applicable validation.
 | OIQ-03 | Independent participant-session expiry beyond revocation/session lifecycle? | `RESOLVED`: both participant roles receive a fixed, non-sliding eight-hour absolute lifetime from creation, with no idle timeout; server time and all earlier canonical authority invalidations remain authoritative as defined in §11. | IVS-05 | Human-reviewed security and implementation decision recorded in this implementation plan. | RESOLVED; no longer blocks IVS-05 |
 | OIQ-04 | Display SSE heartbeat interval/dead timeout? | ADR-0012 requires heartbeat behavior but defers numbers. | IVS-08 | Reliability/security review chooses configurable values; tune later with evidence. | UNRESOLVED; blocks IVS-08 |
 
-OIQ-01, OIQ-02, and OIQ-03 are resolved. IVS-05 is ready to execute; OIQ-04
+OIQ-01, OIQ-02, and OIQ-03 are resolved. IVS-05 is ready for review; OIQ-04
 remains unresolved and blocks IVS-08, not IVS-05. IVS-04 has locked its internal
 initial state as `CREATED`, scene position `0`, and Revision `0` without creating
 an additional wire guarantee. Exact later query shapes, revision increment

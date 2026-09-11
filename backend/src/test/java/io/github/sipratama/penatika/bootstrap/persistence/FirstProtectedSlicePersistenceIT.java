@@ -3,10 +3,12 @@ package io.github.sipratama.penatika.bootstrap.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -47,6 +49,15 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.jayway.jsonpath.JsonPath;
 
+import io.github.sipratama.penatika.classroom.adapter.out.security.Sha256PairingTokenVerifier;
+import io.github.sipratama.penatika.classroom.adapter.in.http.ParticipantSessionCookies;
+import io.github.sipratama.penatika.classroom.application.PairingGrantRejectedException;
+import io.github.sipratama.penatika.classroom.application.ParticipantRoleAlreadyActiveException;
+import io.github.sipratama.penatika.classroom.application.model.EstablishedParticipant;
+import io.github.sipratama.penatika.classroom.application.model.PresentedPairingToken;
+import io.github.sipratama.penatika.classroom.application.model.RawPairingToken;
+import io.github.sipratama.penatika.classroom.application.port.in.EstablishClassroomDisplayParticipantUseCase;
+import io.github.sipratama.penatika.classroom.application.port.in.EstablishTeacherControllerParticipantUseCase;
 import io.github.sipratama.penatika.classroom.application.port.out.AcceptedCommandOutcomePersistencePort;
 import io.github.sipratama.penatika.classroom.application.port.out.ClassroomSessionPersistencePort;
 import io.github.sipratama.penatika.classroom.application.port.out.PairingGrantPersistencePort;
@@ -55,10 +66,14 @@ import io.github.sipratama.penatika.classroom.domain.ClassroomLifecycleState;
 import io.github.sipratama.penatika.classroom.domain.ClassroomSession;
 import io.github.sipratama.penatika.classroom.domain.ClassroomSessionId;
 import io.github.sipratama.penatika.classroom.domain.PairingGrant;
+import io.github.sipratama.penatika.classroom.domain.PairingGrantId;
+import io.github.sipratama.penatika.classroom.domain.PairingRole;
 import io.github.sipratama.penatika.classroom.domain.Revision;
 import io.github.sipratama.penatika.classroom.fixtures.AcceptedCommandOutcomeFixtureBuilder;
 import io.github.sipratama.penatika.classroom.fixtures.ClassroomSessionFixtureBuilder;
 import io.github.sipratama.penatika.classroom.fixtures.PairingGrantFixtureBuilder;
+import io.github.sipratama.penatika.identity.application.TeacherSessionRequiredException;
+import io.github.sipratama.penatika.identity.application.port.in.ParticipantSessionAuthorityUseCase;
 import io.github.sipratama.penatika.identity.application.port.out.ParticipantSessionPersistencePort;
 import io.github.sipratama.penatika.identity.application.port.out.TeacherBrowserSessionPersistencePort;
 import io.github.sipratama.penatika.identity.application.port.out.TeacherIdentityPersistencePort;
@@ -115,10 +130,14 @@ class FirstProtectedSlicePersistenceIT {
     @Autowired private ClassroomSessionPersistencePort classroomSessions;
     @Autowired private PairingGrantPersistencePort pairingGrants;
     @Autowired private AcceptedCommandOutcomePersistencePort commandOutcomes;
+    @Autowired private EstablishTeacherControllerParticipantUseCase establishControllerParticipant;
+    @Autowired private EstablishClassroomDisplayParticipantUseCase establishDisplayParticipant;
+    @Autowired private ParticipantSessionAuthorityUseCase participantAuthority;
     @Autowired private WebApplicationContext applicationContext;
     @Autowired private Clock clock;
 
     private final Sha256SecurityTokenVerifier tokenVerifier = new Sha256SecurityTokenVerifier();
+    private final Sha256PairingTokenVerifier pairingTokenVerifier = new Sha256PairingTokenVerifier();
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -940,6 +959,741 @@ class FirstProtectedSlicePersistenceIT {
         assertThat(rowCount("classroom_session")).isZero();
     }
 
+    @Test
+    void pairingGrantCreationHttpEnforcesContractAuthorityAndRequestedRoleAvailability() throws Exception {
+        PairingFoundation foundation = createPairingFoundation('1', '2');
+
+        IssuedGrant controller = issueGrant(
+                foundation.authority(), foundation.classroomSession(), "TEACHER_CONTROLLER");
+        IssuedGrant display = issueGrant(
+                foundation.authority(), foundation.classroomSession(), "CLASSROOM_DISPLAY");
+
+        assertThat(controller.token()).hasSize(43).matches("[A-Za-z0-9_-]{43}");
+        assertThat(display.token()).hasSize(43).matches("[A-Za-z0-9_-]{43}");
+        assertThat(display.token()).isNotEqualTo(controller.token());
+        PairingGrant stored = pairingGrants.findByCredentialVerifier(pairingVerifier(controller.token()))
+                .orElseThrow();
+        assertThat(Duration.between(stored.issuedAt(), stored.expiresAt())).isEqualTo(Duration.ofMinutes(5));
+        assertThat(stored.expiresAt()).isEqualTo(controller.expiresAt());
+
+        List<String> invalidBodies = List.of(
+                "{\"participantRole\":",
+                "{}",
+                "[]",
+                "{\"participantRole\":null}",
+                "{\"participantRole\":\"CONTROLLER\"}",
+                "{\"participantRole\":\"CLASSROOM_DISPLAY\",\"extra\":true}");
+        for (String invalidBody : invalidBodies) {
+            assertProblem(mockMvc.perform(post(pairingGrantPath(foundation.classroomSession()))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(invalidBody)
+                            .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()))
+                            .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                    .andReturn(), 400, "REQUEST_VALIDATION_FAILED");
+        }
+        assertProblem(mockMvc.perform(post("/api/classroom-sessions/{id}/pairing-grants", "x".repeat(129))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"participantRole\":\"CLASSROOM_DISPLAY\"}")
+                        .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn(), 400, "REQUEST_VALIDATION_FAILED");
+        assertProblem(createPairingGrantRequest(
+                        foundation.authority(), "opaque-classroom-id", "CLASSROOM_DISPLAY")
+                .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+        TeacherAccount otherTeacher = createTeacher(
+                "10000000-0000-0000-0000-000000000621",
+                "10000000-0000-0000-0000-000000000622",
+                "unauthorized-pairing-parent",
+                TeacherAccountStatus.ACTIVE);
+        LessonVersion otherLesson = createLessonVersion(
+                otherTeacher,
+                "20000000-0000-0000-0000-000000000621",
+                "20000000-0000-0000-0000-000000000622",
+                LessonVersionReadiness.CLASSROOM_READY,
+                true);
+        ClassroomSession unauthorizedParent = createClassroomSession(otherTeacher, otherLesson, UUID.randomUUID());
+        assertProblem(createPairingGrantRequest(
+                        foundation.authority(), unauthorizedParent.id().value().toString(), "CLASSROOM_DISPLAY")
+                .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+
+        jdbcClient.sql("UPDATE classroom_session SET lifecycle_state = 'FAILED' WHERE id = :id")
+                .param("id", foundation.classroomSession().id().value())
+                .update();
+        assertProblem(createPairingGrantRequest(
+                        foundation.authority(), foundation.classroomSession().id().value().toString(), "CLASSROOM_DISPLAY")
+                .andReturn(), 409, "CLASSROOM_SESSION_NOT_PAIRABLE");
+        jdbcClient.sql("UPDATE classroom_session SET lifecycle_state = 'CREATED' WHERE id = :id")
+                .param("id", foundation.classroomSession().id().value())
+                .update();
+
+        ParticipantSession occupant = ParticipantSession.display(
+                new io.github.sipratama.penatika.identity.domain.ParticipantSessionId(UUID.randomUUID()),
+                new io.github.sipratama.penatika.identity.domain.ClassroomSessionReference(
+                        foundation.classroomSession().id().value()),
+                "9".repeat(64),
+                clock.instant());
+        assertThat(participantSessions.tryCreateActive(occupant)).isTrue();
+        assertProblem(createPairingGrantRequest(
+                        foundation.authority(), foundation.classroomSession().id().value().toString(), "CLASSROOM_DISPLAY")
+                .andReturn(), 409, "PARTICIPANT_ROLE_ALREADY_ACTIVE");
+        assertThat(createPairingGrantRequest(
+                        foundation.authority(), foundation.classroomSession().id().value().toString(), "TEACHER_CONTROLLER")
+                .andReturn().getResponse().getStatus()).isEqualTo(201);
+    }
+
+    @Test
+    void pairingGrantRevocationIsParentAuthorizedRetrySafeAndNonDisclosing() throws Exception {
+        PairingFoundation foundation = createPairingFoundation('3', '4');
+        ClassroomSession otherParent = createClassroomSession(
+                foundation.teacher(), foundation.lessonVersion(), UUID.randomUUID());
+        IssuedGrant live = issueGrant(
+                foundation.authority(), foundation.classroomSession(), "CLASSROOM_DISPLAY");
+
+        assertThat(revokeGrant(foundation.authority(), foundation.classroomSession(), live.id())
+                .andReturn().getResponse().getStatus()).isEqualTo(204);
+        assertThat(revokeGrant(foundation.authority(), foundation.classroomSession(), live.id())
+                .andReturn().getResponse().getStatus()).isEqualTo(204);
+        assertThat(revokeGrant(foundation.authority(), foundation.classroomSession(), UUID.randomUUID().toString())
+                .andReturn().getResponse().getStatus()).isEqualTo(204);
+        assertThat(revokeGrant(foundation.authority(), foundation.classroomSession(), "opaque-grant-id")
+                .andReturn().getResponse().getStatus()).isEqualTo(204);
+        assertProblem(mockMvc.perform(delete(pairingGrantRevocationPath(
+                                foundation.classroomSession(), "x".repeat(129)))
+                        .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn(), 400, "REQUEST_VALIDATION_FAILED");
+
+        PairingGrant wrongParent = createGrant(otherParent, PairingRole.CLASSROOM_DISPLAY, 'w', clock.instant());
+        assertThat(revokeGrant(foundation.authority(), foundation.classroomSession(), wrongParent.id().value().toString())
+                .andReturn().getResponse().getStatus()).isEqualTo(204);
+        assertThat(pairingGrants.findByCredentialVerifier(wrongParent.credentialVerifier()).orElseThrow().revokedAt())
+                .isNull();
+
+        PairingGrant consumed = createGrant(
+                foundation.classroomSession(), PairingRole.CLASSROOM_DISPLAY, 'c', clock.instant().minusSeconds(30));
+        pairingGrants.consumeByCredentialVerifier(consumed.credentialVerifier(), clock.instant()).orElseThrow();
+        assertThat(revokeGrant(foundation.authority(), foundation.classroomSession(), consumed.id().value().toString())
+                .andReturn().getResponse().getStatus()).isEqualTo(204);
+        PairingGrant expired = createGrant(
+                foundation.classroomSession(), PairingRole.CLASSROOM_DISPLAY, 'e', clock.instant().minusSeconds(301));
+        assertThat(revokeGrant(foundation.authority(), foundation.classroomSession(), expired.id().value().toString())
+                .andReturn().getResponse().getStatus()).isEqualTo(204);
+
+        TeacherAccount otherTeacher = createTeacher(
+                "10000000-0000-0000-0000-000000000631",
+                "10000000-0000-0000-0000-000000000632",
+                "unauthorized-revocation-parent",
+                TeacherAccountStatus.ACTIVE);
+        LessonVersion otherLesson = createLessonVersion(
+                otherTeacher,
+                "20000000-0000-0000-0000-000000000631",
+                "20000000-0000-0000-0000-000000000632",
+                LessonVersionReadiness.CLASSROOM_READY,
+                true);
+        ClassroomSession unauthorizedParent = createClassroomSession(otherTeacher, otherLesson, UUID.randomUUID());
+        assertProblem(mockMvc.perform(delete(pairingGrantRevocationPath(
+                                unauthorizedParent, UUID.randomUUID().toString()))
+                        .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+
+        assertProblem(mockMvc.perform(delete(pairingGrantRevocationPath(
+                                foundation.classroomSession(), live.id())))
+                .andReturn(), 401, "TEACHER_SESSION_REQUIRED");
+        assertProblem(mockMvc.perform(delete(pairingGrantRevocationPath(
+                                foundation.classroomSession(), live.id()))
+                        .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()))
+                        .header("X-Penatika-CSRF", rawToken('5').expose()))
+                .andReturn(), 403, "CSRF_REJECTED");
+    }
+
+    @Test
+    void participantEstablishmentHttpPersistsDistinctAuthorityAndBoundedSecureCookies() throws Exception {
+        PairingFoundation foundation = createPairingFoundation('6', '7');
+        IssuedGrant controllerGrant = issueGrant(
+                foundation.authority(), foundation.classroomSession(), "TEACHER_CONTROLLER");
+        IssuedGrant displayGrant = issueGrant(
+                foundation.authority(), foundation.classroomSession(), "CLASSROOM_DISPLAY");
+
+        MvcResult controller = mockMvc.perform(post("/api/teacher-controller-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(controllerGrant.token()))
+                        .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn();
+        assertEstablishedParticipant(controller, foundation.classroomSession(), "TEACHER_CONTROLLER");
+        String controllerCredential = assertParticipantCookie(controller);
+        assertThat(controllerCredential).isNotEqualTo(controllerGrant.token());
+        ParticipantSession controllerSession = participantSessions
+                .findByCredentialVerifier(tokenVerifier.verifierFor(RawSecurityToken.fromEncoded(controllerCredential)))
+                .orElseThrow();
+        assertThat(controllerSession.teacherAccountId()).isEqualTo(foundation.teacher().id());
+        assertThat(controllerSession.teacherBrowserSessionId()).isEqualTo(foundation.authority().session().id());
+        assertThat(Duration.between(controllerSession.createdAt(), controllerSession.expiresAt()))
+                .isEqualTo(Duration.ofHours(8));
+
+        MvcResult display = mockMvc.perform(post("/api/classroom-display-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(displayGrant.token())))
+                .andReturn();
+        assertEstablishedParticipant(display, foundation.classroomSession(), "CLASSROOM_DISPLAY");
+        String displayCredential = assertParticipantCookie(display);
+        ParticipantSession displaySession = participantSessions
+                .findByCredentialVerifier(tokenVerifier.verifierFor(RawSecurityToken.fromEncoded(displayCredential)))
+                .orElseThrow();
+        assertThat(displaySession.teacherAccountId()).isNull();
+        assertThat(displaySession.teacherBrowserSessionId()).isNull();
+        assertThat(displayCredential).isNotEqualTo(displayGrant.token()).isNotEqualTo(controllerCredential);
+        assertThat(Duration.between(displaySession.createdAt(), displaySession.expiresAt()))
+                .isEqualTo(Duration.ofHours(8));
+
+        ClassroomSession unchanged = classroomSessions.findById(foundation.classroomSession().id()).orElseThrow();
+        assertThat(unchanged.lifecycleState()).isEqualTo(ClassroomLifecycleState.CREATED);
+        assertThat(unchanged.currentScenePosition()).isZero();
+        assertThat(unchanged.revision()).isEqualTo(new Revision(0));
+    }
+
+    @Test
+    void participantEstablishmentFailuresRemainNonDisclosingAndDoNotSetParticipantCookie() throws Exception {
+        PairingFoundation foundation = createPairingFoundation('8', '9');
+        IssuedGrant controllerGrant = issueGrant(
+                foundation.authority(), foundation.classroomSession(), "TEACHER_CONTROLLER");
+        IssuedGrant displayGrant = issueGrant(
+                foundation.authority(), foundation.classroomSession(), "CLASSROOM_DISPLAY");
+
+        MvcResult noTeacher = mockMvc.perform(post("/api/teacher-controller-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(controllerGrant.token())))
+                .andReturn();
+        assertProblem(noTeacher, 401, "TEACHER_SESSION_REQUIRED");
+        assertNoParticipantCookie(noTeacher);
+        MvcResult badCsrf = mockMvc.perform(post("/api/teacher-controller-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(controllerGrant.token()))
+                        .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()))
+                        .header("X-Penatika-CSRF", rawToken('a').expose()))
+                .andReturn();
+        assertProblem(badCsrf, 403, "CSRF_REJECTED");
+        assertNoParticipantCookie(badCsrf);
+
+        MvcResult wrongRole = mockMvc.perform(post("/api/teacher-controller-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(displayGrant.token()))
+                        .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()))
+                        .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                .andReturn();
+        assertProblem(wrongRole, 403, "PAIRING_GRANT_REJECTED");
+        assertNoParticipantCookie(wrongRole);
+        assertThat(pairingGrants.findByCredentialVerifier(pairingVerifier(displayGrant.token()))
+                        .orElseThrow().consumedAt())
+                .isNull();
+
+        MvcResult broadUnknown = mockMvc.perform(post("/api/classroom-display-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody("z".repeat(50))))
+                .andReturn();
+        assertProblem(broadUnknown, 403, "PAIRING_GRANT_REJECTED");
+        assertNoParticipantCookie(broadUnknown);
+        List<String> invalidBodies = List.of(
+                "{\"pairingToken\":",
+                "{}",
+                "[]",
+                "{\"pairingToken\":null}",
+                redemptionBody("two words"),
+                redemptionBody("z".repeat(513)),
+                "{\"pairingToken\":\"valid\",\"extra\":true}");
+        for (String invalidBody : invalidBodies) {
+            MvcResult invalidWire = mockMvc.perform(post("/api/classroom-display-participants")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(invalidBody))
+                    .andReturn();
+            assertProblem(invalidWire, 400, "REQUEST_VALIDATION_FAILED");
+            assertNoParticipantCookie(invalidWire);
+        }
+
+        PairingGrant expired = createGrant(
+                foundation.classroomSession(), PairingRole.CLASSROOM_DISPLAY, 'A', clock.instant().minusSeconds(301));
+        MvcResult expiredResult = mockMvc.perform(post("/api/classroom-display-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(rawPairingToken('A').expose())))
+                .andReturn();
+        assertProblem(expiredResult, 403, "PAIRING_GRANT_REJECTED");
+        assertNoParticipantCookie(expiredResult);
+        PairingGrant revoked = createGrant(
+                foundation.classroomSession(), PairingRole.CLASSROOM_DISPLAY, 'B', clock.instant());
+        pairingGrants.revoke(foundation.classroomSession().id(), revoked.id(), clock.instant());
+        MvcResult revokedResult = mockMvc.perform(post("/api/classroom-display-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(rawPairingToken('B').expose())))
+                .andReturn();
+        assertProblem(revokedResult, 403, "PAIRING_GRANT_REJECTED");
+        assertNoParticipantCookie(revokedResult);
+
+        TeacherAccount otherTeacher = createTeacher(
+                "10000000-0000-0000-0000-000000000641",
+                "10000000-0000-0000-0000-000000000642",
+                "cross-teacher-http",
+                TeacherAccountStatus.ACTIVE);
+        SessionAuthority otherAuthority = createSessionAuthority(
+                otherTeacher,
+                "10000000-0000-0000-0000-000000000643",
+                'C',
+                'D',
+                clock.instant().truncatedTo(ChronoUnit.MICROS));
+        MvcResult crossTeacher = mockMvc.perform(post("/api/teacher-controller-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(controllerGrant.token()))
+                        .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, otherAuthority.sessionToken()))
+                        .header("X-Penatika-CSRF", otherAuthority.csrfToken().expose()))
+                .andReturn();
+        assertProblem(crossTeacher, 403, "PAIRING_GRANT_REJECTED");
+        assertNoParticipantCookie(crossTeacher);
+        assertThat(pairingGrants.findByCredentialVerifier(pairingVerifier(controllerGrant.token()))
+                        .orElseThrow().consumedAt())
+                .isNull();
+
+        MvcResult displaySuccess = mockMvc.perform(post("/api/classroom-display-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(displayGrant.token())))
+                .andReturn();
+        assertThat(displaySuccess.getResponse().getStatus()).isEqualTo(201);
+        MvcResult replay = mockMvc.perform(post("/api/classroom-display-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(displayGrant.token())))
+                .andReturn();
+        assertProblem(replay, 403, "PAIRING_GRANT_REJECTED");
+        assertNoParticipantCookie(replay);
+
+        PairingGrant competingGrant = createGrant(
+                foundation.classroomSession(), PairingRole.CLASSROOM_DISPLAY, 'r', clock.instant());
+        MvcResult occupied = mockMvc.perform(post("/api/classroom-display-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(rawPairingToken('r').expose())))
+                .andReturn();
+        assertProblem(occupied, 409, "PARTICIPANT_ROLE_ALREADY_ACTIVE");
+        assertNoParticipantCookie(occupied);
+        assertThat(pairingGrants.findByCredentialVerifier(competingGrant.credentialVerifier())
+                        .orElseThrow().consumedAt())
+                .isNull();
+    }
+
+    @Test
+    void teacherAuthorityLossInsideRedemptionReturns401AndRollsBackGrantClaim() throws Exception {
+        PairingFoundation foundation = createPairingFoundation('b', 'd');
+        IssuedGrant grant = issueGrant(
+                foundation.authority(), foundation.classroomSession(), "TEACHER_CONTROLLER");
+        jdbcClient.sql("""
+                        CREATE FUNCTION ivs05_revoke_browser_on_claim() RETURNS trigger AS $$
+                        BEGIN
+                            UPDATE identity_teacher_browser_session
+                            SET revoked_at = NEW.consumed_at
+                            WHERE id = '%s'::uuid;
+                            RETURN NEW;
+                        END;
+                        $$ LANGUAGE plpgsql
+                        """.formatted(foundation.authority().session().id().value()))
+                .update();
+        jdbcClient.sql("""
+                        CREATE TRIGGER ivs05_revoke_browser_on_claim
+                        AFTER UPDATE OF consumed_at ON classroom_pairing_grant
+                        FOR EACH ROW EXECUTE FUNCTION ivs05_revoke_browser_on_claim()
+                        """)
+                .update();
+        try {
+            MvcResult result = mockMvc.perform(post("/api/teacher-controller-participants")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(redemptionBody(grant.token()))
+                            .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()))
+                            .header("X-Penatika-CSRF", foundation.authority().csrfToken().expose()))
+                    .andReturn();
+
+            assertProblem(result, 401, "TEACHER_SESSION_REQUIRED");
+            assertNoParticipantCookie(result);
+            assertThat(pairingGrants.findByCredentialVerifier(pairingVerifier(grant.token()))
+                            .orElseThrow().consumedAt())
+                    .isNull();
+            assertThat(browserSessions.findById(foundation.authority().session().id()).orElseThrow().revokedAt())
+                    .isNull();
+            assertThat(rowCount("identity_participant_session")).isZero();
+        } finally {
+            jdbcClient.sql("DROP TRIGGER IF EXISTS ivs05_revoke_browser_on_claim ON classroom_pairing_grant")
+                    .update();
+            jdbcClient.sql("DROP FUNCTION IF EXISTS ivs05_revoke_browser_on_claim()")
+                    .update();
+        }
+    }
+
+    @Test
+    void redemptionTransactionRollsBackAllPostClaimAuthorizationAndRoleFailures() {
+        PairingFoundation foundation = createPairingFoundation('f', 'g');
+
+        PairingGrant wrongRole = createGrant(
+                foundation.classroomSession(), PairingRole.CLASSROOM_DISPLAY, 'h', clock.instant());
+        assertThatThrownBy(() -> establishControllerParticipant.establishController(
+                        PresentedPairingToken.fromWire(rawPairingToken('h').expose()),
+                        foundation.teacher().id().value(),
+                        foundation.authority().session().id().value()))
+                .isInstanceOf(PairingGrantRejectedException.class);
+        assertUnconsumed(wrongRole);
+
+        TeacherAccount otherTeacher = createTeacher(
+                "10000000-0000-0000-0000-000000000611",
+                "10000000-0000-0000-0000-000000000612",
+                "cross-teacher",
+                TeacherAccountStatus.ACTIVE);
+        PairingGrant crossTeacher = createGrant(
+                foundation.classroomSession(), PairingRole.TEACHER_CONTROLLER, 'i', clock.instant());
+        assertThatThrownBy(() -> establishControllerParticipant.establishController(
+                        PresentedPairingToken.fromWire(rawPairingToken('i').expose()),
+                        otherTeacher.id().value(),
+                        UUID.randomUUID()))
+                .isInstanceOf(PairingGrantRejectedException.class);
+        assertUnconsumed(crossTeacher);
+
+        ClassroomSession failed = createClassroomSession(
+                foundation.teacher(), foundation.lessonVersion(), UUID.randomUUID());
+        jdbcClient.sql("UPDATE classroom_session SET lifecycle_state = 'FAILED' WHERE id = :id")
+                .param("id", failed.id().value())
+                .update();
+        PairingGrant nonPairable = createGrant(failed, PairingRole.CLASSROOM_DISPLAY, 'j', clock.instant());
+        assertThatThrownBy(() -> establishDisplayParticipant.establishDisplay(
+                        PresentedPairingToken.fromWire(rawPairingToken('j').expose())))
+                .isInstanceOf(PairingGrantRejectedException.class);
+        assertUnconsumed(nonPairable);
+
+        PairingGrant invalidTeacher = createGrant(
+                foundation.classroomSession(), PairingRole.TEACHER_CONTROLLER, 'k', clock.instant());
+        assertThatThrownBy(() -> establishControllerParticipant.establishController(
+                        PresentedPairingToken.fromWire(rawPairingToken('k').expose()),
+                        foundation.teacher().id().value(),
+                        UUID.randomUUID()))
+                .isInstanceOf(TeacherSessionRequiredException.class);
+        assertUnconsumed(invalidTeacher);
+
+        ClassroomSession occupiedSession = createClassroomSession(
+                foundation.teacher(), foundation.lessonVersion(), UUID.randomUUID());
+        ParticipantSession occupant = ParticipantSession.display(
+                new io.github.sipratama.penatika.identity.domain.ParticipantSessionId(UUID.randomUUID()),
+                new io.github.sipratama.penatika.identity.domain.ClassroomSessionReference(occupiedSession.id().value()),
+                "8".repeat(64),
+                clock.instant());
+        assertThat(participantSessions.tryCreateActive(occupant)).isTrue();
+        PairingGrant roleConflict = createGrant(
+                occupiedSession, PairingRole.CLASSROOM_DISPLAY, 'l', clock.instant());
+        assertThatThrownBy(() -> establishDisplayParticipant.establishDisplay(
+                        PresentedPairingToken.fromWire(rawPairingToken('l').expose())))
+                .isInstanceOf(ParticipantRoleAlreadyActiveException.class);
+        assertUnconsumed(roleConflict);
+    }
+
+    @Test
+    void concurrentRedemptionEnforcesSingleUseSameRoleAndIndependentRoles() throws Exception {
+        PairingFoundation foundation = createPairingFoundation('m', 'n');
+        ClassroomSession sameTokenSession = createClassroomSession(
+                foundation.teacher(), foundation.lessonVersion(), UUID.randomUUID());
+        PairingGrant sameToken = createGrant(
+                sameTokenSession, PairingRole.CLASSROOM_DISPLAY, 'o', clock.instant());
+        PresentedPairingToken samePresented = PresentedPairingToken.fromWire(rawPairingToken('o').expose());
+        assertThat(runConcurrently(2, () -> displayOutcome(samePresented)))
+                .containsExactlyInAnyOrder("SUCCESS", "REJECTED");
+        assertThat(activeParticipantCount(sameTokenSession, PairingRole.CLASSROOM_DISPLAY)).isEqualTo(1);
+
+        ClassroomSession sameRoleSession = createClassroomSession(
+                foundation.teacher(), foundation.lessonVersion(), UUID.randomUUID());
+        PairingGrant first = createGrant(sameRoleSession, PairingRole.CLASSROOM_DISPLAY, 'p', clock.instant());
+        PairingGrant second = createGrant(sameRoleSession, PairingRole.CLASSROOM_DISPLAY, 'q', clock.instant());
+        List<String> sameRoleOutcomes = runConcurrently(List.of(
+                () -> displayOutcome(PresentedPairingToken.fromWire(rawPairingToken('p').expose())),
+                () -> displayOutcome(PresentedPairingToken.fromWire(rawPairingToken('q').expose()))));
+        assertThat(sameRoleOutcomes).containsExactlyInAnyOrder("SUCCESS", "ROLE_ACTIVE");
+        assertThat(activeParticipantCount(sameRoleSession, PairingRole.CLASSROOM_DISPLAY)).isEqualTo(1);
+        assertThat(List.of(first, second).stream()
+                        .filter(grant -> pairingGrants.findByCredentialVerifier(grant.credentialVerifier())
+                                .orElseThrow().consumedAt() == null)
+                        .count())
+                .isEqualTo(1);
+
+        ClassroomSession differentRolesSession = createClassroomSession(
+                foundation.teacher(), foundation.lessonVersion(), UUID.randomUUID());
+        createGrant(differentRolesSession, PairingRole.TEACHER_CONTROLLER, 's', clock.instant());
+        createGrant(differentRolesSession, PairingRole.CLASSROOM_DISPLAY, 't', clock.instant());
+        List<String> differentRoleOutcomes = runConcurrently(List.of(
+                () -> controllerOutcome(
+                        PresentedPairingToken.fromWire(rawPairingToken('s').expose()), foundation),
+                () -> displayOutcome(PresentedPairingToken.fromWire(rawPairingToken('t').expose()))));
+        assertThat(differentRoleOutcomes).containsExactly("SUCCESS", "SUCCESS");
+        assertThat(activeParticipantCount(differentRolesSession, PairingRole.TEACHER_CONTROLLER)).isEqualTo(1);
+        assertThat(activeParticipantCount(differentRolesSession, PairingRole.CLASSROOM_DISPLAY)).isEqualTo(1);
+    }
+
+    @Test
+    void exactExpiredParticipantIsUnusableAndLazyCleanupAllowsNewEightHourRepair() {
+        PairingFoundation foundation = createPairingFoundation('u', 'v');
+        Instant exactExpiry = clock.instant().truncatedTo(ChronoUnit.MICROS);
+        RawSecurityToken oldCredential = rawToken('x');
+        ParticipantSession expired = ParticipantSession.display(
+                new io.github.sipratama.penatika.identity.domain.ParticipantSessionId(UUID.randomUUID()),
+                new io.github.sipratama.penatika.identity.domain.ClassroomSessionReference(
+                        foundation.classroomSession().id().value()),
+                tokenVerifier.verifierFor(oldCredential),
+                exactExpiry.minus(Duration.ofHours(8)));
+        assertThat(expired.expiresAt()).isEqualTo(exactExpiry);
+        assertThat(participantSessions.tryCreateActive(expired)).isTrue();
+        assertThat(participantAuthority.resolve(oldCredential)).isEmpty();
+
+        PairingGrant replacementGrant = createGrant(
+                foundation.classroomSession(), PairingRole.CLASSROOM_DISPLAY, 'y', clock.instant());
+        EstablishedParticipant replacement = establishDisplayParticipant.establishDisplay(
+                PresentedPairingToken.fromWire(rawPairingToken('y').expose()));
+
+        ParticipantSession stale = participantSessions.findByCredentialVerifier(expired.credentialVerifier()).orElseThrow();
+        assertThat(stale.revokedAt()).isNotNull();
+        ParticipantSession current = participantSessions
+                .findByCredentialVerifier(tokenVerifier.verifierFor(replacement.participantCredential()))
+                .orElseThrow();
+        assertThat(current.id()).isNotEqualTo(expired.id());
+        assertThat(Duration.between(current.createdAt(), current.expiresAt())).isEqualTo(Duration.ofHours(8));
+        assertThat(pairingGrants.findByCredentialVerifier(replacementGrant.credentialVerifier())
+                        .orElseThrow().consumedAt())
+                .isNotNull();
+    }
+
+    @Test
+    void invalidatedControllerOccupantIsCleanedBeforeAuthorizedRepair() throws Exception {
+        PairingFoundation foundation = createPairingFoundation('E', 'F');
+        ParticipantSession staleController = ParticipantSession.controller(
+                new io.github.sipratama.penatika.identity.domain.ParticipantSessionId(UUID.randomUUID()),
+                new io.github.sipratama.penatika.identity.domain.ClassroomSessionReference(
+                        foundation.classroomSession().id().value()),
+                "7".repeat(64),
+                foundation.teacher().id(),
+                foundation.authority().session().id(),
+                clock.instant());
+        assertThat(participantSessions.tryCreateActive(staleController)).isTrue();
+        assertThat(browserSessions.revoke(foundation.authority().session().id(), clock.instant())).isTrue();
+
+        SessionAuthority replacementAuthority = createSessionAuthority(
+                foundation.teacher(),
+                "10000000-0000-0000-0000-000000000604",
+                'G',
+                'H',
+                clock.instant().truncatedTo(ChronoUnit.MICROS));
+        IssuedGrant replacementGrant = issueGrant(
+                replacementAuthority, foundation.classroomSession(), "TEACHER_CONTROLLER");
+        MvcResult result = mockMvc.perform(post("/api/teacher-controller-participants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(redemptionBody(replacementGrant.token()))
+                        .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, replacementAuthority.sessionToken()))
+                        .header("X-Penatika-CSRF", replacementAuthority.csrfToken().expose()))
+                .andReturn();
+
+        assertThat(result.getResponse().getStatus()).isEqualTo(201);
+        assertThat(participantSessions.findByCredentialVerifier(staleController.credentialVerifier())
+                        .orElseThrow().revokedAt())
+                .isNotNull();
+        String newCredential = assertParticipantCookie(result);
+        ParticipantSession replacement = participantSessions.findByCredentialVerifier(
+                        tokenVerifier.verifierFor(RawSecurityToken.fromEncoded(newCredential)))
+                .orElseThrow();
+        assertThat(replacement.id()).isNotEqualTo(staleController.id());
+        assertThat(replacement.teacherBrowserSessionId()).isEqualTo(replacementAuthority.session().id());
+    }
+
+    private PairingFoundation createPairingFoundation(char sessionCharacter, char csrfCharacter) {
+        TeacherAccount teacher = createTeacher(
+                "10000000-0000-0000-0000-000000000601",
+                "10000000-0000-0000-0000-000000000602",
+                "pairing-foundation",
+                TeacherAccountStatus.ACTIVE);
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+        SessionAuthority authority = createSessionAuthority(
+                teacher,
+                "10000000-0000-0000-0000-000000000603",
+                sessionCharacter,
+                csrfCharacter,
+                now);
+        LessonVersion lessonVersion = createLessonVersion(
+                teacher,
+                "20000000-0000-0000-0000-000000000601",
+                "20000000-0000-0000-0000-000000000602",
+                LessonVersionReadiness.CLASSROOM_READY,
+                true);
+        ClassroomSession classroomSession = createClassroomSession(
+                teacher,
+                lessonVersion,
+                UUID.fromString("30000000-0000-0000-0000-000000000601"));
+        return new PairingFoundation(teacher, authority, lessonVersion, classroomSession);
+    }
+
+    private ClassroomSession createClassroomSession(
+            TeacherAccount teacher,
+            LessonVersion lessonVersion,
+            UUID classroomSessionId) {
+        ClassroomSession session = ClassroomSession.start(
+                new ClassroomSessionId(classroomSessionId),
+                teacher.id().value(),
+                lessonVersion.id().value(),
+                clock.instant().truncatedTo(ChronoUnit.MICROS));
+        classroomSessions.create(session);
+        return session;
+    }
+
+    private IssuedGrant issueGrant(
+            SessionAuthority authority,
+            ClassroomSession classroomSession,
+            String participantRole) throws Exception {
+        MvcResult result = createPairingGrantRequest(
+                        authority, classroomSession.id().value().toString(), participantRole)
+                .andReturn();
+        assertThat(result.getResponse().getStatus()).isEqualTo(201);
+        assertThat(result.getResponse().getContentType()).isEqualTo("application/json");
+        assertThat(result.getResponse().getHeader("Cache-Control")).isEqualTo("no-store");
+        assertThat(result.getResponse().getHeader("Location")).isNull();
+        Map<String, Object> body = JsonPath.read(result.getResponse().getContentAsString(), "$");
+        assertThat(body).containsOnlyKeys("pairingGrantId", "pairingToken", "participantRole", "expiresAt");
+        assertThat(body.get("participantRole")).isEqualTo(participantRole);
+        return new IssuedGrant(
+                (String) body.get("pairingGrantId"),
+                (String) body.get("pairingToken"),
+                participantRole,
+                Instant.parse((String) body.get("expiresAt")));
+    }
+
+    private org.springframework.test.web.servlet.ResultActions createPairingGrantRequest(
+            SessionAuthority authority,
+            String classroomSessionId,
+            String participantRole) throws Exception {
+        return mockMvc.perform(post("/api/classroom-sessions/{id}/pairing-grants", classroomSessionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"participantRole\":\"" + participantRole + "\"}")
+                .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, authority.sessionToken()))
+                .header("X-Penatika-CSRF", authority.csrfToken().expose()));
+    }
+
+    private org.springframework.test.web.servlet.ResultActions revokeGrant(
+            SessionAuthority authority,
+            ClassroomSession classroomSession,
+            String pairingGrantId) throws Exception {
+        return mockMvc.perform(delete(pairingGrantRevocationPath(classroomSession, pairingGrantId))
+                .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, authority.sessionToken()))
+                .header("X-Penatika-CSRF", authority.csrfToken().expose()));
+    }
+
+    private static String pairingGrantPath(ClassroomSession classroomSession) {
+        return "/api/classroom-sessions/" + classroomSession.id().value() + "/pairing-grants";
+    }
+
+    private static String pairingGrantRevocationPath(
+            ClassroomSession classroomSession, String pairingGrantId) {
+        return pairingGrantPath(classroomSession) + "/" + pairingGrantId;
+    }
+
+    private PairingGrant createGrant(
+            ClassroomSession classroomSession,
+            PairingRole role,
+            char tokenCharacter,
+            Instant issuedAt) {
+        RawPairingToken token = rawPairingToken(tokenCharacter);
+        PairingGrant grant = PairingGrant.issue(
+                new PairingGrantId(UUID.randomUUID()),
+                classroomSession.id(),
+                role,
+                pairingTokenVerifier.verifierFor(token),
+                issuedAt.truncatedTo(ChronoUnit.MICROS));
+        pairingGrants.create(grant);
+        return grant;
+    }
+
+    private String displayOutcome(PresentedPairingToken token) {
+        try {
+            establishDisplayParticipant.establishDisplay(token);
+            return "SUCCESS";
+        } catch (PairingGrantRejectedException exception) {
+            return "REJECTED";
+        } catch (ParticipantRoleAlreadyActiveException exception) {
+            return "ROLE_ACTIVE";
+        }
+    }
+
+    private String controllerOutcome(PresentedPairingToken token, PairingFoundation foundation) {
+        try {
+            establishControllerParticipant.establishController(
+                    token,
+                    foundation.teacher().id().value(),
+                    foundation.authority().session().id().value());
+            return "SUCCESS";
+        } catch (PairingGrantRejectedException exception) {
+            return "REJECTED";
+        } catch (ParticipantRoleAlreadyActiveException exception) {
+            return "ROLE_ACTIVE";
+        }
+    }
+
+    private int activeParticipantCount(ClassroomSession session, PairingRole role) {
+        return jdbcClient.sql("""
+                        SELECT count(*)
+                        FROM identity_participant_session
+                        WHERE classroom_session_id = :classroomSessionId
+                          AND participant_role = :participantRole
+                          AND revoked_at IS NULL
+                        """)
+                .param("classroomSessionId", session.id().value())
+                .param("participantRole", role.name())
+                .query(Integer.class)
+                .single();
+    }
+
+    private void assertUnconsumed(PairingGrant grant) {
+        assertThat(pairingGrants.findByCredentialVerifier(grant.credentialVerifier())
+                        .orElseThrow().consumedAt())
+                .isNull();
+    }
+
+    private static void assertEstablishedParticipant(
+            MvcResult result,
+            ClassroomSession classroomSession,
+            String participantRole) throws Exception {
+        assertThat(result.getResponse().getStatus()).isEqualTo(201);
+        assertThat(result.getResponse().getContentType()).isEqualTo("application/json");
+        assertThat(result.getResponse().getHeader("Location")).isNull();
+        Map<String, Object> body = JsonPath.read(result.getResponse().getContentAsString(), "$");
+        assertThat(body).containsOnlyKeys("classroomSessionId", "participantRole");
+        assertThat(body.get("classroomSessionId")).isEqualTo(classroomSession.id().value().toString());
+        assertThat(body.get("participantRole")).isEqualTo(participantRole);
+    }
+
+    private static String assertParticipantCookie(MvcResult result) {
+        String header = result.getResponse().getHeaders("Set-Cookie").stream()
+                .filter(value -> value.startsWith(ParticipantSessionCookies.COOKIE_NAME + "="))
+                .findFirst()
+                .orElseThrow();
+        assertThat(header)
+                .contains("Secure", "HttpOnly", "Path=/", "SameSite=Strict")
+                .doesNotContain("Domain=");
+        java.util.regex.Matcher maxAge = java.util.regex.Pattern.compile("Max-Age=(\\d+)").matcher(header);
+        assertThat(maxAge.find()).isTrue();
+        assertThat(Long.parseLong(maxAge.group(1))).isBetween(28_790L, 28_800L);
+        int valueStart = ParticipantSessionCookies.COOKIE_NAME.length() + 1;
+        return header.substring(valueStart, header.indexOf(';', valueStart));
+    }
+
+    private static void assertNoParticipantCookie(MvcResult result) {
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .noneMatch(value -> value.startsWith(ParticipantSessionCookies.COOKIE_NAME + "="));
+    }
+
+    private static String redemptionBody(String pairingToken) {
+        return "{\"pairingToken\":\"" + pairingToken + "\"}";
+    }
+
+    private String pairingVerifier(String token) {
+        return pairingTokenVerifier.verifierFor(PresentedPairingToken.fromWire(token));
+    }
+
+    private static RawPairingToken rawPairingToken(char character) {
+        return RawPairingToken.fromGenerated(String.valueOf(character).repeat(43));
+    }
+
     private Foundation createFoundation() {
         TeacherAccount teacher = new TeacherAccountFixtureBuilder().build();
         ExternalIdentityLink link = new ExternalIdentityLinkFixtureBuilder()
@@ -1199,4 +1953,16 @@ class FirstProtectedSlicePersistenceIT {
             TeacherBrowserSession session,
             RawSecurityToken sessionToken,
             RawSecurityToken csrfToken) {}
+
+    private record PairingFoundation(
+            TeacherAccount teacher,
+            SessionAuthority authority,
+            LessonVersion lessonVersion,
+            ClassroomSession classroomSession) {}
+
+    private record IssuedGrant(
+            String id,
+            String token,
+            String participantRole,
+            Instant expiresAt) {}
 }

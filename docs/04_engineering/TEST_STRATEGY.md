@@ -8,9 +8,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `1.0` |
+| Version | `1.1` |
 | Last Updated | `2026-09-11` |
-| Test Tooling | Deterministic scaffolding plus IVS-02 persistence, accepted IVS-03 identity/session evidence, and IVS-04 LessonVersion eligibility, Teacher/CSRF mutation authority, Classroom start, HTTP, architecture, and PostgreSQL evidence established; implementation tooling remains incremental |
+| Test Tooling | Deterministic scaffolding plus IVS-02 persistence, accepted IVS-03/04 evidence, and IVS-05 PairingGrant/participant domain, HTTP, transaction, cookie, authority, expiry, replay, stale-slot, and PostgreSQL concurrency evidence established; implementation tooling remains incremental |
 
 ## 1. Testing Objectives
 
@@ -57,8 +57,10 @@ suite proves Authorization Code OIDC initiation with state, nonce, and PKCE
 `S256`, plus PostgreSQL 18 connectivity, Flyway V001, module-owned mappings,
 `GET /api/teacher-session`, authority isolation, session rotation/activity/
 expiry/revocation, CSRF recovery/CAS behavior, ownership-scoped LessonVersion
-eligibility, and `POST /api/classroom-sessions` initial authoritative state. It
-does not yet prove IVS-05 or later Pairing/participant/command/Display behavior,
+eligibility, `POST /api/classroom-sessions` initial authoritative state, the
+four IVS-05 Pairing/participant operations, transactional grant consumption,
+role-slot concurrency, stale authority cleanup, and fixed participant expiry.
+It does not yet prove IVS-06 or later command/projection/realtime behavior,
 migration-upgrade compatibility, or a real production identity provider.
 
 Still future or open are Playwright activation when a real cross-application
@@ -84,8 +86,10 @@ The SS-05 mechanism smoke remains; IVS-02 extends it with V001 and module-owned
 persistence evidence; IVS-03 adds provider-neutral OIDC request evidence and
 disposable-real-PostgreSQL HTTP/session-security evidence; IVS-04 adds
 LessonVersion ownership/readiness/non-disclosure and authoritative Classroom
-Session start evidence. This does not claim IVS-05 or later Pairing,
-participant, command, projection, or realtime behavior.
+Session start evidence; IVS-05 adds PairingGrant/participant HTTP, cookie,
+authority, transaction rollback, expiry, replay, stale-slot, and PostgreSQL
+concurrency evidence. This does not claim IVS-06 or later command, projection,
+or realtime behavior.
 
 ### Frontend Component Tests
 

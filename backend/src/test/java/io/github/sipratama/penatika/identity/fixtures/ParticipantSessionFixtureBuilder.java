@@ -54,7 +54,7 @@ public final class ParticipantSessionFixtureBuilder {
                 teacherAccountId,
                 teacherBrowserSessionId,
                 createdAt,
-                null,
+                createdAt.plus(ParticipantSession.ABSOLUTE_LIFETIME),
                 null);
     }
 }

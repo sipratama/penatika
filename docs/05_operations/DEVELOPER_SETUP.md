@@ -32,9 +32,11 @@ Backend shell:
 - ownership-scoped LessonVersion classroom-start eligibility plus
   Teacher/CSRF-authorized `POST /api/classroom-sessions`, persisting the initial
   backend-authoritative `CREATED` state;
+- four IVS-05 PairingGrant/participant HTTP operations with five-minute
+  single-use grants, fixed eight-hour participant sessions, secure host-only
+  participant cookies, and PostgreSQL-authoritative role slots;
 - one Maven project rooted at `backend/`;
-- no Pairing, participant, command, projection, SSE, or frontend product
-  behavior yet.
+- no command, projection, SSE, or frontend product behavior yet.
 
 Frontend workspace:
 
@@ -58,8 +60,8 @@ Contract validation tooling:
   `openapi-typescript` 7.13.0.
 
 The repository has no configured production OIDC provider, deployment
-configuration, or CI/CD. IVS-05 and later Pairing, participant, command,
-projection, and realtime behavior remain unimplemented.
+configuration, or CI/CD. IVS-06 and later command, projection, and realtime
+behavior remain unimplemented.
 
 ## 2. Current Prerequisites
 
@@ -122,8 +124,9 @@ The equivalent repository-root command is:
 ```
 
 Both commands include the Spring context smoke test, production architecture
-fitness rules, typed configuration activation/failure tests, security-token and
-Teacher-session application tests, OIDC success-handler tests, and negative
+fitness rules, typed configuration activation/failure tests, security-token,
+Teacher-session, PairingGrant, and participant-authority application tests,
+OIDC success-handler tests, and negative
 test-fixture proof that the rules detect invalid dependencies. They do not
 start PostgreSQL or require a container runtime.
 
@@ -150,9 +153,11 @@ This runs the fast suite and the Maven Failsafe integration suite. The
 integration suite uses Testcontainers with the exact
 `postgres:18.6-bookworm` image to prove DataSource/JdbcClient/Flyway V001,
 module persistence, Teacher-session HTTP authority, expiry/activity/revocation,
-and CSRF recovery behavior. It also proves provider-neutral OIDC authorization
-requests contain state, nonce, and PKCE `S256` using test-only registration
-metadata; no production provider is configured.
+CSRF recovery behavior, the four Pairing/participant HTTP operations,
+transaction rollback, fixed participant expiry, stale-slot cleanup, and
+same-token/same-role/cross-role concurrency. It also proves provider-neutral
+OIDC authorization requests contain state, nonce, and PKCE `S256` using
+test-only registration metadata; no production provider is configured.
 
 A usable Docker-compatible runtime is required. On macOS with Podman, the
 current shell may need to expose the active Podman machine's Docker-compatible
@@ -272,16 +277,17 @@ authorize implementation. Material architecture decisions remain governed by
 
 ## 10. Open Work
 
-Source Scaffolding and IVS-01 through IVS-03 are complete. IVS-04 LessonVersion
-eligibility and Classroom Session start is READY FOR REVIEW. IVS-05 has not
-started and remains blocked by OIQ-03; later product behavior, production OIDC
-provider selection/configuration, deployment files, CI/CD, and backup
-implementation remain pending.
+Source Scaffolding and IVS-01 through IVS-04 are complete. IVS-05 PairingGrant
+and participant-session runtime is READY FOR REVIEW. IVS-06 has not started;
+OIQ-04 remains unresolved and blocks IVS-08 only. Later product behavior,
+production OIDC provider selection/configuration, deployment files, CI/CD, and
+backup implementation remain pending.
 
 ## 11. Change Log
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-11` | Record IVS-05 PairingGrant/participant HTTP, cookie, authority, expiry, rollback, stale-slot, and PostgreSQL concurrency validation | Codex |
 | `2026-09-11` | Record IVS-04 LessonVersion eligibility, Teacher/CSRF-authorized Classroom Session start, and PostgreSQL/HTTP validation evidence | Codex |
 | `2026-09-10` | Record IVS-03 provider-neutral OIDC, Teacher browser-session runtime, HTTP endpoint, and PostgreSQL/security validation commands | Codex |
 | `2026-09-10` | Record SS-06 handoff-ready setup status without adding product, deployment, or CI behavior | Codex |

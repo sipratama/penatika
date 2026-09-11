@@ -106,8 +106,18 @@ public class IdentitySecurityConfiguration {
             TeacherSessionAuthenticationEntryPoint entryPoint) throws Exception {
         http.securityMatcher("/api/**")
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.POST, "/api/classroom-display-participants").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/teacher-session").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/classroom-sessions").authenticated()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/classroom-sessions/*/pairing-grants",
+                                "/api/teacher-controller-participants")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/classroom-sessions/*/pairing-grants/*")
+                        .authenticated()
                         .anyRequest().denyAll())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import io.github.sipratama.penatika.classroom.adapter.in.http.ParticipantSessionCookies;
 import io.github.sipratama.penatika.classroom.adapter.out.security.SecureRandomPairingTokenGenerator;
 import io.github.sipratama.penatika.classroom.adapter.out.security.Sha256PairingTokenVerifier;
 import io.github.sipratama.penatika.classroom.adapter.out.transaction.spring.TransactionalPairingGrantRedemptionUseCase;
@@ -39,6 +40,11 @@ public class ClassroomRuntimeConfiguration {
     @Bean
     PairingTokenVerifierPort pairingTokenVerifier() {
         return new Sha256PairingTokenVerifier();
+    }
+
+    @Bean
+    ParticipantSessionCookies participantSessionCookies() {
+        return new ParticipantSessionCookies();
     }
 
     @Bean

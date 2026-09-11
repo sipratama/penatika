@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `1.1` |
+| Version | `1.2` |
 | Last Updated | `2026-09-11` |
 | Review Trigger | Identity, provider, contract, deployment, retention, or student-data decisions |
 
@@ -219,6 +219,10 @@ success, derives Teacher ownership from server authentication, and merges
 nonexistent and other-Teacher LessonVersion references into the same 404
 outcome. The CSRF recovery cookie and Teacher session credential cannot
 substitute for the CSRF header.
+IVS-05 automated evidence covers high-entropy verifier-only PairingGrants,
+single-use transactional redemption, non-disclosing rejection, separate
+Controller/Display authority, fixed participant expiry, bounded secure cookies,
+stale-slot cleanup, and same-token/same-role/cross-role PostgreSQL concurrency.
 
 ## 9. External Provider Review
 
@@ -295,6 +299,7 @@ Review this threat model before:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `1.2` | `2026-09-11` | Record IVS-05 PairingGrant and participant authority, expiry, cookie, non-disclosure, rollback, stale-slot, and concurrency evidence | Codex |
 | `1.1` | `2026-09-11` | Remove resolved OIQ-03 from open security decisions and route the frozen participant-session lifetime to the implementation plan | Codex |
 | `1.0` | `2026-09-11` | Record IVS-04 session revalidation, explicit mutation CSRF enforcement, trusted Teacher ownership, and LessonVersion non-disclosure evidence | Codex |
 | `0.9` | `2026-09-10` | Record implemented IVS-03 cookie, backend-session authority, transient OIDC isolation, and CSRF recovery/verification controls and evidence | Codex |
