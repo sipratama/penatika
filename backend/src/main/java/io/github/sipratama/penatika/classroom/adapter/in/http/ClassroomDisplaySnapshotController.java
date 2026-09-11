@@ -46,11 +46,15 @@ public final class ClassroomDisplaySnapshotController {
         int length = value == null ? 0 : value.codePointCount(0, value.length());
         if (length < 1
                 || length > MAX_ID_CODE_POINTS
-                || value.codePoints().anyMatch(Character::isWhitespace)) {
+                || value.codePoints().anyMatch(ClassroomDisplaySnapshotController::isWhitespace)) {
             throw new ClassroomRequestValidationException(List.of(new RequestValidationFieldError(
                     "classroomSessionId",
                     "INVALID_VALUE",
                     "The field must be a non-whitespace opaque identifier of at most 128 characters.")));
         }
+    }
+
+    private static boolean isWhitespace(int codePoint) {
+        return Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint);
     }
 }

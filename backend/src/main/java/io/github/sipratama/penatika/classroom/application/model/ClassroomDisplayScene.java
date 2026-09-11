@@ -16,12 +16,16 @@ public record ClassroomDisplayScene(
         int idLength = sceneId.codePointCount(0, sceneId.length());
         if (idLength < 1
                 || idLength > 128
-                || sceneId.codePoints().anyMatch(Character::isWhitespace)
+                || sceneId.codePoints().anyMatch(ClassroomDisplayScene::isWhitespace)
                 || position < 0
                 || position > MAX_WIRE_INTEGER
                 || blocks.isEmpty()
                 || blocks.size() > 64) {
             throw new IllegalArgumentException("invalid Display projection scene");
         }
+    }
+
+    private static boolean isWhitespace(int codePoint) {
+        return Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint);
     }
 }

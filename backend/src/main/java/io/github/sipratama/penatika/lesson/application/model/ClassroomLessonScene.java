@@ -17,12 +17,16 @@ public record ClassroomLessonScene(
         int sceneIdLength = sceneId.codePointCount(0, sceneId.length());
         if (sceneIdLength < 1
                 || sceneIdLength > 128
-                || sceneId.codePoints().anyMatch(Character::isWhitespace)
+                || sceneId.codePoints().anyMatch(ClassroomLessonScene::isWhitespace)
                 || position < 0
                 || position > MAX_WIRE_INTEGER
                 || blocks.isEmpty()
                 || blocks.size() > MAX_BLOCKS) {
             throw new IllegalArgumentException("invalid classroom lesson scene");
         }
+    }
+
+    private static boolean isWhitespace(int codePoint) {
+        return Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint);
     }
 }

@@ -18,10 +18,14 @@ public record ClassroomDisplayProjection(
         if (!"1.0".equals(schemaVersion)
                 || idLength < 1
                 || idLength > 128
-                || classroomSessionId.codePoints().anyMatch(Character::isWhitespace)
+                || classroomSessionId.codePoints().anyMatch(ClassroomDisplayProjection::isWhitespace)
                 || revision < 0
                 || revision > Revision.MAX_VALUE) {
             throw new IllegalArgumentException("invalid Display projection");
         }
+    }
+
+    private static boolean isWhitespace(int codePoint) {
+        return Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint);
     }
 }

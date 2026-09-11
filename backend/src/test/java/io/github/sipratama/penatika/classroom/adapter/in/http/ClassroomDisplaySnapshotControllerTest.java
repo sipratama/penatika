@@ -1,8 +1,9 @@
 package io.github.sipratama.penatika.classroom.adapter.in.http;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
@@ -92,6 +93,23 @@ class ClassroomDisplaySnapshotControllerTest {
             assertThat(JsonPath.<String>read(result.getResponse().getContentAsString(), "$.code"))
                     .isEqualTo("REQUEST_VALIDATION_FAILED");
         }
+    }
+
+    @Test
+    void rejectsNoBreakSpaceInClassroomSessionIdBeforeCallingTheApplication() throws Exception {
+        MvcResult result = mockMvc.perform(get(
+                                "/api/classroom-sessions/{id}/display-snapshot", "abc\u00A0def")
+                        .cookie(new jakarta.servlet.http.Cookie(
+                                ParticipantSessionCookies.COOKIE_NAME, TOKEN.expose())))
+                .andReturn();
+
+        assertThat(result.getResponse().getStatus()).isEqualTo(400);
+        assertThat(JsonPath.<String>read(result.getResponse().getContentAsString(), "$.code"))
+                .isEqualTo("REQUEST_VALIDATION_FAILED");
+        assertThat(JsonPath.<String>read(
+                        result.getResponse().getContentAsString(), "$.fieldErrors[0].field"))
+                .isEqualTo("classroomSessionId");
+        verifyNoInteractions(getSnapshot);
     }
 
     @Test

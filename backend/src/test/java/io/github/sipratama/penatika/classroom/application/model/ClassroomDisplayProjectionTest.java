@@ -3,6 +3,8 @@ package io.github.sipratama.penatika.classroom.application.model;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 class ClassroomDisplayProjectionTest {
@@ -24,6 +26,19 @@ class ClassroomDisplayProjectionTest {
         assertThatThrownBy(() -> new ClassroomDisplayBlock("PLAIN_TEXT", ""))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new ClassroomDisplayBlock("HTML", "text"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void rejectsNoBreakSpaceInProjectionIdentifiers() {
+        var block = new ClassroomDisplayBlock("PLAIN_TEXT", "Classroom text");
+        var validScene = new ClassroomDisplayScene("scene-id", 1, List.of(block));
+
+        assertThatThrownBy(() -> new ClassroomDisplayProjection(
+                        "1.0", "classroom\u00A0session", 0, validScene))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new ClassroomDisplayScene(
+                        "scene\u00A0id", 1, List.of(block)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }
