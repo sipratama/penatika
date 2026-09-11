@@ -8,9 +8,9 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `1.2` |
+| Version | `1.3` |
 | Last Updated | `2026-09-11` |
-| Test Tooling | Deterministic scaffolding plus accepted IVS-02 through IVS-06 evidence and IVS-07 Display snapshot authority, closed projection, privacy, current-state, no-side-effect, HTTP, and PostgreSQL evidence established; implementation tooling remains incremental |
+| Test Tooling | Deterministic scaffolding plus accepted IVS-02 through IVS-07 evidence established; OIQ-04 now freezes IVS-08 liveness evidence requirements, but no IVS-08 runtime or tests exist yet |
 
 ## 1. Testing Objectives
 
@@ -133,6 +133,30 @@ Use real or representative smartphones, laptops/PCs, classroom displays, mouse, 
 - pairing expiry, replay, and revocation;
 - idempotent end/save;
 - safe last-known projection during recoverable failure.
+
+For IVS-08, deterministic/fake scheduling and controllable time must prove the
+implementation-plan-owned Display SSE liveness policy:
+
+- comment-only heartbeat cadence at the 15-second default;
+- heartbeat frames contain no `id`, `event`, or `data` field;
+- a successful heartbeat updates `lastSuccessfulWriteAt` only after send
+  success;
+- a failed heartbeat invalidates the current stream generation,
+  synchronization state, and mutation gate;
+- a successful state-bearing projection send updates stream liveness;
+- liveness age below 45 seconds is potentially live;
+- the exact 45-second boundary and every greater age are dead/fail-closed;
+- dispatch and acknowledgement remain bound to the current stream generation;
+- replacing a stream invalidates the older generation and acknowledgement;
+- emitter completion, error, unexpected timeout, and send failure invalidate
+  synchronization idempotently;
+- backend restart begins with no process-local stream acknowledgement and a
+  closed mutation gate;
+- reconnect requires a fresh generation, current full projection, and explicit
+  fresh acknowledgement;
+- heartbeat, projection, reconnect, snapshot, and acknowledgement do not alter
+  the fixed participant lifetime;
+- Display stream activity does not refresh Teacher-session activity.
 
 ### Structured Content Suite
 
@@ -296,6 +320,7 @@ Before pilot, evidence must cover all release blockers, high threats, architectu
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `1.3` | `2026-09-11` | Freeze future IVS-08 deterministic evidence for 15-second comment heartbeats, 45-second last-successful-write liveness, current-generation acknowledgement, fail-closed cleanup/restart, reconnect, and unchanged participant/Teacher lifetimes | Codex |
 | `1.2` | `2026-09-11` | Record IVS-07 Display snapshot authority, exact current-scene projection, closed privacy allow-list, Unicode/order, HTTP outcomes, and no-side-effect PostgreSQL evidence | Codex |
 | `1.0` | `2026-09-11` | Record IVS-04 LessonVersion eligibility/non-disclosure, Teacher/CSRF mutation authority, exact HTTP outcomes, initial Classroom state, and PostgreSQL evidence | Codex |
 | `0.9` | `2026-09-10` | Record IVS-03 token, OIDC, existing-account, backend-session, cookie/CSRF, HTTP authority-isolation, and PostgreSQL lifecycle evidence | Codex |

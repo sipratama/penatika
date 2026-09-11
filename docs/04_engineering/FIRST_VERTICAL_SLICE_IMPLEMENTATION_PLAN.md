@@ -140,7 +140,8 @@ optional simplifications.
 - Separate Teacher and Display React/TypeScript/Vite applications exist.
 - Role-scoped generated transport declarations exist.
 - OpenAPI `0.8.0` and the closed Display schema are authoritative.
-- IVS-04 Classroom Session start behavior is COMPLETE after human review.
+- IVS-04 through IVS-07 behavior is COMPLETE after human review. IVS-08 has
+  not started; its heartbeat and liveness policy is now frozen below.
 
 ## 6. Implementation Decision Register
 
@@ -168,6 +169,7 @@ input before the owning batch can complete.
 | ID-16 | Backend wire models | `LOCKED`: handwritten adapter-local Java models/mappers; no server-stub generation. | IVS-03–08 | Existing generation strategy is frontend transport-only. |
 | ID-17 | Frontend state/routing | `LOCKED`: explicit role-local state machines with `fetch`/`EventSource`; no router/query/state library without evidence. | IVS-09 | Each app has one bounded journey. |
 | ID-18 | Browser E2E tooling | `DEFERRED`: reassess Playwright in IVS-10 only if existing test layers leave an evidence gap. | IVS-10 | Avoid premature browser-harness dependency. |
+| ID-19 | Display SSE heartbeat and liveness | `LOCKED`: 15-second comment-only heartbeat cadence when otherwise idle, dead at 45 seconds since the last successful outbound write on the current stream generation, and no finite Servlet/SseEmitter absolute async timeout. | IVS-08 | Periodic writes expose silent disconnects without terminating healthy streams or allowing traffic to extend participant authority. |
 
 ## 7. First-Slice Physical Data Boundary
 
@@ -400,6 +402,154 @@ classroom/{domain,application/port/in,application/port/out,
 | Invalid Last-Event-ID | Reject before stream establishment. |
 | Valid behind/equal/ahead Last-Event-ID | Advisory only; send current full projection. |
 
+### OIQ-04 — Display SSE Liveness and Current-Generation Lock
+
+The first-slice Display SSE defaults are fixed implementation policy, not a
+new wire-contract guarantee:
+
+```text
+heartbeatInterval = 15 seconds
+deadTimeout       = 45 seconds
+Servlet/SseEmitter async timeout = disabled (no absolute async timeout)
+```
+
+If IVS-08 exposes typed configuration, it must enforce:
+
+```text
+heartbeatInterval > 0
+deadTimeout > 0
+deadTimeout >= 3 × heartbeatInterval
+```
+
+The defaults must not vary silently by environment. Later tuning requires
+reliability or pilot evidence and does not require a wire-contract version
+change while contracted SSE semantics remain unchanged.
+
+Heartbeats are comment-only frames such as:
+
+```text
+: keep-alive
+```
+
+They have no event name, event id, data payload, Classroom Revision,
+projection, command, acknowledgement, or synchronization authority. They do
+not alter `Last-Event-ID` and are not state-bearing events. Their only purposes
+are keeping idle transport active through intermediaries, providing periodic
+outbound writes that expose silent disconnects, and maintaining server-side
+stream-liveness evidence.
+
+A Display SSE stream is no longer liveness-eligible when 45 seconds have
+elapsed since its last successful outbound write on the current active stream
+generation. A successful outbound write is either a successfully returned full
+Display-projection send or a successfully returned comment-only heartbeat
+send. Update `lastSuccessfulWriteAt` only after the send returns successfully;
+scheduling, task start, acknowledgement, accepted commands, and participant
+credential existence are not liveness evidence. The exact boundary is:
+
+```text
+liveness age < 45 seconds  → potentially live
+liveness age >= 45 seconds → dead / fail closed
+```
+
+This threshold is not participant-session expiry, participant idle timeout,
+Teacher activity timeout, stream age, time since content changed, time since
+acknowledgement, browser polling timeout, or an HTTP Keep-Alive header timeout.
+
+IVS-08 must disable the finite Servlet/SseEmitter asynchronous request timeout,
+conceptually using `new SseEmitter(0L)` or an equivalent no-timeout setting.
+Servlet async timeout is an absolute request lifetime, not the rolling
+liveness detector; a healthy connection must not be terminated every 45
+seconds. `onTimeout` must still defensively and idempotently invalidate and
+clean up the stream if infrastructure unexpectedly raises it.
+
+Minimum process-local state is conceptually:
+
+```text
+ClassroomSessionId
+participantSessionId
+streamGeneration
+lastSuccessfulWriteAt
+lastDispatchedProjectionRevision
+acknowledgedRevision?
+emitter/stream handle
+```
+
+Do not persist this state or add Redis, a cache, broker infrastructure, or a
+migration. Backend restart intentionally loses it and therefore closes the
+Display mutation gate.
+
+Every successful Display SSE establishment creates a new `streamGeneration`.
+A newer stream for the active Display participant replaces the older current
+stream. Acknowledgement is bound to the Classroom Session, Display participant,
+current stream generation, and projection Revision; acknowledgement from an
+older generation cannot authorize mutation on a newer generation.
+
+Initial establishment proceeds as follows:
+
+```text
+authorize Display participant
+→ register new stream generation
+→ synchronization CLOSED
+→ send current full authoritative Display projection
+→ record successful dispatch for current Revision
+→ await explicit Display synchronization acknowledgement
+```
+
+Neither opening the stream nor dispatching the projection alone establishes
+synchronization. The mutation gate becomes eligible only while all canonical
+Display authority checks pass, the current generation has liveness age below
+45 seconds, the current authoritative projection Revision was dispatched on
+that exact generation, and that exact Revision was acknowledged on that exact
+generation. A participant credential, stream, heartbeat, or acknowledgement
+alone is insufficient.
+
+IVS-08 should use one bounded application scheduler mechanism for all active
+streams, not one platform thread per Classroom stream. A heartbeat is needed
+after an interval without another outbound write; a recent successful
+projection write may satisfy that interval. Writes to one emitter must be
+serialized, without overlapping sends or accumulating heartbeat tasks.
+
+A failed projection or heartbeat write immediately invalidates the current
+generation and synchronization, unregisters the stream, and closes the
+mutation gate. Cleanup after send failure, emitter `onError`, `onCompletion`,
+unexpected timeout, replacement, participant revocation/replacement/expiry,
+Classroom authority loss, or shutdown must be idempotent. Do not require a
+second application message to a connection whose write already failed.
+
+The server-side watchdog applies the same fail-closed cleanup when:
+
+```text
+now - lastSuccessfulWriteAt >= 45 seconds
+```
+
+It must unregister the current generation and complete or terminate the
+application-owned stream if still possible rather than waiting indefinitely
+for TCP disconnect detection.
+
+When an accepted student-facing mutation advances Revision `R` to `R2`, the
+acknowledgement for `R` immediately stops satisfying the gate. A full `R2`
+projection must be dispatched and explicitly acknowledged on the current
+generation before another mutation becomes eligible. Heartbeats never
+acknowledge a Revision.
+
+Every reconnect creates a fresh generation, sends the current full projection,
+and requires fresh validation/application plus explicit acknowledgement. The
+existing absent/behind/equal/ahead `Last-Event-ID` behavior remains unchanged;
+there is no historical replay or delta catch-up. Old-generation
+acknowledgement never survives reconnect.
+
+Comment heartbeats are transport keep-alives and are not exposed as ordinary
+`EventSource` events. Browser code must not count them or implement a custom
+ping/pong protocol, and IVS-08 must not turn them into named `ping` events or
+emit an SSE `retry:` field. Connection error or close uses native EventSource
+reconnect behavior, may later surface `RECONNECTING` in IVS-09, and is
+authorized again on each reconnect request.
+
+Heartbeat, projection dispatch, reconnect, snapshot, and acknowledgement do
+not move participant `createdAt` or `expiresAt`, renew a participant credential,
+or introduce participant idle-expiry semantics. Display SSE activity is not
+Teacher application activity and never refreshes Teacher-session idle expiry.
+
 ## 14. Testing Strategy
 
 - **Domain/unit:** pairing lifecycle with fake Clock; deterministic `NEXT`;
@@ -549,7 +699,7 @@ broader applicable validation.
 
 ### IVS-07 — Display Projection + Snapshot
 
-- **Status:** `READY FOR REVIEW`.
+- **Status:** `COMPLETE` after human review.
 - **Objective/outputs:** derived safe projection and snapshot GET.
 - **Inputs:** Display schema/projection requirements/snapshot contract.
 - **Allowed:** schema `1.0` `PLAIN_TEXT`. **Forbidden:** richer/private/stored
@@ -568,14 +718,20 @@ broader applicable validation.
 
 ### IVS-08 — Display SSE + Synchronization Gate
 
+- **Status:** `READY TO EXECUTE`; runtime implementation has not started.
 - **Objective/outputs:** Display events GET, synchronization PUT, publisher,
   process-local stream registry/gate.
 - **Inputs:** ADR-0012 and SSE/reconnect contracts.
-- **Allowed:** Spring MVC Display SSE. **Forbidden:** Controller SSE, reactive/
-  socket/broker/delta scope or invented numeric timeout policy.
-- **Prerequisites:** IVS-06/07 and resolved heartbeat/dead-timeout values.
-- **Tests/completion:** initial/reconnect/current state, Last-Event-ID, dispatch/
-  ack/termination/restart/`NEXT` gating; current-stream ack alone restores gate.
+- **Allowed:** Spring MVC Display SSE using the frozen OIQ-04 liveness policy.
+  **Forbidden:** Controller SSE, reactive/socket/broker/delta scope or a
+  different unreviewed timeout policy.
+- **Prerequisites:** IVS-06/07 COMPLETE and OIQ-04 RESOLVED; satisfied.
+- **Tests/completion:** deterministic heartbeat comment cadence, successful-
+  write liveness timestamps, exact 45-second boundary, failed-write/watchdog
+  cleanup, initial/reconnect/current state, Last-Event-ID, dispatch/ack/current-
+  generation replacement/termination/restart/`NEXT` gating; only a live
+  current-stream acknowledgement for the current dispatched Revision restores
+  gate eligibility.
 
 ### IVS-09 — Teacher/Display Frontend Integration
 
@@ -605,10 +761,10 @@ broader applicable validation.
 | OIQ-01 | Teacher session idle/absolute lifetimes? | `RESOLVED`: 30-minute sliding idle timeout and fixed 8-hour absolute timeout from session creation, with the server-authority and qualifying-activity semantics in §11. | IVS-03 | Human-reviewed security decision recorded in this implementation plan. | RESOLVED; no longer blocks IVS-03 |
 | OIQ-02 | Minimum entropy/encoded lengths for Teacher, participant, PairingGrant, and CSRF secrets? | `RESOLVED`: each uses exactly 32 CSPRNG bytes (256 bits), encoded as 43-character unpadded Base64URL; persistence stores only a lowercase 64-character SHA-256 verifier. | IVS-03/05 | Human-reviewed common first-slice credential baseline recorded in §11; OIDC transaction values remain ephemeral. | RESOLVED; no longer blocks IVS-03/05 |
 | OIQ-03 | Independent participant-session expiry beyond revocation/session lifecycle? | `RESOLVED`: both participant roles receive a fixed, non-sliding eight-hour absolute lifetime from creation, with no idle timeout; server time and all earlier canonical authority invalidations remain authoritative as defined in §11. | IVS-05 | Human-reviewed security and implementation decision recorded in this implementation plan. | RESOLVED; no longer blocks IVS-05 |
-| OIQ-04 | Display SSE heartbeat interval/dead timeout? | ADR-0012 requires heartbeat behavior but defers numbers. | IVS-08 | Reliability/security review chooses configurable values; tune later with evidence. | UNRESOLVED; blocks IVS-08 |
+| OIQ-04 | Display SSE heartbeat interval/dead timeout? | `RESOLVED`: comment-only heartbeat every 15 seconds when otherwise idle; dead/fail-closed at 45 seconds since the last successful outbound write on the current generation; Servlet/SseEmitter absolute async timeout disabled. | IVS-08 | Human-reviewed reliability/security decision recorded in §13; later tuning requires evidence and does not change the wire contract while contracted semantics remain stable. | RESOLVED; no longer blocks IVS-08 |
 
-OIQ-01, OIQ-02, and OIQ-03 are resolved. IVS-05 and IVS-06 are complete and
-IVS-07 is ready for review; OIQ-04 remains unresolved and blocks IVS-08 only. IVS-04 has locked its internal
+OIQ-01 through OIQ-04 are resolved. IVS-05 through IVS-07 are complete and
+IVS-08 is ready to execute but has not started. IVS-04 has locked its internal
 initial state as `CREATED`, scene position `0`, and Revision `0` without creating
 an additional wire guarantee. Exact later query shapes, revision increment
 mechanics, Java class names, and validator packaging remain normal owning-batch

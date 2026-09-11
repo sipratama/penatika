@@ -23,10 +23,10 @@ wins and this document must be corrected.
 |---|---|
 | Product | Penatika |
 | Status | Active |
-| Version | 0.45 |
+| Version | 0.46 |
 | Last Updated | 2026-09-11 |
 | Current Phase | Application Implementation — Active |
-| Implementation State | IVS-01 through IVS-06 are complete; IVS-07 is READY FOR REVIEW; IVS-08 is blocked by OIQ-04 |
+| Implementation State | IVS-01 through IVS-07 are complete; OIQ-04 is resolved; IVS-08 is READY TO EXECUTE |
 | Product Owner | sipratama |
 
 The final product-baseline consistency audit passed before the Architecture
@@ -89,8 +89,10 @@ Foundation handoff checkpoint was created.
 | OIQ-03 Participant-Session Lifetime Decision Gate | COMPLETE | Fixed, non-sliding eight-hour absolute lifetime with no idle timeout; [First Protected Vertical Slice Implementation Plan](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md) owns the frozen decision |
 | IVS-05 Pairing Grants + Participant Sessions | COMPLETE | Four contracted HTTP operations, secure verifier-only grants/participant credentials, fixed participant expiry, transactional redemption, stale-slot cleanup, cookies, and PostgreSQL concurrency evidence accepted after human review |
 | IVS-06 Controller Reconciliation + NEXT Revision/Idempotency | COMPLETE | Dual-authority Controller revision GET and transactional `DIRECT_ACTION:NEXT` command POST with row-lock serialization, durable accepted outcomes, replay/conflict semantics, and production fail-closed Display mutation gate accepted after human review |
-| IVS-07 Display Projection + Snapshot | READY FOR REVIEW | Participant-authorized current snapshot derives closed schema `1.0` `PLAIN_TEXT` state from durable ClassroomSession plus its immutable selected LessonVersion without persistence or synchronization side effects |
-| Remaining IVS batches | PENDING / BLOCKED AS NOTED | IVS-08 through IVS-10 have not started; OIQ-04 remains unresolved and blocks IVS-08 only |
+| IVS-07 Display Projection + Snapshot | COMPLETE | Participant-authorized current snapshot derives closed schema `1.0` `PLAIN_TEXT` state from durable ClassroomSession plus its immutable selected LessonVersion without persistence or synchronization side effects; accepted after human review |
+| OIQ-04 Display SSE Heartbeat/Liveness Decision Gate | COMPLETE | Fixed 15-second heartbeat, 45-second last-successful-write dead threshold, and disabled Servlet/SseEmitter absolute async timeout; [First Protected Vertical Slice Implementation Plan](./04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md) owns the frozen decision |
+| IVS-08 Display SSE + Synchronization Gate | READY TO EXECUTE | Prerequisite decisions and IVS-06/07 are complete; no IVS-08 runtime source has started |
+| Remaining IVS batches | PENDING | IVS-09 and IVS-10 have not started |
 | Pilot Stage A execution | PENDING | after required vertical slice/evidence |
 | Pilot Stage B real classroom | EVIDENCE_REQUIRED / PENDING | [PILOT_PLAN.md](./06_delivery/PILOT_PLAN.md) Stage B gates |
 | Commercial launch | PENDING | [BUSINESS_MODEL.md](./00_product/BUSINESS_MODEL.md) launch gates |
@@ -230,13 +232,16 @@ non-sliding eight-hour participant-session absolute lifetime with no idle
 timeout. IVS-05 PairingGrant and participant-session runtime is accepted and
 complete. IVS-06 Controller reconciliation and transactional/idempotent NEXT
 runtime is accepted and complete. IVS-07 Display projection and snapshot is
-READY FOR REVIEW: the participant-authorized snapshot derives the exact current
-scene and Revision from durable ClassroomSession plus its immutable selected
+accepted and COMPLETE: the participant-authorized snapshot derives the exact
+current scene and Revision from durable ClassroomSession plus its immutable selected
 LessonVersion, exposes only closed schema `1.0` `PLAIN_TEXT` fields, and persists
 no duplicate projection. Snapshot access does not synchronize the Display, so
 the production mutation gate deliberately remains fail-closed until IVS-08.
-OIQ-04 remains unresolved and blocks IVS-08 only. Frontend, contracts, Accepted
-ADRs, checkpoints, and V001 remain unchanged.
+OIQ-04 is RESOLVED by the implementation-plan-owned 15-second heartbeat,
+45-second last-successful-write liveness threshold, and disabled absolute
+Servlet/SseEmitter timeout policy. IVS-08 is READY TO EXECUTE but its runtime
+implementation has not started. Frontend, contracts, Accepted ADRs,
+checkpoints, and V001 remain unchanged.
 `SYSTEM_ARCHITECTURE.md` remains authoritative for `Needed Before` rules.
 
 ## Open Non-Product Follow-Ups
@@ -292,8 +297,9 @@ browser-session runtime, and IVS-04 LessonVersion eligibility/Classroom Session
 start and IVS-05 PairingGrant/participant-session runtime are accepted and
 complete. OIQ-03 is resolved. IVS-06 Controller reconciliation and NEXT
 revision/idempotency runtime is accepted and complete. IVS-07 Display projection
-and snapshot is READY FOR REVIEW with production mutation still fail-closed
-pending IVS-08. IVS-08 and later runtime have not started.
+and snapshot is accepted and complete with production mutation still
+fail-closed pending IVS-08. OIQ-04 is resolved, and IVS-08 is ready to execute;
+IVS-08 and later runtime have not started.
 
 The previous [Contract Foundation Checkpoint — Complete](./checkpoints/2026-09-09-contract-foundation-complete.md)
 remains immutable and historically correct. Its subsequent merge is recorded

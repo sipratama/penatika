@@ -38,9 +38,10 @@ Backend shell:
 - IVS-06 Controller revision reconciliation and transactional/idempotent
   `DIRECT_ACTION:NEXT`, with per-session PostgreSQL serialization and a
   production fail-closed Display mutation gate;
-- IVS-07 participant-authorized Display snapshot derived from current durable
-  ClassroomSession state and its immutable selected LessonVersion, with closed
-  schema `1.0` `PLAIN_TEXT` output and no synchronization side effect;
+- accepted IVS-07 participant-authorized Display snapshot derived from current
+  durable ClassroomSession state and its immutable selected LessonVersion,
+  with closed schema `1.0` `PLAIN_TEXT` output and no synchronization side
+  effect;
 - one Maven project rooted at `backend/`;
 - no Display SSE, synchronization, or frontend product behavior yet.
 
@@ -69,7 +70,31 @@ The repository has no configured production OIDC provider, deployment
 configuration, or CI/CD. IVS-08 and later realtime behavior remain
 unimplemented; the IVS-07 snapshot does not synchronize Display, and production
 NEXT remains fail-closed until IVS-08 supplies the real Display synchronization
-gate.
+gate. OIQ-04 is resolved, so IVS-08 is ready to execute.
+
+### IVS-08 SSE Liveness Baseline — Not Yet Implemented
+
+The [First Protected Vertical Slice Implementation Plan](../04_engineering/FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md)
+owns the frozen implementation policy:
+
+```text
+heartbeatInterval = 15 seconds
+deadTimeout       = 45 seconds since the last successful outbound write
+Servlet/SseEmitter async timeout = disabled
+```
+
+IVS-08 must use comment-only heartbeat frames, current-stream-generation
+liveness/acknowledgement state, and one bounded scheduler mechanism across
+active streams. This state remains process-local and restart intentionally
+closes the Display mutation gate. No scheduler, SSE registry, typed liveness
+configuration, migration, Redis/cache, or broker source exists yet.
+
+Future reverse-proxy configuration must support long-lived
+`text/event-stream` responses, must not buffer them in a way that defeats
+timely delivery, and must not impose a stream lifetime shorter than application
+expectations without deliberate configuration. This documentation batch adds
+no Caddy or other deployment configuration and introduces no application
+`Connection` or `Keep-Alive` header contract.
 
 ## 2. Current Prerequisites
 
@@ -285,9 +310,8 @@ authorize implementation. Material architecture decisions remain governed by
 
 ## 10. Open Work
 
-Source Scaffolding and IVS-01 through IVS-06 are complete. IVS-07 Display
-projection and snapshot is READY FOR REVIEW. IVS-08 has not started; OIQ-04
-remains unresolved and blocks IVS-08 only. Later product behavior,
+Source Scaffolding and IVS-01 through IVS-07 are complete. OIQ-04 is resolved,
+and IVS-08 is READY TO EXECUTE but has not started. Later product behavior,
 production OIDC provider selection/configuration, deployment files, CI/CD, and
 backup implementation remain pending.
 
@@ -295,6 +319,7 @@ backup implementation remain pending.
 
 | Date | Change | Author |
 |---|---|---|
+| `2026-09-11` | Freeze the documentation-only IVS-08 operational baseline for 15-second comment heartbeats, 45-second last-successful-write liveness, disabled Servlet/SseEmitter absolute timeout, bounded process-local scheduling, and long-lived unbuffered reverse-proxy support; no runtime/configuration source added | Codex |
 | `2026-09-11` | Record IVS-07 participant-authorized derived Display snapshot, closed schema/privacy, current-state PostgreSQL evidence, and unchanged fail-closed synchronization gate | Codex |
 | `2026-09-11` | Record IVS-06 Controller reconciliation, dual authority, transactional NEXT, idempotency, rollback, fail-closed Display gate, and PostgreSQL concurrency validation | Codex |
 | `2026-09-11` | Record IVS-05 PairingGrant/participant HTTP, cookie, authority, expiry, rollback, stale-slot, and PostgreSQL concurrency validation | Codex |

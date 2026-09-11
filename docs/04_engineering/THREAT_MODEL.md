@@ -8,7 +8,7 @@
 |---|---|
 | Product | Penatika |
 | Status | Draft baseline |
-| Version | `1.2` |
+| Version | `1.3` |
 | Last Updated | `2026-09-11` |
 | Review Trigger | Identity, provider, contract, deployment, retention, or student-data decisions |
 
@@ -124,6 +124,7 @@ Out of scope for this baseline: payment, student accounts, school administration
 | T-056 | Real classroom pilot traffic served over plain HTTP | Credential/session interception, tampering | HTTPS required before real pilot activation; valid domain/hostname required; TCP 80 used only for redirect/certificate bootstrap |
 | T-057 | Compromised or tampered deployment artifact (image/registry) | Malicious code reaching the pilot host | Immutable/versioned release identity (commit SHA or image digest), OCI-compatible registry, no mutable `latest` as authoritative release identity |
 | T-058 | Provider outage or single-host loss | Full application unavailability; potential data loss without off-host backup | Explicit single-failure-domain acknowledgement (ADR-0019); off-host backup boundary; provider portability so the deployment can move to another compatible Linux VPS provider |
+| T-059 | Stale or dead Display SSE stream retains synchronization authority | Student-facing mutation continues without a currently live, synchronized Display | Current-generation dispatch/acknowledgement binding; 45-second last-successful-write liveness threshold; immediate failure/completion/error invalidation; backend restart and uncertainty fail closed; frozen policy owned by the First Protected Vertical Slice Implementation Plan |
 
 ## 6. Security Invariants
 
@@ -133,6 +134,9 @@ Out of scope for this baseline: payment, student accounts, school administration
 - External identity is resolved by validated `(issuer, subject)` and is not automatically linked by email.
 - OAuth/OIDC access, refresh, and ID tokens remain server-side and are not browser application credentials.
 - Browser and participant sessions are bounded and revocable.
+- A stale, dead, replaced, or terminated Display SSE stream cannot preserve
+  student-facing mutation authority; liveness and acknowledgement apply only
+  to the current stream generation and fail closed on uncertainty or restart.
 - AI and speech providers cannot authorize product actions.
 - AI output cannot bypass structured schema, policy, assurance, or teacher-control gates.
 - Raw audio is not persisted by default.
@@ -238,6 +242,16 @@ command, lifecycle, and persistence identities. Snapshot traffic renews no
 credential and creates no synchronization evidence, so the production mutation
 gate remains fail-closed.
 
+The [First Protected Vertical Slice Implementation Plan](./FIRST_VERTICAL_SLICE_IMPLEMENTATION_PLAN.md)
+owns the resolved OIQ-04 Display SSE liveness policy: comment-only heartbeats
+use a 15-second cadence, a current stream generation is dead at 45 seconds
+since its last successful outbound projection or heartbeat write, and the
+Servlet/SseEmitter absolute async timeout is disabled. Heartbeats grant no
+synchronization authority, do not extend participant lifetime, and do not
+refresh Teacher activity. Immediate send failure, liveness expiry, stream
+replacement/termination, authority loss, or backend restart invalidates
+synchronization and keeps student-facing mutation fail-closed.
+
 ## 9. External Provider Review
 
 Before selecting AI or speech providers, evaluate:
@@ -266,6 +280,9 @@ Before selecting AI or speech providers, evaluate:
 - Sensitive logging, telemetry, and build-artifact scans.
 - Raw-audio non-retention tests.
 - Command replay, concurrency, and stale-state tests.
+- Display SSE heartbeat/liveness boundary, failed-write cleanup,
+  current-generation acknowledgement, reconnect, termination, and restart
+  fail-closed tests.
 - Provider failure and degraded-mode abuse tests.
 
 ## 11. Open Security and Privacy Decisions
@@ -313,6 +330,7 @@ Review this threat model before:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+| `1.3` | `2026-09-11` | Record the stale/dead Display-stream mutation-authority threat and route the resolved OIQ-04 heartbeat/liveness, current-generation, and fail-closed policy to the implementation plan | Codex |
 | `1.2` | `2026-09-11` | Record IVS-05 PairingGrant and participant authority, expiry, cookie, non-disclosure, rollback, stale-slot, and concurrency evidence | Codex |
 | `1.1` | `2026-09-11` | Remove resolved OIQ-03 from open security decisions and route the frozen participant-session lifetime to the implementation plan | Codex |
 | `1.0` | `2026-09-11` | Record IVS-04 session revalidation, explicit mutation CSRF enforcement, trusted Teacher ownership, and LessonVersion non-disclosure evidence | Codex |
