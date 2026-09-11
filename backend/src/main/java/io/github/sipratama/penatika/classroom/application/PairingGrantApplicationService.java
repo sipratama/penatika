@@ -99,7 +99,11 @@ public final class PairingGrantApplicationService
 
     private static java.util.Optional<UUID> parseUuid(String value) {
         try {
-            return java.util.Optional.of(UUID.fromString(value));
+            UUID parsed = UUID.fromString(value);
+            if (!parsed.toString().equalsIgnoreCase(value)) {
+                return java.util.Optional.empty();
+            }
+            return java.util.Optional.of(parsed);
         } catch (IllegalArgumentException exception) {
             return java.util.Optional.empty();
         }

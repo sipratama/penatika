@@ -1000,6 +1000,17 @@ class FirstProtectedSlicePersistenceIT {
         assertProblem(createPairingGrantRequest(
                         foundation.authority(), "opaque-classroom-id", "CLASSROOM_DISPLAY")
                 .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+        ClassroomSession canonicalAliasTarget = createClassroomSession(
+                foundation.teacher(),
+                foundation.lessonVersion(),
+                UUID.fromString("00000001-0001-0001-0001-000000000001"));
+        int grantCountBeforeAlias = rowCount("classroom_pairing_grant");
+        assertProblem(createPairingGrantRequest(
+                        foundation.authority(), "1-1-1-1-1", "CLASSROOM_DISPLAY")
+                .andReturn(), 404, "CLASSROOM_SESSION_NOT_FOUND");
+        assertThat(canonicalAliasTarget.id().value().toString())
+                .isEqualTo("00000001-0001-0001-0001-000000000001");
+        assertThat(rowCount("classroom_pairing_grant")).isEqualTo(grantCountBeforeAlias);
         TeacherAccount otherTeacher = createTeacher(
                 "10000000-0000-0000-0000-000000000621",
                 "10000000-0000-0000-0000-000000000622",
@@ -1057,6 +1068,19 @@ class FirstProtectedSlicePersistenceIT {
                 .andReturn().getResponse().getStatus()).isEqualTo(204);
         assertThat(revokeGrant(foundation.authority(), foundation.classroomSession(), "opaque-grant-id")
                 .andReturn().getResponse().getStatus()).isEqualTo(204);
+        RawPairingToken aliasTargetToken = rawPairingToken('a');
+        PairingGrant canonicalAliasTarget = PairingGrant.issue(
+                new PairingGrantId(UUID.fromString("00000001-0001-0001-0001-000000000001")),
+                foundation.classroomSession().id(),
+                PairingRole.CLASSROOM_DISPLAY,
+                pairingTokenVerifier.verifierFor(aliasTargetToken),
+                clock.instant());
+        pairingGrants.create(canonicalAliasTarget);
+        assertThat(revokeGrant(foundation.authority(), foundation.classroomSession(), "1-1-1-1-1")
+                .andReturn().getResponse().getStatus()).isEqualTo(204);
+        assertThat(pairingGrants.findByCredentialVerifier(canonicalAliasTarget.credentialVerifier())
+                        .orElseThrow().revokedAt())
+                .isNull();
         assertProblem(mockMvc.perform(delete(pairingGrantRevocationPath(
                                 foundation.classroomSession(), "x".repeat(129)))
                         .cookie(cookie(TeacherSessionCookies.SESSION_COOKIE_NAME, foundation.authority().sessionToken()))
