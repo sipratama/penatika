@@ -13,6 +13,8 @@ public interface ParticipantSessionAuthorityUseCase {
 
     boolean hasEffectiveDisplay(UUID classroomSessionId);
 
+    boolean hasEffectiveDisplay(UUID classroomSessionId, UUID participantSessionId);
+
     EstablishedParticipantSession establishController(
             UUID classroomSessionId,
             UUID teacherAccountId,

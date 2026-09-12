@@ -7,6 +7,7 @@ public final class PenatikaProperties {
 
     private PenatikaEnvironment environment = PenatikaEnvironment.LOCAL;
     private final PenatikaPersistenceProperties persistence = new PenatikaPersistenceProperties();
+    private final PenatikaDisplayProperties display = new PenatikaDisplayProperties();
 
     public PenatikaEnvironment getEnvironment() {
         return environment;
@@ -18,5 +19,9 @@ public final class PenatikaProperties {
 
     public PenatikaPersistenceProperties getPersistence() {
         return persistence;
+    }
+
+    public PenatikaDisplayProperties getDisplay() {
+        return display;
     }
 }

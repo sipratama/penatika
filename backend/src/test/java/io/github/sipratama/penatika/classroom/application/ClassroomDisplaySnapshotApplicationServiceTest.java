@@ -49,7 +49,8 @@ class ClassroomDisplaySnapshotApplicationServiceTest {
     @BeforeEach
     void setUp() {
         service = new ClassroomDisplaySnapshotApplicationService(
-                participantSessions, classroomSessions, lessonScenes);
+                new ClassroomDisplayAuthorityApplicationService(participantSessions, classroomSessions),
+                new ClassroomDisplayProjectionApplicationService(lessonScenes));
     }
 
     @Test

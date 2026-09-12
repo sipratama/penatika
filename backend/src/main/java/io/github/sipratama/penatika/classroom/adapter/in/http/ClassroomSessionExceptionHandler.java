@@ -15,7 +15,9 @@ import io.github.sipratama.penatika.classroom.application.ClassroomMutationNotAl
 import io.github.sipratama.penatika.classroom.application.CommandIdReuseConflictException;
 import io.github.sipratama.penatika.classroom.application.ControllerAuthorityRequiredException;
 import io.github.sipratama.penatika.classroom.application.DisplayAuthorityRequiredException;
+import io.github.sipratama.penatika.classroom.application.DisplayIntentRequiredException;
 import io.github.sipratama.penatika.classroom.application.DisplaySessionRequiredException;
+import io.github.sipratama.penatika.classroom.application.DisplaySynchronizationConflictException;
 import io.github.sipratama.penatika.classroom.application.PairingGrantRejectedException;
 import io.github.sipratama.penatika.classroom.application.ParticipantRoleAlreadyActiveException;
 import io.github.sipratama.penatika.classroom.application.StaleRevisionException;
@@ -26,6 +28,7 @@ import io.github.sipratama.penatika.lesson.application.LessonVersionNotReadyExce
         ClassroomSessionController.class,
         ClassroomControllerCommandController.class,
         ClassroomDisplaySnapshotController.class,
+        ClassroomDisplayStreamController.class,
         PairingGrantController.class,
         ParticipantEstablishmentController.class
 })
@@ -131,6 +134,24 @@ public final class ClassroomSessionExceptionHandler {
                 "Forbidden",
                 "Active Classroom Display authority is required for this request.",
                 "DISPLAY_AUTHORITY_REQUIRED");
+    }
+
+    @ExceptionHandler(DisplayIntentRequiredException.class)
+    ResponseEntity<ClassroomSessionProblem> displayIntentRequired() {
+        return problem(
+                403,
+                "Forbidden",
+                "The request did not include valid CSRF protection.",
+                "CSRF_REJECTED");
+    }
+
+    @ExceptionHandler(DisplaySynchronizationConflictException.class)
+    ResponseEntity<ClassroomSessionProblem> displaySynchronizationConflict() {
+        return problem(
+                409,
+                "Conflict",
+                "The Display synchronization acknowledgement is not valid for current state.",
+                "DISPLAY_SYNCHRONIZATION_CONFLICT");
     }
 
     @ExceptionHandler(StaleRevisionException.class)

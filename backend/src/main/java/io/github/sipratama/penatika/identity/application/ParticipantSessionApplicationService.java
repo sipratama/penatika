@@ -72,6 +72,18 @@ public final class ParticipantSessionApplicationService implements ParticipantSe
     }
 
     @Override
+    public boolean hasEffectiveDisplay(UUID classroomSessionId, UUID participantSessionId) {
+        Objects.requireNonNull(participantSessionId, "participantSessionId must not be null");
+        return effectiveOccupant(
+                        new ClassroomSessionReference(classroomSessionId),
+                        ParticipantRole.CLASSROOM_DISPLAY,
+                        null,
+                        clock.instant())
+                .filter(occupant -> occupant.id().value().equals(participantSessionId))
+                .isPresent();
+    }
+
+    @Override
     public EstablishedParticipantSession establishController(
             UUID classroomSessionId,
             UUID teacherAccountId,

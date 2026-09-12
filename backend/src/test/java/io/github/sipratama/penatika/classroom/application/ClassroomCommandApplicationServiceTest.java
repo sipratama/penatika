@@ -82,8 +82,10 @@ class ClassroomCommandApplicationServiceTest {
                 .thenReturn(true);
         when(acceptedCommands.saveIfAbsent(any())).thenReturn(true);
 
-        var result = service.execute(request("command-1", 0));
+        var execution = service.execute(request("command-1", 0));
+        var result = execution.result();
 
+        assertThat(execution.newlyAccepted()).isTrue();
         assertThat(result.classroomSessionId()).isEqualTo(SESSION_ID.toString());
         assertThat(result.commandId()).isEqualTo("command-1");
         assertThat(result.resultingRevision()).isEqualTo(1);
@@ -104,9 +106,10 @@ class ClassroomCommandApplicationServiceTest {
         when(acceptedCommands.findByCommandIdentity(current.id(), "command-1"))
                 .thenReturn(Optional.of(original));
 
-        var result = service.execute(request("command-1", 0));
+        var execution = service.execute(request("command-1", 0));
 
-        assertThat(result.resultingRevision()).isEqualTo(1);
+        assertThat(execution.newlyAccepted()).isFalse();
+        assertThat(execution.result().resultingRevision()).isEqualTo(1);
         verify(displayGate, never()).isMutationPermitted(any(), any());
         verify(lessonNavigation, never()).resolveNextScenePosition(any(), any(Long.class));
         verify(classroomSessions, never()).updatePositionIfRevisionMatches(any(), any(), any(Long.class), any(), any());
